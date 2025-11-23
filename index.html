@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width = device-width, initial-scale=1.0">
+  <title>ACHSTS Home</title>
+  <!-- linking icons  -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <!-- SweetAlert2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+
+  <!-- header / navbar section  -->
+  <nav class="navbar">
+    <div class="section-content">
+      <div style="display: none;" class="logo"><a href="#" id="logo"><i class="fas fa-mosque"></i><span>ACHSTS</span></a></div>
+      <ul class="menu">
+        <button class="fas fa-times" id="menu-close-button"></button>
+        <li><a href="#hero-section" class="nav-link">Home</a></li>
+        <li><a href="#about-section" class="nav-link">About</a></li>
+        <li><a href="#admission" class="nav-link">Admission</a></li>
+        <li><a href="#news" class="nav-link">News</a></li>
+        <li><a href="#team" class="nav-link">Teachers</a></li>
+        <li><a href="#contact-section" class="nav-link">Contact</a></li>
+      </ul>
+      <button class="fas fa-bars" id="menu-open-button"></button>
+      <button id="theme-toggle" class="theme-toggle">
+  <i class="fas fa-moon"></i>
+</button>
+
+    </div>
+  </nav>
+
+  <main>
+    <!-- hero section  -->
+    <section class="hero-section" id="hero-section">
+      <div class="overlay">
+        <h1 class="headline">
+          Welcome to <span style="color: lightblue;">ACHSTS</span>
+        </h1>
+        <h1>ARRIDA COLLEGE OF HEALTH SCIENCE TECHNOLOGY SULEJA</h1>
+        <p class="tagline">
+          Your Health is our Concern.
+        </p>
+        <div class="buttons"><a href="https://script.google.com/macros/s/AKfycby1iYjYzvWwpxmfIX8J4ux5SWJ33NUoyGvGf9cZnsmgD92y0u7NuPuMJEinOQZRX5NJ/exec" class="button">Apply Now</a></div>
+      </div>
+    </section>
+
+    <!-- about section  -->
+    <section class="about-section" id="about-section">
+      <div class="section-content">
+        <div class="image-wrapper">
+          <img src="images/DSC_3728.JPG" alt="Me" class="image">
+        </div>
+        <div class="about-details">
+          <h1>DIRECTOR</h1>
+          <div class="social-link-list">
+            <a href="https://www.tiktok.com/@hanifessaiy?_t=ZM-8wxL6yx5MJC&_r=1" class="social-link"><i
+                class="fa-brands fa-tiktok"></i></a>
+            <a href="https://www.instagram.com/hanif_essaiy?igsh=d3ZoN3FmMGloNGRx&utm_source=qr" class="social-link"><i
+                class="fa-brands fa-instagram"></i></a>
+            <a href="https://wa.me/2347040686186" class="social-link"><i class="fa-brands fa-whatsapp"></i></a>
+          </div>
+          <p class="about-text">
+            The ARRIDA School of Health Sciences Technology is a leading institution committed to training skilled, compassionate, and competent healthcare professionals. Our mission is to provide high-quality education that combines modern classroom learning with hands-on practical experience.
+          </p>
+          <p class="about-text">
+            At ARRIDA School of Health Sciences Technology, students learn in a supportive environment equipped with essential facilities, experienced instructors, and a curriculum designed to meet today’s healthcare standards. We focus on building professionals who are prepared to serve in hospitals, laboratories, community health centers, research institutions, and public health organizations.
+          </p>
+          <div class="buttons">
+            <a href="images/Ar-rida Flyer.jpg" class="button cv" download="Ar-rida Flyer">Download Flier</a>
+            <a href="#contact-section" class="button c-m">Contact Us</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- services section -->
+    <section class="services-section" id="admission">
+      <h3 class="section-title">Courses we offer</h3>
+      <div class="section-content">
+        <ul class="menu js-menu">
+        </ul>
+      </div>
+    </section>
+
+    <!-- News Section -->
+    <section class="news-section" id="news">
+      <h3 class="section-title">Latest News</h3>
+      <div class="section-content news-list">
+        <div class="news-card">
+          <img src="images/DSC_3720.JPG" alt="SSIA Science Award" class="news-img">
+          <h4 class="news-title">Admission into Health Programs</h4>
+          <p class="news-date">Posted: <span>September 30, 2025</span></p>
+          <p class="news-body">
+            We are pleased to announce that admissions are now open for our various health science programs. Apply now to
+            kickstart your career in healthcare!
+          </p>
+          <div class="news-actions">
+            <div class="share-dropdown">
+              <button class="share-btn"><i class="fa-solid fa-share"></i> <span>Share</span></button>
+              <div class="share-menu">
+                <a href="#" class="share-link" data-platform="facebook"><i class="fa-brands fa-facebook"></i>
+                  Facebook</a>
+                <a href="#" class="share-link" data-platform="twitter"><i class="fa-brands fa-x-twitter"></i>
+                  Twitter</a>
+                <a href="#" class="share-link" data-platform="whatsapp"><i class="fa-brands fa-whatsapp"></i>
+                  WhatsApp</a>
+              </div>
+            </div>
+            <button class="like-btn"><i class="fa-solid fa-thumbs-up"></i> <span class="like-count">0</span></button>
+          </div>
+        </div>
+        <!-- I can repeat .news-card for more news -->
+        <div class="news-card">
+          <img src="images/Covr1.jpg" alt="New Library Opened" class="news-img">
+          <h4 class="news-title">New Library Opened</h4>
+          <p class="news-date">Posted: <span>September 28, 2025</span></p>
+          <p class="news-body">
+            We are excited to announce the opening of our new library, equipped with the latest resources and study spaces
+            for our students.
+          </p>
+          <div class="news-actions">
+            <div class="share-dropdown">
+              <button class="share-btn"><i class="fa-solid fa-share"></i> <span>Share</span></button>
+              <div class="share-menu">
+                <a href="#" class="share-link" data-platform="facebook"><i class="fa-brands fa-facebook"></i>
+                  Facebook</a>
+                <a href="#" class="share-link" data-platform="twitter"><i class="fa-brands fa-x-twitter"></i>
+                  Twitter</a>
+                <a href="#" class="share-link" data-platform="whatsapp"><i class="fa-brands fa-whatsapp"></i>
+                  WhatsApp</a>
+              </div>
+            </div>
+            <button class="like-btn"><i class="fa-solid fa-thumbs-up"></i> <span class="like-count">0</span></button>
+          </div>
+        </div>
+        <div class="news-card">
+          <img src="images/dev.JPG" alt="New CBT Centre Opened" class="news-img">
+          <h4 class="news-title">New CBT Centre Opened</h4>
+          <p class="news-date">Posted: <span>September 25, 2025</span></p>
+          <p class="news-body">
+            We are thrilled to announce the opening of our new Computer-Based Testing (CBT) Centre, designed to provide
+            students with a modern and efficient testing environment.
+          </p>
+          <div class="news-actions">
+            <div class="share-dropdown">
+              <button class="share-btn"><i class="fa-solid fa-share"></i> <span>Share</span></button>
+              <div class="share-menu">
+                <a href="#" class="share-link" data-platform="facebook"><i class="fa-brands fa-facebook"></i>
+                  Facebook</a>
+                <a href="#" class="share-link" data-platform="twitter"><i class="fa-brands fa-x-twitter"></i>
+                  Twitter</a>
+                <a href="#" class="share-link" data-platform="whatsapp"><i class="fa-brands fa-whatsapp"></i>
+                  WhatsApp</a>
+              </div>
+            </div>
+            <button class="like-btn"><i class="fa-solid fa-thumbs-up"></i> <span class="like-count">0</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- My team section -->
+    <section class="my-team" id="team">
+      <div class="section-content">
+        <h3 class="section-title">my team</h3>
+        <div class="team-card-container js-team">
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact section -->
+    <section class="contact-section" id="contact-section">
+      <div class="section-content">
+        <h3 class="section-title">Contact Us</h3>
+        <div class="contact-card">
+          <!-- Left: Contact Form -->
+          <form class="contact-form" autocomplete="off">
+            <h2>Send a Message</h2>
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="email" name="email" placeholder="Email Address" required>
+            <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
+            <button type="submit" class="button submit">Send Message</button>
+          </form>
+          <!-- Right: Contact Info -->
+          <div class="contact-info">
+            <h2>Contact Information</h2>
+            <ul>
+              <li><i class="fa-solid fa-envelope"></i> https://ar-rida.vercel.app/contact-us</li>
+              <li><i class="fa-solid fa-phone"></i> 08038578902, 08028267789</li>
+              <li><i class="fa-solid fa-location-dot"></i> Bakin Iku, Commonwealth International School, Suleja, Nigeria.
+              </li>
+              <li><i class="fa-solid fa-calendar-days"></i> Monday–Friday, 7:00 AM – 6:00 PM</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+    <footer class="site-footer">
+      <div class="footer-content">
+        &copy; 2025 ARRIDA College of Health Sciences Technology. All rights reserved.
+      </div>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+
+</body>
+
+</html>

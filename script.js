@@ -1,3 +1,4 @@
+// ...existing code...
 document.addEventListener('DOMContentLoaded', function () {
     // Sticky navbar on scroll
     window.addEventListener('scroll', function () {
@@ -27,12 +28,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Services data
     const services = [
         { id: `item-1`, icone: `fas fa-hand-holding-heart`, header: `Community Health Extension Workers (SCHEW)`, descrioption: `Community Health Extension Workers (CHEWs) are trained health professionals who provide basic preventive, promotive, and curative healthcare services at the community level.`},
-    
-        { id: `item-6`, icone: `fas fa-ambulance`, header: `Public Health`, descrioption: `Reliable and results-driven printing solutions for businesses and creatives. From business cards to banners, I deliver hight-quality prints with precision, speed, and style.` },
-        
-        { id: `item-6`, icone: `fas fa-capsules`, header: `Pharmacy Technician`, descrioption: `Reliable and results-driven printing solutions for businesses and creatives. From business cards to banners, I deliver hight-quality prints with precision, speed, and style.` },
-        
-        { id: `item-6`, icone: `fas fa-microscope`, header: `Medical Laboratory Technician`, descrioption: `Reliable and results-driven printing solutions for businesses and creatives. From business cards to banners, I deliver hight-quality prints with precision, speed, and style.` },
+
+        { id: `item-6`, icone: `fas fa-ambulance`, header: `Public Health`, descrioption: `A public health specialist is a professional dedicated to improving and protecting the health of entire communities and populations, rather than treating individual patients` },
+
+        { id: `item-6`, icone: `fas fa-capsules`, header: `Pharmacy Technician`, descrioption: `A pharmacy technician is a healthcare professional who assists licensed pharmacists in dispensing medications, managing administrative tasks, and handling inventory under pharmacist supervision` },
+
+        { id: `item-6`, icone: `fas fa-microscope`, header: `Medical Laboratory Technician`, descrioption: `A medical lab technician performs tests on patient samples like blood and tissue to help diagnose and treat diseases. ` },
     ];
     let innerHTML = '';
     services.forEach((service) => {
@@ -48,31 +49,33 @@ document.addEventListener('DOMContentLoaded', function () {
     if (menuContainer) menuContainer.innerHTML = innerHTML;
 
     // Skills HTML (if you have a container for skills)
-    const skills = [
-        { name: `HTML`, levelPercentage: `fifty-percent` },
-        { name: `CSS`, levelPercentage: `thirty-percent` },
-        { name: `JAVASCRIPT`, levelPercentage: `twenty-percent` },
-        { name: `CORELDRAW`, levelPercentage: `sixty-percent` },
-        { name: `PHOTOSHOP`, levelPercentage: `forty-percent` }
-    ];
-    let levelHTML = '';
-    skills.forEach((skill) => {
-        levelHTML += `
-        <div class="skill">
-            <p>${skill.name}</p>
-            <div class="level-container">
-                <span class="${skill.levelPercentage}"></span>  
-            </div>
-        </div>
-        `;
-    });
+    // const skills = [
+    //     { name: `HTML`, levelPercentage: `fifty-percent` },
+    //     { name: `CSS`, levelPercentage: `thirty-percent` },
+    //     { name: `JAVASCRIPT`, levelPercentage: `twenty-percent` },
+    //     { name: `CORELDRAW`, levelPercentage: `sixty-percent` },
+    //     { name: `PHOTOSHOP`, levelPercentage: `forty-percent` }
+    // ];
+    // let levelHTML = '';
+    // skills.forEach((skill) => {
+    //     levelHTML += `
+    //     <div class="skill">
+    //         <p>${skill.name}</p>
+    //         <div class="level-container">
+    //             <span class="${skill.levelPercentage}"></span>  
+    //         </div>
+    //     </div>
+    //     `;
+    // });
     // If you have a container for skills, set its innerHTML here
 
     // Team HTML
     const myTeam = [
-        { image: `Muhammad Dayyabu.jpg`, name: `Muhammad Dayyabu`, post: `Registrar` },
+        { image: `IMG-20251121-WA0093.jpg`, name: `Nura Nasiru`, post: `HOD Public Health` },
         { image: `Pharmacist David Joel.jpg`, name: `Pharmacist David Joel`, post: `HOD Pharmacy` },
-        { image: `Abdulmalik Hussaini.jpg`, name: `Abdulmalik Hussaini`, post: `Director` }
+        { image: `IMG-20251122-WA0036.jpg`, name: `Demmile Stephanie`, post: `Lecturer` },
+        { image: `IMG-20251121-WA0063.jpg`, name: `Vivian Odiali`, post: `Provost` },
+        { image: `IMG-20251121-WA0067.jpg`, name: `Suleiman Shaibu`, post: `Registrar` },
     ];
     let teamHTML = '';
     myTeam.forEach((member) => {
@@ -88,6 +91,91 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     const teamContainer = document.querySelector('.js-team');
     if (teamContainer) teamContainer.innerHTML = teamHTML;
+
+    // Gallery Lightbox (init inside DOMContentLoaded)
+    (function initGallery() {
+        const imgs = Array.from(document.querySelectorAll('.gallery-img'));
+        if (!imgs.length) return;
+
+        // Create overlay once
+        let overlay = document.querySelector('.lightbox-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'lightbox-overlay';
+            overlay.innerHTML = `
+                <div class="lightbox-content" role="dialog" aria-modal="true">
+                  <button class="lightbox-close lightbox-btn" aria-label="Close">&times;</button>
+                  <img class="lightbox-img" src="" alt="">
+                  <div class="lightbox-controls">
+                    <button class="lightbox-btn lightbox-prev" aria-label="Previous">&#10094;</button>
+                    <button class="lightbox-btn lightbox-next" aria-label="Next">&#10095;</button>
+                  </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        const lightboxImg = overlay.querySelector('.lightbox-img');
+        const btnClose = overlay.querySelector('.lightbox-close');
+        const btnPrev = overlay.querySelector('.lightbox-prev');
+        const btnNext = overlay.querySelector('.lightbox-next');
+
+        let currentIndex = 0;
+
+        function openAt(index) {
+            currentIndex = (index + imgs.length) % imgs.length;
+            const src = imgs[currentIndex].getAttribute('src') || imgs[currentIndex].dataset.src;
+            const alt = imgs[currentIndex].getAttribute('alt') || '';
+            lightboxImg.src = src;
+            lightboxImg.alt = alt;
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            btnClose.focus();
+        }
+
+        function close() {
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+            lightboxImg.src = '';
+        }
+
+        function prev() { openAt(currentIndex - 1); }
+        function next() { openAt(currentIndex + 1); }
+
+        imgs.forEach((img, i) => {
+            img.addEventListener('click', () => openAt(i));
+            img.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') openAt(i);
+            });
+        });
+
+        btnClose.addEventListener('click', close);
+        btnPrev.addEventListener('click', (e) => { e.stopPropagation(); prev(); });
+        btnNext.addEventListener('click', (e) => { e.stopPropagation(); next(); });
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close();
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (!overlay.classList.contains('active')) return;
+            if (e.key === 'Escape') close();
+            if (e.key === 'ArrowLeft') prev();
+            if (e.key === 'ArrowRight') next();
+        });
+
+        // Touch swipe
+        let touchStartX = 0;
+        overlay.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+        overlay.addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            if (Math.abs(dx) > 40) {
+                if (dx > 0) prev(); else next();
+            }
+        }, { passive: true });
+    })();
+    // end gallery init
 
     // News share dropdown
     function closeAllShareMenus() {
@@ -117,9 +205,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('touchstart', function (e) {
         if (!e.target.closest('.share-dropdown')) closeAllShareMenus();
     });
-
-    document.addEventListener('click', closeAllShareMenus);
-    document.addEventListener('touchstart', closeAllShareMenus);
 
     // Like button (persist likes in localStorage)
     // Assign stable data-id to each .news-card if not present
@@ -173,7 +258,8 @@ document.addEventListener('DOMContentLoaded', function () {
         link.addEventListener('click', function (e) {
             e.preventDefault();
             const url = window.location.href;
-            const title = this.closest('.news-card').querySelector('.news-title').textContent;
+            const titleEl = this.closest('.news-card')?.querySelector('.news-title');
+            const title = titleEl ? titleEl.textContent : document.title;
             let shareUrl = '';
             switch (this.dataset.platform) {
                 case 'facebook':
@@ -233,8 +319,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
-
-
+ 
 // THEME TOGGLE LOGIC
 const toggleBtn = document.getElementById("theme-toggle");
 const body = document.body;
@@ -242,46 +327,44 @@ const body = document.body;
 // Load saved theme
 if (localStorage.getItem("theme") === "dark") {
   body.classList.add("dark-mode");
-  toggleBtn.innerHTML = `<i class="fas fa-sun"></i>`;
+  if (toggleBtn) toggleBtn.innerHTML = `<i class="fas fa-sun"></i>`;
 }
 
-toggleBtn.addEventListener("click", () => {
-  body.classList.toggle("dark-mode");
+if (toggleBtn) {
+  toggleBtn.addEventListener("click", () => {
+    body.classList.toggle("dark-mode");
 
-  if (body.classList.contains("dark-mode")) {
-    localStorage.setItem("theme", "dark");
-    toggleBtn.innerHTML = `<i class="fas fa-sun"></i>`;
-  } else {
-    localStorage.setItem("theme", "light");
-    toggleBtn.innerHTML = `<i class="fas fa-moon"></i>`;
-  }
-});
-
+    if (body.classList.contains("dark-mode")) {
+      localStorage.setItem("theme", "dark");
+      toggleBtn.innerHTML = `<i class="fas fa-sun"></i>`;
+    } else {
+      localStorage.setItem("theme", "light");
+      toggleBtn.innerHTML = `<i class="fas fa-moon"></i>`;
+    }
+  });
+}
 
 // Array of background images
 const heroImages = [
-  './images/DSC_3752.JPG',
-  './images/DSC_3672.JPG',
-  './images/DSC_3654.JPG'
+  './images/DSC_3652.JPG',
+  './images/IMG-20251121-WA0050.jpg',
+  './images/DSC_3656.JPG'
 ];
 
 let currentHeroIndex = 0;
 const heroSection = document.getElementById('hero-section');
 
-// Set initial image
-heroSection.style.backgroundImage = `url('${heroImages[currentHeroIndex]}')`;
+// Safely set initial image if element exists
+if (heroSection) {
+  heroSection.style.backgroundImage = `url('${heroImages[currentHeroIndex]}')`;
+} 
 
 // Function to change image
 function changeHeroImage() {
+  if (!heroSection) return;
   currentHeroIndex = (currentHeroIndex + 1) % heroImages.length;
   heroSection.style.backgroundImage = `url('${heroImages[currentHeroIndex]}')`;
 }
 
-// Change image every 10 seconds
-setInterval(changeHeroImage, 1000000);
-
-// Set initial background
-heroSection.style.backgroundImage = `url('${heroImages[0]}')`;
-
-// Change every 5 seconds
+// Ensure only one interval and use 5 seconds
 setInterval(changeHeroImage, 5000);

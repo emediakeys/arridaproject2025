@@ -45,15 +45,10 @@
             object-fit: cover;
             border: 3px solid #17a2b8; /* Highlight color */
             margin-bottom: 10px;
-            /* Added transition for smooth reveal */
             transition: opacity 0.3s ease, visibility 0.3s ease; 
         }
         
-        /* FIX: Initially hide the image so it doesn't flicker between the placeholder and the real image. */
-        .profile-img.hidden {
-            visibility: hidden;
-            opacity: 0;
-        }
+        /* Removed .profile-img.hidden class to let the image load immediately */
 
         .badge {
             display: inline-block;
@@ -226,7 +221,7 @@
     <div class="dashboard-container">
         <div class="sidebar" id="sidebar">
             <div class="profile-info">
-                <img id="profile-passport" src="placeholder.png" alt="Passport Photo" class="profile-img hidden">
+                <img id="profile-passport" src="placeholder.png" alt="Passport Photo" class="profile-img">
                 <h3 id="student-name">Loading...</h3>
                 <p id="student-admno" class="badge">ADM-XXX</p>
             </div>
@@ -308,35 +303,24 @@
         document.getElementById('student-name').textContent = `${studentData.firstName} ${studentData.lastName}`;
         document.getElementById('student-admno').textContent = studentData.admNo;
 
-        // --- START: CORRECTED PASSPORT IMAGE LOGIC ---
+        // --- START: CRITICAL PASSPORT IMAGE LOGIC FIX ---
         const passportImg = document.getElementById('profile-passport');
         const passportUrl = studentData.passportUrl;
 
-        // New function to set the source and remove the 'hidden' class to reveal the image
-        const showPassportImage = (src) => {
-            passportImg.src = src;
-            // Use setTimeout to ensure the browser has a moment to load the source before displaying
-            setTimeout(() => {
-                passportImg.classList.remove('hidden');
-            }, 50); // Small delay to reduce flicker if possible
-        };
-
-        // Check 1: Does the URL exist?
-        // Check 2: Does it start with http (ensuring it's a valid remote link)?
-        // Check 3: Does it contain an error message? (From saveFileToDrive function)
+        // Simplified validation: only check if the URL exists and starts with 'http'
         if (passportUrl && 
-            (passportUrl.startsWith('http') || passportUrl.startsWith('https')) && 
-            !passportUrl.includes('No Image') &&
-            !passportUrl.includes('Error')) {
-                
-            showPassportImage(passportUrl); // Set correct URL and reveal
+            (passportUrl.startsWith('http') || passportUrl.startsWith('https'))) {
+            
+            // If the URL is valid, overwrite the src immediately.
+            // This prevents the flicker by stopping the script from resetting a valid image.
+            passportImg.src = passportUrl;
             
         } else {
-            // Fallback to placeholder image if the URL is missing, invalid, or an error message.
-            showPassportImage('placeholder.png'); // Set placeholder URL and reveal
+            // Ensure placeholder.png is set if the URL is clearly invalid or empty.
+            passportImg.src = 'placeholder.png'; 
             console.warn("Passport image URL is invalid or missing:", passportUrl);
         }
-        // --- END: CORRECTED PASSPORT IMAGE LOGIC ---
+        // --- END: CRITICAL PASSPORT IMAGE LOGIC FIX ---
         
         // Populate profile details section
         document.getElementById('detail-name').textContent = `${studentData.firstName} ${studentData.lastName}`;

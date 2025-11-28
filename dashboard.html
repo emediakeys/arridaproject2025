@@ -160,7 +160,7 @@
             color: white;
         }
 
-        /* --- Document Button Styles (NEW/MODIFIED) --- */
+        /* --- Document Button Styles (UPDATED) --- */
         .document-list {
             list-style: none;
             padding: 0;
@@ -194,7 +194,7 @@
         .document-list button i {
             margin-right: 5px;
         }
-        .document-list button:hover {
+        .document-list button:hover:not(.disabled) {
             background-color: #117a8b;
         }
         .document-list button.disabled {
@@ -282,8 +282,14 @@
             
             <section id="documents" class="dashboard-section" style="display: none;">
                 <h3><i class="fas fa-folder-open"></i> Uploaded Documents</h3>
-                <p>The links below provide access to the files you submitted during registration.</p>
+                <p>Use the links below to view your uploaded files or download your official letter.</p>
                 <ul class="document-list">
+                    <li id="li-admission-letter">
+                        <span>Official Admission Letter</span>
+                        <a id="doc-admission-letter-link" href="#" target="_blank" class="view-btn">
+                            <button id="doc-admission-letter-btn" class="view-button"><i class="fas fa-download"></i> Download</button>
+                        </a>
+                    </li>
                     <li id="li-birthcert">
                         <span>Birth Certificate</span>
                         <a id="doc-birthcert-link" href="#" target="_blank" class="view-btn">
@@ -325,6 +331,10 @@
 
         const studentData = JSON.parse(studentDataJSON);
         
+        // 🚀 UPDATED URL: Using the provided deployed Apps Script URL
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx-qOYtM3Jq5lgKThbl4vUlwAeB8NNs1Vcz0CxpJwxg3E6jf691Y6kTG_UF62Ib3DXu/exec'; 
+
+
         // 2. LOGOUT FUNCTIONALITY
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
@@ -344,20 +354,12 @@
         const passportImg = document.getElementById('profile-passport');
         const passportUrl = studentData.passportUrl;
 
-        // Validation: check if the URL exists and starts with 'http'
-        if (passportUrl && 
-            (passportUrl.startsWith('http') || passportUrl.startsWith('https'))) {
-            
-            // If the URL is valid, overwrite the src with the external photo URL.
+        if (passportUrl && (passportUrl.startsWith('http') || passportUrl.startsWith('https'))) {
             passportImg.src = passportUrl;
-            
         } else {
-            // If the URL is invalid or missing, use the local placeholder.
             passportImg.src = 'placeholder.png'; 
-            
             console.warn("Passport image URL is invalid or missing:", passportUrl);
         }
-        // --- END PASSPORT IMAGE LOGIC ---
         
         // Populate profile details section
         document.getElementById('detail-name').textContent = `${studentData.firstName} ${studentData.lastName}`;
@@ -365,7 +367,7 @@
         document.getElementById('detail-email').textContent = studentData.email;
         document.getElementById('detail-course').textContent = studentData.course;
         
-        // 4. POPULATE DOCUMENTS SECTION (Updated for button/list structure)
+        // 4. POPULATE DOCUMENTS SECTION 
         const birthCertLink = document.getElementById('doc-birthcert-link');
         const birthCertButton = document.getElementById('doc-birthcert-btn');
         const olevelLink = document.getElementById('doc-olevel-link');
@@ -374,11 +376,9 @@
         const liOLevelText = document.getElementById('li-olevel').querySelector('span');
 
         if (studentData.birthCertUrl && !studentData.birthCertUrl.includes('No File')) {
-            // Document is available
             birthCertLink.href = studentData.birthCertUrl;
         } else {
-            // Document is NOT available - Disable button and change text
-            birthCertLink.removeAttribute('href'); // Remove the active link
+            birthCertLink.removeAttribute('href'); 
             birthCertLink.style.cursor = 'default';
             birthCertButton.classList.add('disabled');
             birthCertButton.textContent = 'Unavailable';
@@ -386,25 +386,65 @@
         }
 
         if (studentData.olevelUrl && !studentData.olevelUrl.includes('No File')) {
-            // Document is available
             olevelLink.href = studentData.olevelUrl;
         } else {
-            // Document is NOT available - Disable button and change text
-            olevelLink.removeAttribute('href'); // Remove the active link
+            olevelLink.removeAttribute('href'); 
             olevelLink.style.cursor = 'default';
             olevelButton.classList.add('disabled');
             olevelButton.textContent = 'Unavailable';
             liOLevelText.style.color = "#dc3545"; 
         }
+
+        // 5. ADMISSION LETTER DOWNLOAD LOGIC (NEW)
+        const admissionLetterLink = document.getElementById('doc-admission-letter-link');
+        const admissionLetterButton = document.getElementById('doc-admission-letter-btn');
+
+        admissionLetterButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const admNo = studentData.admNo;
+
+            // Show loading state and disable button
+            const originalText = admissionLetterButton.innerHTML;
+            admissionLetterButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            admissionLetterButton.classList.add('disabled');
+            
+            fetch(`${WEB_APP_URL}?action=generateLetter&admNo=${admNo}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Success: Set the link and trigger download
+                        admissionLetterLink.href = data.pdfUrl;
+                        admissionLetterButton.innerHTML = originalText;
+                        admissionLetterButton.classList.remove('disabled');
+                        
+                        // Programmatically trigger the download
+                        window.open(data.pdfUrl, '_blank');
+
+                    } else {
+                        // Error State
+                        console.error("Letter generation failed:", data.message);
+                        admissionLetterButton.textContent = 'Error';
+                        admissionLetterButton.classList.add('disabled'); // Keep disabled on error
+                        alert('Failed to generate admission letter: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    admissionLetterButton.textContent = 'Network Error';
+                    admissionLetterButton.classList.add('disabled');
+                    alert('A network error occurred while generating the letter.');
+                });
+        });
         
-        // 5. POPULATE PAYMENTS SECTION 
+        // 6. POPULATE PAYMENTS SECTION 
         if (studentData.paymentRef && studentData.paymentRef !== "NO_REF_FOUND") {
             document.getElementById('payment-ref').textContent = studentData.paymentRef;
         } else {
             document.getElementById('payment-ref').textContent = "Not Recorded";
         }
 
-        // 6. TOGGLE FUNCTIONALITY 
+        // 7. TOGGLE FUNCTIONALITY 
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('toggleSidebar');
 
@@ -421,7 +461,7 @@
             });
         }
 
-        // 7. NAVIGATION LOGIC
+        // 8. NAVIGATION LOGIC
         document.querySelectorAll('.sidebar-nav a').forEach(item => {
             item.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -437,7 +477,6 @@
                     targetSection.style.display = 'block';
                 }
 
-            
                 // Collapse sidebar on small screens after navigating
                 if (window.innerWidth < 768) {
                     sidebar.classList.add('collapsed');

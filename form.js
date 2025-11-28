@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     // --- CONFIGURATION ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyhCPOpdjz0UKlPTIyA2Dsd6Fi1xwTDNXw-lmP9vGJG2P6HuU0pzeuSCTeBLBVrKH1/exec"; 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-qOYtM3Jq5lgKThbl4vUlwAeB8NNs1Vcz0CxpJwxg3E6jf691Y6kTG_UF62Ib3DXu/exec"; 
     
     // **PAYSTACK CONFIGURATION**
     // ⚠️ REPLACE THIS WITH YOUR ACTUAL PAYSTACK PUBLIC KEY
@@ -157,6 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 });
+
 
 
 

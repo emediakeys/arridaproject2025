@@ -160,21 +160,50 @@
             color: white;
         }
 
-        /* Document List */
+        /* --- Document Button Styles (NEW/MODIFIED) --- */
         .document-list {
             list-style: none;
             padding: 0;
         }
         .document-list li {
-            margin-bottom: 10px;
+            display: flex; /* Aligns document name and button */
+            justify-content: space-between; /* Pushes button to the right */
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #e9ecef;
         }
-        .document-list a {
-            color: #007bff;
+        .document-list li span {
+            /* Style for the document name text */
+            font-weight: 500;
+            color: #343a40;
+        }
+        .document-list a.view-btn {
             text-decoration: none;
         }
-        .document-list a:hover {
-            text-decoration: underline;
+        .document-list button {
+            background-color: #17a2b8; /* Blue button */
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
         }
+        .document-list button i {
+            margin-right: 5px;
+        }
+        .document-list button:hover {
+            background-color: #117a8b;
+        }
+        .document-list button.disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+        /* End Document Styles */
+
 
         /* Payment Card */
         .payment-card {
@@ -255,8 +284,18 @@
                 <h3><i class="fas fa-folder-open"></i> Uploaded Documents</h3>
                 <p>The links below provide access to the files you submitted during registration.</p>
                 <ul class="document-list">
-                    <li><a id="doc-birthcert" href="#" target="_blank"><i class="fas fa-link"></i> Birth Certificate</a></li>
-                    <li><a id="doc-olevel" href="#" target="_blank"><i class="fas fa-link"></i> O-Level Results</a></li>
+                    <li id="li-birthcert">
+                        <span>Birth Certificate</span>
+                        <a id="doc-birthcert-link" href="#" target="_blank" class="view-btn">
+                            <button id="doc-birthcert-btn" class="view-button"><i class="fas fa-eye"></i> View</button>
+                        </a>
+                    </li>
+                    <li id="li-olevel">
+                        <span>O-Level Results</span>
+                        <a id="doc-olevel-link" href="#" target="_blank" class="view-btn">
+                            <button id="doc-olevel-btn" class="view-button"><i class="fas fa-eye"></i> View</button>
+                        </a>
+                    </li>
                 </ul>
             </section>
             
@@ -301,26 +340,24 @@
         document.getElementById('student-name').textContent = `${studentData.firstName} ${studentData.lastName}`;
         document.getElementById('student-admno').textContent = studentData.admNo;
 
-        // --- START: CRITICAL PASSPORT IMAGE LOGIC FIX ---
+        // --- PASSPORT IMAGE LOGIC ---
         const passportImg = document.getElementById('profile-passport');
         const passportUrl = studentData.passportUrl;
 
-        // Simplified validation: only check if the URL exists and starts with 'http'
+        // Validation: check if the URL exists and starts with 'http'
         if (passportUrl && 
             (passportUrl.startsWith('http') || passportUrl.startsWith('https'))) {
             
-            // If the URL is valid, overwrite the src immediately.
+            // If the URL is valid, overwrite the src with the external photo URL.
             passportImg.src = passportUrl;
             
         } else {
             // If the URL is invalid or missing, use the local placeholder.
             passportImg.src = 'placeholder.png'; 
             
-            // The alt attribute is set in the HTML now ("Default Profile Image").
-            
             console.warn("Passport image URL is invalid or missing:", passportUrl);
         }
-        // --- END: CRITICAL PASSPORT IMAGE LOGIC FIX ---
+        // --- END PASSPORT IMAGE LOGIC ---
         
         // Populate profile details section
         document.getElementById('detail-name').textContent = `${studentData.firstName} ${studentData.lastName}`;
@@ -328,22 +365,36 @@
         document.getElementById('detail-email').textContent = studentData.email;
         document.getElementById('detail-course').textContent = studentData.course;
         
-        // 4. POPULATE DOCUMENTS SECTION 
-        const birthCertLink = document.getElementById('doc-birthcert');
-        const olevelLink = document.getElementById('doc-olevel');
-        
+        // 4. POPULATE DOCUMENTS SECTION (Updated for button/list structure)
+        const birthCertLink = document.getElementById('doc-birthcert-link');
+        const birthCertButton = document.getElementById('doc-birthcert-btn');
+        const olevelLink = document.getElementById('doc-olevel-link');
+        const olevelButton = document.getElementById('doc-olevel-btn');
+        const liBirthCertText = document.getElementById('li-birthcert').querySelector('span');
+        const liOLevelText = document.getElementById('li-olevel').querySelector('span');
+
         if (studentData.birthCertUrl && !studentData.birthCertUrl.includes('No File')) {
+            // Document is available
             birthCertLink.href = studentData.birthCertUrl;
         } else {
-            birthCertLink.textContent = "Birth Certificate (Not Available)";
-            birthCertLink.style.color = "#dc3545";
+            // Document is NOT available - Disable button and change text
+            birthCertLink.removeAttribute('href'); // Remove the active link
+            birthCertLink.style.cursor = 'default';
+            birthCertButton.classList.add('disabled');
+            birthCertButton.textContent = 'Unavailable';
+            liBirthCertText.style.color = "#dc3545"; 
         }
 
         if (studentData.olevelUrl && !studentData.olevelUrl.includes('No File')) {
+            // Document is available
             olevelLink.href = studentData.olevelUrl;
         } else {
-            olevelLink.textContent = "O-Level Results (Not Available)";
-            olevelLink.style.color = "#dc3545";
+            // Document is NOT available - Disable button and change text
+            olevelLink.removeAttribute('href'); // Remove the active link
+            olevelLink.style.cursor = 'default';
+            olevelButton.classList.add('disabled');
+            olevelButton.textContent = 'Unavailable';
+            liOLevelText.style.color = "#dc3545"; 
         }
         
         // 5. POPULATE PAYMENTS SECTION 
@@ -357,7 +408,7 @@
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('toggleSidebar');
 
-        // Set initial state based on screen size (desktop open, mobile closed)
+        // Set initial state based on screen size
         if (window.innerWidth > 768) {
             sidebar.classList.remove('collapsed');
         } else {
@@ -386,6 +437,7 @@
                     targetSection.style.display = 'block';
                 }
 
+            
                 // Collapse sidebar on small screens after navigating
                 if (window.innerWidth < 768) {
                     sidebar.classList.add('collapsed');

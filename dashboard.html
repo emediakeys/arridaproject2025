@@ -219,7 +219,7 @@
     <div class="dashboard-container">
         <div class="sidebar" id="sidebar">
             <div class="profile-info">
-                <img id="profile-passport" src="placeholder.png" class="profile-img">
+                <img id="profile-passport" src="placeholder.png" alt="placeholder.png" class="profile-img">
                 <h3 id="student-name">Loading...</h3>
                 <p id="student-admno" class="badge">ADM-XXX</p>
             </div>
@@ -314,8 +314,8 @@
             
         } else {
             // If the URL is invalid or missing, use the local placeholder.
+            // The alt attribute is set in the HTML now, so we don't need to overwrite it here.
             passportImg.src = 'placeholder.png'; 
-         
             
             console.warn("Passport image URL is invalid or missing:", passportUrl);
         }
@@ -396,5 +396,3 @@
     </script>
 </body>
 </html>
-
-

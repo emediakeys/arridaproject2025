@@ -200,7 +200,8 @@
                 position: absolute;
                 z-index: 10;
             }
-            .sidebar.collapsed {
+            /* This rule is now managed by JS, but defines the hidden state */
+            .sidebar.collapsed { 
                 margin-left: -100%; 
             }
             .dashboard-header {
@@ -216,7 +217,7 @@
 <body>
 
     <div class="dashboard-container">
-        <div class="sidebar collapsed" id="sidebar">
+        <div class="sidebar" id="sidebar">
             <div class="profile-info">
                 <img id="profile-passport" src="placeholder.png" alt="Passport Photo" class="profile-img">
                 <h3 id="student-name">Loading...</h3>
@@ -352,14 +353,17 @@
             document.getElementById('payment-ref').textContent = "Not Recorded";
         }
 
-        // 6. TOGGLE FUNCTIONALITY 
+        // 6. TOGGLE FUNCTIONALITY (The Fix)
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('toggleSidebar');
 
         // Set initial state based on screen size (desktop open, mobile closed)
+        // This runs after the image logic, and after the HTML has rendered the sidebar uncollapsed.
         if (window.innerWidth > 768) {
+            // Desktop: ensure it's uncollapsed (redundant now, but safe)
             sidebar.classList.remove('collapsed');
         } else {
+            // Mobile: collapse it immediately 
             sidebar.classList.add('collapsed');
         }
 
@@ -393,7 +397,6 @@
         });
 
     });
-</script>
+    </script>
 </body>
 </html>
-

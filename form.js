@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // **PAYSTACK CONFIGURATION**
     // ⚠️ REPLACE THIS WITH YOUR ACTUAL PAYSTACK PUBLIC KEY
-    const PAYSTACK_PUBLIC_KEY = "sk_test_ca89d5ed3e86ee199e68d1c61ffcff4fc3557d84"; 
+    const PAYSTACK_PUBLIC_KEY = "sk_test_1d5e80e83d487c098f27ef5e6d0fe58003c6a438"; 
     const APPLICATION_FEE_NAIRA = 7500;
     // Paystack takes amount in kobo (100 kobo = 1 Naira)
     const APPLICATION_FEE_KOBO = APPLICATION_FEE_NAIRA * 100;
@@ -155,4 +155,5 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.textContent = "Try Submitting Again";
         });
     });
+
 });

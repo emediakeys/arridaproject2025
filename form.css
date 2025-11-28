@@ -121,7 +121,7 @@ small {
 /* MOBILE RESPONSIVENESS (The Key Change)        */
 /* -------------------------------------------------------------------------- */
 
-@media (max-width: 600px) {
+@media (max-width: 400px) {
     
     /* 1. Force two-column layouts to stack */
     .row {
@@ -156,3 +156,4 @@ small {
         width: 100%;
     }
 }
+

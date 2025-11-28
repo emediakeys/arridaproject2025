@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- CONFIGURATION ---
     // Use the SAME Web App URL that hosts your doGet and doPost functions
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzj76G7DjCxdbLhfvl_EGoHlkCIrUH0o-FCgvKBafO2MI88-qXYL3TvjkMcMvlZ77U/exec"; 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNYSR4iMwv7NRLgtSeb09qv3ZWr9qAjycg5L8XMZ_rGXiOe2So2QfJ3rTtz0YErpce/exec"; 
     
     const loginForm = document.getElementById('loginForm');
     const loginBtn = document.getElementById('loginBtn');
@@ -57,4 +57,5 @@ document.addEventListener('DOMContentLoaded', function() {
             loginBtn.disabled = false;
         });
     });
+
 });

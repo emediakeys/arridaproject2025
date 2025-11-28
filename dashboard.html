@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <header style="text-align: left;">
+        <h1 style="display: inline-block;">Welcome to your Dashboard! 👋</h1>
+        <button id="logoutBtn" class="btn-pay" style="float: right;">Log Out</button>
+        <div style="clear: both;"></div>
+    </header>
+
+    <h2 id="studentNameHeader"></h2>
+    
+    <fieldset>
+        <legend>My Details</legend>
+        <div id="detailsArea">
+            </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Profile Photo</legend>
+        <img id="profilePhoto" style="max-width: 150px; border-radius: 5px;" alt="Profile Photo">
+    </fieldset>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        const studentDataString = localStorage.getItem('studentData');
+
+        // Check for login status
+        if (!isLoggedIn || !studentDataString) {
+            alert("You must log in to view the dashboard.");
+            window.location.href = 'login.html'; // Redirect to login page
+            return;
+        }
+
+        const studentData = JSON.parse(studentDataString);
+        
+        // Display data
+        document.getElementById('studentNameHeader').textContent = 
+            `Hello, ${studentData.firstName} ${studentData.lastName}!`;
+        
+        document.getElementById('profilePhoto').src = studentData.passportUrl;
+
+        document.getElementById('detailsArea').innerHTML = `
+            <p><strong>Admission Number:</strong> ${studentData.admNo}</p>
+            <p><strong>Email:</strong> ${studentData.email}</p>
+            <p><strong>Course:</strong> ${studentData.course}</p>
+        `;
+
+        // Logout function
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.clear(); // Clear all saved session data
+            window.location.href = 'login.html'; // Redirect to login
+        });
+    });
+</script>
+</body>
+</html>

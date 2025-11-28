@@ -4,64 +4,383 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* --- GLOBAL/BASE STYLES --- */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa; 
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- DASHBOARD LAYOUT --- */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- SIDEBAR STYLES --- */
+        .sidebar {
+            width: 250px;
+            background-color: #343a40; /* Dark background */
+            color: white;
+            padding: 20px 0;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            transition: margin-left 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .profile-info {
+            text-align: center;
+            padding: 10px 20px 30px;
+        }
+
+        .profile-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #17a2b8; /* Highlight color */
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: #17a2b8;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: normal;
+        }
+
+        /* --- SIDEBAR NAV --- */
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li a {
+            display: block;
+            padding: 12px 20px;
+            color: #ced4da; /* Light text color */
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .sidebar-nav li a:hover,
+        .sidebar-nav li.active a {
+            background-color: #495057; 
+            color: white;
+            border-left: 4px solid #17a2b8; 
+        }
+
+        .sidebar-nav li i {
+            margin-right: 10px;
+            width: 20px; 
+        }
+
+        .sidebar-nav .logout a {
+            color: #ffc107; 
+            margin-top: 20px;
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex-grow: 1;
+            padding: 20px 30px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .dashboard-header h2 {
+            color: #343a40;
+        }
+
+        .toggle-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none; /* Hide on large screens, show on mobile */
+        }
+
+        /* --- CONTENT SECTIONS --- */
+        .dashboard-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .dashboard-section h3 {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            color: #17a2b8;
+            font-size: 1.4em;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .detail-grid strong {
+            color: #495057;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .status-badge.paid,
+        .status-badge.confirmed {
+            background-color: #28a745; 
+            color: white;
+        }
+
+        /* Document List */
+        .document-list {
+            list-style: none;
+            padding: 0;
+        }
+        .document-list li {
+            margin-bottom: 10px;
+        }
+        .document-list a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .document-list a:hover {
+            text-decoration: underline;
+        }
+
+        /* Payment Card */
+        .payment-card {
+            border: 1px solid #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+        }
+        .payment-card h4 {
+            margin-top: 0;
+            color: #343a40;
+        }
+
+        /* --- MEDIA QUERY for Mobile Responsiveness --- */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                margin-left: 0;
+                padding-bottom: 0;
+                position: absolute;
+                z-index: 10;
+            }
+            .sidebar.collapsed {
+                margin-left: -100%; 
+            }
+            .dashboard-header {
+                padding-left: 0;
+                padding-right: 0;
+            }
+            .toggle-btn {
+                display: block;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<div class="container">
-    <header style="text-align: left;">
-        <h1 style="display: inline-block;">Welcome to your Dashboard! 👋</h1>
-        <button id="logoutBtn" class="btn-pay" style="float: right;">Log Out</button>
-        <div style="clear: both;"></div>
-    </header>
-
-    <h2 id="studentNameHeader"></h2>
-    
-    <fieldset>
-        <legend>My Details</legend>
-        <div id="detailsArea">
+    <div class="dashboard-container">
+        <div class="sidebar collapsed" id="sidebar">
+            <div class="profile-info">
+                <img id="profile-passport" src="placeholder.png" alt="Passport Photo" class="profile-img">
+                <h3 id="student-name">Loading...</h3>
+                <p id="student-admno" class="badge">ADM-XXX</p>
             </div>
-    </fieldset>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active"><a href="#profile"><i class="fas fa-user-circle"></i> Profile</a></li>
+                    <li><a href="#documents"><i class="fas fa-file-alt"></i> Documents</a></li>
+                    <li><a href="#payments"><i class="fas fa-credit-card"></i> Payments</a></li>
+                    <li class="logout"><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Log Out</a></li>
+                </ul>
+            </nav>
+        </div>
 
-    <fieldset>
-        <legend>Profile Photo</legend>
-        <img id="profilePhoto" style="max-width: 150px; border-radius: 5px;" alt="Profile Photo">
-    </fieldset>
+        <div class="main-content">
+            <header class="dashboard-header">
+                <h2>Welcome to Your Dashboard 👋</h2>
+                <button class="toggle-btn" id="toggleSidebar"><i class="fas fa-bars"></i></button>
+            </header>
 
-</div>
+            <section id="profile" class="dashboard-section active">
+                <h3><i class="fas fa-info-circle"></i> Personal Details</h3>
+                <div class="detail-grid">
+                    <p><strong>Full Name:</strong> <span id="detail-name"></span></p>
+                    <p><strong>Admission No:</strong> <span id="detail-admno"></span></p>
+                    <p><strong>Email:</strong> <span id="detail-email"></span></p>
+                    <p><strong>Course:</strong> <span id="detail-course"></span></p>
+                    <p><strong>Payment Status:</strong> <span class="status-badge paid" id="detail-payment-status">PAID</span></p>
+                </div>
+            </section>
+            
+            <section id="documents" class="dashboard-section" style="display: none;">
+                <h3><i class="fas fa-folder-open"></i> Uploaded Documents</h3>
+                <p>The links below provide access to the files you submitted during registration.</p>
+                <ul class="document-list">
+                    <li><a id="doc-birthcert" href="#" target="_blank"><i class="fas fa-link"></i> Birth Certificate</a></li>
+                    <li><a id="doc-olevel" href="#" target="_blank"><i class="fas fa-link"></i> O-Level Results</a></li>
+                </ul>
+            </section>
+            
+            <section id="payments" class="dashboard-section" style="display: none;">
+                <h3><i class="fas fa-receipt"></i> Payment History</h3>
+                <p>Your application fee payment has been confirmed.</p>
+                <div class="payment-card">
+                    <h4>Application Fee</h4>
+                    <p>Reference: <span id="payment-ref">Loading...</span></p>
+                    <p>Amount: **₦7,500**</p>
+                    <p>Status: <span class="status-badge paid">CONFIRMED</span></p>
+                </div>
+            </section>
+        </div>
+    </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const isLoggedIn = localStorage.getItem('isLoggedIn');
-        const studentDataString = localStorage.getItem('studentData');
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentDataJSON = localStorage.getItem('studentData');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
 
-        // Check for login status
-        if (!isLoggedIn || !studentDataString) {
-            alert("You must log in to view the dashboard.");
-            window.location.href = 'login.html'; // Redirect to login page
-            return;
-        }
+            // 1. AUTHENTICATION CHECK
+            if (!isLoggedIn || !studentDataJSON) {
+                window.location.href = 'login.html';
+                return;
+            }
 
-        const studentData = JSON.parse(studentDataString);
-        
-        // Display data
-        document.getElementById('studentNameHeader').textContent = 
-            `Hello, ${studentData.firstName} ${studentData.lastName}!`;
-        
-        document.getElementById('profilePhoto').src = studentData.passportUrl;
+            const studentData = JSON.parse(studentDataJSON);
+            
+            // 2. LOGOUT FUNCTIONALITY
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('studentData');
+                    window.location.href = 'login.html';
+                });
+            }
 
-        document.getElementById('detailsArea').innerHTML = `
-            <p><strong>Admission Number:</strong> ${studentData.admNo}</p>
-            <p><strong>Email:</strong> ${studentData.email}</p>
-            <p><strong>Course:</strong> ${studentData.course}</p>
-        `;
+            // 3. POPULATE SIDEBAR AND PROFILE DETAILS
+            document.getElementById('student-name').textContent = `${studentData.firstName} ${studentData.lastName}`;
+            document.getElementById('student-admno').textContent = studentData.admNo;
 
-        // Logout function
-        document.getElementById('logoutBtn').addEventListener('click', function() {
-            localStorage.clear(); // Clear all saved session data
-            window.location.href = 'login.html'; // Redirect to login
+            // Set passport image
+            const passportImg = document.getElementById('profile-passport');
+            if (studentData.passportUrl && !studentData.passportUrl.includes('No Image')) {
+                passportImg.src = studentData.passportUrl;
+            } else {
+                // IMPORTANT: Change 'default_avatar.png' to an actual path if you have one
+                passportImg.src = 'placeholder.png'; 
+            }
+            
+            // Populate profile details section
+            document.getElementById('detail-name').textContent = `${studentData.firstName} ${studentData.lastName}`;
+            document.getElementById('detail-admno').textContent = studentData.admNo;
+            document.getElementById('detail-email').textContent = studentData.email;
+            document.getElementById('detail-course').textContent = studentData.course;
+            
+            // 4. POPULATE DOCUMENTS SECTION 
+            const birthCertLink = document.getElementById('doc-birthcert');
+            const olevelLink = document.getElementById('doc-olevel');
+            
+            if (studentData.birthCertUrl && !studentData.birthCertUrl.includes('No File')) {
+                 birthCertLink.href = studentData.birthCertUrl;
+            } else {
+                 birthCertLink.textContent = "Birth Certificate (Not Available)";
+                 birthCertLink.style.color = "#dc3545";
+            }
+
+            if (studentData.olevelUrl && !studentData.olevelUrl.includes('No File')) {
+                 olevelLink.href = studentData.olevelUrl;
+            } else {
+                 olevelLink.textContent = "O-Level Results (Not Available)";
+                 olevelLink.style.color = "#dc3545";
+            }
+            
+            // 5. POPULATE PAYMENTS SECTION 
+            if (studentData.paymentRef && studentData.paymentRef !== "NO_REF_FOUND") {
+                document.getElementById('payment-ref').textContent = studentData.paymentRef;
+            } else {
+                document.getElementById('payment-ref').textContent = "Not Recorded";
+            }
+
+            // 6. TOGGLE FUNCTIONALITY 
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggleSidebar');
+
+            // Set initial state based on screen size (desktop open, mobile closed)
+            if (window.innerWidth > 768) {
+                 sidebar.classList.remove('collapsed');
+            } else {
+                 sidebar.classList.add('collapsed');
+            }
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('collapsed');
+                });
+            }
+
+            // 7. NAVIGATION LOGIC
+            document.querySelectorAll('.sidebar-nav a').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+                    document.querySelectorAll('.dashboard-section').forEach(section => section.style.display = 'none');
+
+                    this.parentElement.classList.add('active');
+                    
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetSection = document.getElementById(targetId);
+                    if (targetSection) {
+                        targetSection.style.display = 'block';
+                    }
+
+                    // Collapse sidebar on small screens after navigating
+                    if (window.innerWidth < 768) {
+                        sidebar.classList.add('collapsed');
+                    }
+                });
+            });
+
         });
-    });
-</script>
+    </script>
 </body>
 </html>

@@ -1,14 +1,16 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f4f4f9;
-    padding: 20px;
+    /* Reduced padding on body for mobile screens */
+    padding: 10px; 
 }
 
 .container {
     max-width: 700px;
     margin: 0 auto;
     background: white;
-    padding: 30px;
+    /* Adjusted padding for a cleaner look on mobile */
+    padding: 20px; 
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
@@ -35,6 +37,7 @@ legend {
     margin-bottom: 15px;
 }
 
+/* Base style for rows (desktop/large screens) */
 .row {
     display: flex;
     gap: 15px;
@@ -59,6 +62,12 @@ input, select, textarea {
     box-sizing: border-box;
 }
 
+/* Smaller font for instruction text */
+small {
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
 /* Image Preview */
 #preview-container img {
     max-width: 150px;
@@ -75,6 +84,10 @@ input, select, textarea {
     border-radius: 8px;
 }
 
+.fee-notice strong {
+    color: #28a745;
+}
+
 .btn-pay {
     background-color: #28a745;
     color: white;
@@ -83,6 +96,8 @@ input, select, textarea {
     border-radius: 4px;
     font-size: 16px;
     cursor: pointer;
+    width: 100%; /* Make pay button full width on mobile */
+    margin-bottom: 10px;
 }
 
 .btn-submit {
@@ -100,4 +115,44 @@ input, select, textarea {
 .btn-submit:disabled {
     background-color: #ccc;
     cursor: not-allowed;
+}
+
+/* -------------------------------------------------------------------------- */
+/* MOBILE RESPONSIVENESS (The Key Change)        */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 600px) {
+    
+    /* 1. Force two-column layouts to stack */
+    .row {
+        flex-direction: column;
+        gap: 0; /* Remove gap when stacking */
+    }
+
+    /* 2. Ensure columns take full width and maintain consistent spacing */
+    .col {
+        flex: none; /* Override flex: 1 */
+        width: 100%;
+        margin-bottom: 15px; /* Add margin back to bottom of columns */
+    }
+
+    /* 3. Adjust header size for better fit */
+    header h1 {
+        font-size: 1.8em;
+    }
+    
+    header p {
+        font-size: 0.9em;
+    }
+    
+    /* 4. Increase fieldset padding consistency */
+    fieldset {
+        padding: 15px;
+    }
+
+    /* 5. Ensure all buttons are full width */
+    .btn-pay,
+    .btn-submit {
+        width: 100%;
+    }
 }

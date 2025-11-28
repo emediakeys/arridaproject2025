@@ -273,114 +273,127 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const studentDataJSON = localStorage.getItem('studentData');
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    document.addEventListener('DOMContentLoaded', function() {
+        const studentDataJSON = localStorage.getItem('studentData');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
 
-            // 1. AUTHENTICATION CHECK
-            if (!isLoggedIn || !studentDataJSON) {
+        // 1. AUTHENTICATION CHECK
+        if (!isLoggedIn || !studentDataJSON) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const studentData = JSON.parse(studentDataJSON);
+        
+        // 2. LOGOUT FUNCTIONALITY
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('studentData');
                 window.location.href = 'login.html';
-                return;
-            }
-
-            const studentData = JSON.parse(studentDataJSON);
-            
-            // 2. LOGOUT FUNCTIONALITY
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    localStorage.removeItem('isLoggedIn');
-                    localStorage.removeItem('studentData');
-                    window.location.href = 'login.html';
-                });
-            }
-
-            // 3. POPULATE SIDEBAR AND PROFILE DETAILS
-            document.getElementById('student-name').textContent = `${studentData.firstName} ${studentData.lastName}`;
-            document.getElementById('student-admno').textContent = studentData.admNo;
-
-            // Set passport image
-            const passportImg = document.getElementById('profile-passport');
-            if (studentData.passportUrl && !studentData.passportUrl.includes('No Image')) {
-                passportImg.src = studentData.passportUrl;
-            } else {
-                // IMPORTANT: Change 'default_avatar.png' to an actual path if you have one
-                passportImg.src = 'placeholder.png'; 
-            }
-            
-            // Populate profile details section
-            document.getElementById('detail-name').textContent = `${studentData.firstName} ${studentData.lastName}`;
-            document.getElementById('detail-admno').textContent = studentData.admNo;
-            document.getElementById('detail-email').textContent = studentData.email;
-            document.getElementById('detail-course').textContent = studentData.course;
-            
-            // 4. POPULATE DOCUMENTS SECTION 
-            const birthCertLink = document.getElementById('doc-birthcert');
-            const olevelLink = document.getElementById('doc-olevel');
-            
-            if (studentData.birthCertUrl && !studentData.birthCertUrl.includes('No File')) {
-                 birthCertLink.href = studentData.birthCertUrl;
-            } else {
-                 birthCertLink.textContent = "Birth Certificate (Not Available)";
-                 birthCertLink.style.color = "#dc3545";
-            }
-
-            if (studentData.olevelUrl && !studentData.olevelUrl.includes('No File')) {
-                 olevelLink.href = studentData.olevelUrl;
-            } else {
-                 olevelLink.textContent = "O-Level Results (Not Available)";
-                 olevelLink.style.color = "#dc3545";
-            }
-            
-            // 5. POPULATE PAYMENTS SECTION 
-            if (studentData.paymentRef && studentData.paymentRef !== "NO_REF_FOUND") {
-                document.getElementById('payment-ref').textContent = studentData.paymentRef;
-            } else {
-                document.getElementById('payment-ref').textContent = "Not Recorded";
-            }
-
-            // 6. TOGGLE FUNCTIONALITY 
-            const sidebar = document.getElementById('sidebar');
-            const toggleBtn = document.getElementById('toggleSidebar');
-
-            // Set initial state based on screen size (desktop open, mobile closed)
-            if (window.innerWidth > 768) {
-                 sidebar.classList.remove('collapsed');
-            } else {
-                 sidebar.classList.add('collapsed');
-            }
-
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', () => {
-                    sidebar.classList.toggle('collapsed');
-                });
-            }
-
-            // 7. NAVIGATION LOGIC
-            document.querySelectorAll('.sidebar-nav a').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
-                    document.querySelectorAll('.dashboard-section').forEach(section => section.style.display = 'none');
-
-                    this.parentElement.classList.add('active');
-                    
-                    const targetId = this.getAttribute('href').substring(1);
-                    const targetSection = document.getElementById(targetId);
-                    if (targetSection) {
-                        targetSection.style.display = 'block';
-                    }
-
-                    // Collapse sidebar on small screens after navigating
-                    if (window.innerWidth < 768) {
-                        sidebar.classList.add('collapsed');
-                    }
-                });
             });
+        }
 
+        // 3. POPULATE SIDEBAR AND PROFILE DETAILS
+        document.getElementById('student-name').textContent = `${studentData.firstName} ${studentData.lastName}`;
+        document.getElementById('student-admno').textContent = studentData.admNo;
+
+        // --- START: CORRECTED PASSPORT IMAGE LOGIC ---
+        const passportImg = document.getElementById('profile-passport');
+        const passportUrl = studentData.passportUrl;
+
+        // Check 1: Does the URL exist?
+        // Check 2: Does it start with http (ensuring it's a valid remote link)?
+        // Check 3: Does it contain an error message? (From saveFileToDrive function)
+        if (passportUrl && 
+            (passportUrl.startsWith('http') || passportUrl.startsWith('https')) && 
+            !passportUrl.includes('No Image') &&
+            !passportUrl.includes('Error')) {
+                
+            passportImg.src = passportUrl;
+            
+        } else {
+            // Fallback to placeholder image if the URL is missing, invalid, or an error message.
+            passportImg.src = 'placeholder.png'; 
+            console.warn("Passport image URL is invalid or missing:", passportUrl);
+        }
+        // --- END: CORRECTED PASSPORT IMAGE LOGIC ---
+        
+        // Populate profile details section
+        document.getElementById('detail-name').textContent = `${studentData.firstName} ${studentData.lastName}`;
+        document.getElementById('detail-admno').textContent = studentData.admNo;
+        document.getElementById('detail-email').textContent = studentData.email;
+        document.getElementById('detail-course').textContent = studentData.course;
+        
+        // 4. POPULATE DOCUMENTS SECTION 
+        const birthCertLink = document.getElementById('doc-birthcert');
+        const olevelLink = document.getElementById('doc-olevel');
+        
+        if (studentData.birthCertUrl && !studentData.birthCertUrl.includes('No File')) {
+            birthCertLink.href = studentData.birthCertUrl;
+        } else {
+            birthCertLink.textContent = "Birth Certificate (Not Available)";
+            birthCertLink.style.color = "#dc3545";
+        }
+
+        if (studentData.olevelUrl && !studentData.olevelUrl.includes('No File')) {
+            olevelLink.href = studentData.olevelUrl;
+        } else {
+            olevelLink.textContent = "O-Level Results (Not Available)";
+            olevelLink.style.color = "#dc3545";
+        }
+        
+        // 5. POPULATE PAYMENTS SECTION 
+        if (studentData.paymentRef && studentData.paymentRef !== "NO_REF_FOUND") {
+            document.getElementById('payment-ref').textContent = studentData.paymentRef;
+        } else {
+            document.getElementById('payment-ref').textContent = "Not Recorded";
+        }
+
+        // 6. TOGGLE FUNCTIONALITY 
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggleSidebar');
+
+        // Set initial state based on screen size (desktop open, mobile closed)
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('collapsed');
+        } else {
+            sidebar.classList.add('collapsed');
+        }
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+            });
+        }
+
+        // 7. NAVIGATION LOGIC
+        document.querySelectorAll('.sidebar-nav a').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+                document.querySelectorAll('.dashboard-section').forEach(section => section.style.display = 'none');
+
+                this.parentElement.classList.add('active');
+                
+                const targetId = this.getAttribute('href').substring(1);
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                }
+
+                // Collapse sidebar on small screens after navigating
+                if (window.innerWidth < 768) {
+                    sidebar.classList.add('collapsed');
+                }
+            });
         });
-    </script>
+
+    });
+</script>
 </body>
 </html>
+

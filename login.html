@@ -4,54 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard Login</title>
-    <link rel="stylesheet" href="style.css"> <style>
-        /* Specific login styling */
-        .login-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 30px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        .login-container h1 {
-            color: #007bff;
-            margin-bottom: 25px;
-            font-size: 24px;
-        }
-        .message {
-            margin-top: 15px;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css"> 
 </head>
 <body>
 
-<div class="login-container">
-    <h1>Student Dashboard Access 🔑</h1>
-    <form id="loginForm">
-        <div class="form-group">
-            <label for="admNo">Admission Number</label>
-            <input type="text" id="admNo" name="admNo" placeholder="e.g., ADM-001" required>
-        </div>
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" required>
-        </div>
+<div class="page-wrapper">
+    <div class="login-container">
+        <h1>Student Dashboard Access 🔑</h1>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="admNo">Admission Number</label>
+                <input type="text" id="admNo" name="admNo" class="form-control" placeholder="e.g., ADM-001" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+            </div>
+            
+            <button type="submit" class="btn btn-submit" id="loginBtn">Log In</button>
+            
+            <p class="message" id="statusMessage"></p>
+        </form>
         
-        <button type="submit" class="btn-submit" id="loginBtn" style="width: 100%; margin-top: 20px;">Log In</button>
-        
-        <p class="message" id="statusMessage"></p>
-    </form>
-    
-    <p style="margin-top: 20px; font-size: 14px;">
-        <a href="index.html">Go to Application Form</a>
-    </p>
+        <p class="application-link">
+            <a href="index.html">Go to Application Form</a>
+        </p>
+    </div>
 </div>
 
-<script src="login.js">
-    
-</script>
+<script src="login.js"></script>
 </body>
 </html>

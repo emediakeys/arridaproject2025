@@ -45,6 +45,14 @@
             object-fit: cover;
             border: 3px solid #17a2b8; /* Highlight color */
             margin-bottom: 10px;
+            /* Added transition for smooth reveal */
+            transition: opacity 0.3s ease, visibility 0.3s ease; 
+        }
+        
+        /* FIX: Initially hide the image so it doesn't flicker between the placeholder and the real image. */
+        .profile-img.hidden {
+            visibility: hidden;
+            opacity: 0;
         }
 
         .badge {
@@ -200,7 +208,6 @@
                 position: absolute;
                 z-index: 10;
             }
-            /* This rule is now managed by JS, but defines the hidden state */
             .sidebar.collapsed { 
                 margin-left: -100%; 
             }
@@ -219,7 +226,7 @@
     <div class="dashboard-container">
         <div class="sidebar" id="sidebar">
             <div class="profile-info">
-                <img id="profile-passport" src="placeholder.png" alt="Passport Photo" class="profile-img">
+                <img id="profile-passport" src="placeholder.png" alt="Passport Photo" class="profile-img hidden">
                 <h3 id="student-name">Loading...</h3>
                 <p id="student-admno" class="badge">ADM-XXX</p>
             </div>
@@ -305,6 +312,15 @@
         const passportImg = document.getElementById('profile-passport');
         const passportUrl = studentData.passportUrl;
 
+        // New function to set the source and remove the 'hidden' class to reveal the image
+        const showPassportImage = (src) => {
+            passportImg.src = src;
+            // Use setTimeout to ensure the browser has a moment to load the source before displaying
+            setTimeout(() => {
+                passportImg.classList.remove('hidden');
+            }, 50); // Small delay to reduce flicker if possible
+        };
+
         // Check 1: Does the URL exist?
         // Check 2: Does it start with http (ensuring it's a valid remote link)?
         // Check 3: Does it contain an error message? (From saveFileToDrive function)
@@ -313,11 +329,11 @@
             !passportUrl.includes('No Image') &&
             !passportUrl.includes('Error')) {
                 
-            passportImg.src = passportUrl;
+            showPassportImage(passportUrl); // Set correct URL and reveal
             
         } else {
             // Fallback to placeholder image if the URL is missing, invalid, or an error message.
-            passportImg.src = 'placeholder.png'; 
+            showPassportImage('placeholder.png'); // Set placeholder URL and reveal
             console.warn("Passport image URL is invalid or missing:", passportUrl);
         }
         // --- END: CORRECTED PASSPORT IMAGE LOGIC ---
@@ -353,17 +369,14 @@
             document.getElementById('payment-ref').textContent = "Not Recorded";
         }
 
-        // 6. TOGGLE FUNCTIONALITY (The Fix)
+        // 6. TOGGLE FUNCTIONALITY 
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('toggleSidebar');
 
         // Set initial state based on screen size (desktop open, mobile closed)
-        // This runs after the image logic, and after the HTML has rendered the sidebar uncollapsed.
         if (window.innerWidth > 768) {
-            // Desktop: ensure it's uncollapsed (redundant now, but safe)
             sidebar.classList.remove('collapsed');
         } else {
-            // Mobile: collapse it immediately 
             sidebar.classList.add('collapsed');
         }
 

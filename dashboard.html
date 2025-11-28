@@ -48,8 +48,6 @@
             transition: opacity 0.3s ease, visibility 0.3s ease; 
         }
         
-        /* Removed .profile-img.hidden class to let the image load immediately */
-
         .badge {
             display: inline-block;
             background-color: #17a2b8;
@@ -312,12 +310,15 @@
             (passportUrl.startsWith('http') || passportUrl.startsWith('https'))) {
             
             // If the URL is valid, overwrite the src immediately.
-            // This prevents the flicker by stopping the script from resetting a valid image.
             passportImg.src = passportUrl;
             
         } else {
-            // Ensure placeholder.png is set if the URL is clearly invalid or empty.
+            // If the URL is invalid or missing, use the local placeholder.
             passportImg.src = 'placeholder.png'; 
+            
+            // ⭐ FIX: Change alt text to the filename 'placeholder.png' as requested.
+            passportImg.alt = "placeholder.png"; 
+            
             console.warn("Passport image URL is invalid or missing:", passportUrl);
         }
         // --- END: CRITICAL PASSPORT IMAGE LOGIC FIX ---

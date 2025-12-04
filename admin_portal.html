@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Portal Login</title>
+    <title>Admin Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -21,9 +21,10 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-    <div class="w-full max-w-md">
+    <!-- 1. Login Form Card (Visible initially) -->
+    <div id="loginCard" class="w-full max-w-md">
         <div class="card bg-white p-8 rounded-xl">
             <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Admin Login</h1>
             
@@ -50,13 +51,71 @@
         </div>
     </div>
 
+    <!-- 2. Admin Dashboard (Hidden initially) -->
+    <div id="adminDashboard" class="hidden w-full max-w-5xl bg-white rounded-xl card p-8 my-8 flex flex-col md:flex-row min-h-[70vh]">
+        <!-- Sidebar Navigation -->
+        <aside class="md:w-64 p-4 border-b md:border-b-0 md:border-r border-gray-200 mb-4 md:mb-0">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Admin Tools</h2>
+            <nav class="space-y-2">
+                <a href="#" class="block px-3 py-2 text-indigo-600 font-medium bg-indigo-50 rounded-lg hover:bg-indigo-100 transition duration-150">Dashboard</a>
+                <a href="#" class="block px-3 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition duration-150">Students</a>
+                <a href="#" class="block px-3 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition duration-150">Attendance</a>
+                <a href="#" class="block px-3 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition duration-150">Assignments</a>
+                <a href="#" class="block px-3 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition duration-150">Announcements</a>
+                <button id="logoutButton" class="mt-4 w-full text-left px-3 py-2 text-red-600 rounded-lg hover:bg-red-50 transition duration-150">
+                    Log Out
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 p-4 md:pl-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6">Welcome, <span id="adminName"></span>!</h1>
+            
+            <div class="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-500 mb-8">
+                <p class="text-lg font-medium text-indigo-800">Assigned Course:</p>
+                <p id="assignedCourseDisplay" class="text-2xl font-bold text-indigo-900"></p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Example Stats/Cards -->
+                <div class="bg-blue-100 p-6 rounded-xl shadow-md">
+                    <p class="text-sm font-medium text-blue-800">Total Students</p>
+                    <p class="text-3xl font-extrabold text-blue-900 mt-1">42</p>
+                </div>
+                <div class="bg-yellow-100 p-6 rounded-xl shadow-md">
+                    <p class="text-sm font-medium text-yellow-800">Pending Assignments</p>
+                    <p class="text-3xl font-extrabold text-yellow-900 mt-1">5</p>
+                </div>
+                <div class="bg-green-100 p-6 rounded-xl shadow-md">
+                    <p class="text-sm font-medium text-green-800">Recent Attendance</p>
+                    <p class="text-3xl font-extrabold text-green-900 mt-1">98%</p>
+                </div>
+            </div>
+            
+            <div class="mt-8">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Latest Announcements</h3>
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <p class="text-gray-600 italic">No course-specific announcements yet.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
     <script>
         // REPLACE THIS WITH YOUR ACTUAL GOOGLE APPS SCRIPT DEPLOYMENT URL
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGidWQ0EYgQZOFRGYbQB2Akn_XlJ7NJoBLag9y-HwbGui4J4LqnBV1OwTOqableTfuMA/exec';
         
+        // DOM Elements
+        const loginCard = document.getElementById('loginCard');
+        const adminDashboard = document.getElementById('adminDashboard');
         const loginForm = document.getElementById('loginForm');
         const loginButton = document.getElementById('loginButton');
         const messageBox = document.getElementById('messageBox');
+        const adminNameDisplay = document.getElementById('adminName');
+        const assignedCourseDisplay = document.getElementById('assignedCourseDisplay');
+        const logoutButton = document.getElementById('logoutButton');
+
 
         /**
          * Utility function to display messages to the user.
@@ -76,12 +135,54 @@
                 messageBox.classList.add('bg-blue-100', 'text-blue-800', 'border-blue-400', 'border');
             }
         }
+        
+        /**
+         * Shows the dashboard and hides the login form, populating data.
+         * @param {string} username - The logged-in username.
+         * @param {string} assignedCourse - The course assigned to the admin.
+         */
+        function showDashboard(username, assignedCourse) {
+            loginCard.classList.add('hidden');
+            adminDashboard.classList.remove('hidden');
+            
+            // Populate dashboard data
+            adminNameDisplay.textContent = username;
+            assignedCourseDisplay.textContent = assignedCourse;
+
+            // Optional: Store login state in sessionStorage (or use Firebase/Cookies for persistence)
+            sessionStorage.setItem('adminLoggedIn', 'true');
+            sessionStorage.setItem('adminUsername', username);
+            sessionStorage.setItem('adminCourse', assignedCourse);
+        }
+
+        /**
+         * Resets the view to the login form.
+         */
+        function showLoginForm() {
+            sessionStorage.removeItem('adminLoggedIn');
+            sessionStorage.removeItem('adminUsername');
+            sessionStorage.removeItem('adminCourse');
+
+            adminDashboard.classList.add('hidden');
+            loginCard.classList.remove('hidden');
+            messageBox.classList.add('hidden');
+            loginForm.reset();
+        }
+
+        // Check for existing session on page load (basic persistence)
+        document.addEventListener('DOMContentLoaded', () => {
+            const loggedIn = sessionStorage.getItem('adminLoggedIn');
+            const username = sessionStorage.getItem('adminUsername');
+            const course = sessionStorage.getItem('adminCourse');
+
+            if (loggedIn === 'true' && username && course) {
+                showDashboard(username, course);
+            }
+        });
+
 
         /**
          * Fetches data from the Google Apps Script endpoint.
-         * * IMPORTANT: This function is modified to send data as 'application/x-www-form-urlencoded' 
-         * using URLSearchParams, which is considered a "simple" request and helps prevent CORS preflight issues.
-         * The Apps Script server will receive this in the e.postData.contents.
          * @param {object} data - The payload to send to the script.
          */
         async function fetchAppsScript(data) {
@@ -91,10 +192,6 @@
             try {
                 const response = await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
-                    // REMOVED Content-Type: application/json
-                    // The default Content-Type for a URLSearchParams body is application/x-www-form-urlencoded,
-                    // which is a simple request and helps resolve the CORS issue.
-                    // DO NOT set the Content-Type header explicitly here.
                     body: formData
                 });
 
@@ -107,14 +204,8 @@
                 return result;
 
             } catch (error) {
-                // This catch block handles network errors and the 'Failed to fetch' TypeError
                 console.error("API Fetch Error (Network or JSON Parse failure):", error);
-                
-                // If this error is hit, the request either failed completely (network/CORS) 
-                // or the response body could not be parsed as JSON.
                 displayMessage("Connection failed or server returned invalid data format. Check console for details.", 'error');
-                
-                // Re-throw the error for the calling function to handle
                 throw error; 
             }
         }
@@ -142,30 +233,32 @@
             try {
                 const result = await fetchAppsScript(payload);
 
-                // --- FIX APPLIED HERE: Checking for 'result' field instead of 'status' ---
+                // Check for 'success' status using either 'status' or 'result' key
                 if (result && (result.status === 'success' || result.result === 'success')) {
                     const adminUsername = username;
                     const assignedCourse = result.assignedCourse || 'N/A';
                     
-                    displayMessage(`Login successful! Welcome, ${adminUsername}. Assigned Course: ${assignedCourse}`, 'success');
+                    // CALL THE NEW showDashboard FUNCTION
+                    showDashboard(adminUsername, assignedCourse);
                     
-                    // You can now proceed to store the assigned course or redirect
                     console.log('Admin data:', {
                         message: result.message,
                         assignedCourse: assignedCourse
                     });
+                    
+                    // Display success in the original message box area (which is now hidden)
+                    // We don't need a message box visible on the dashboard itself, 
+                    // but the internal state is now handled by showDashboard.
 
-                // --- FIX APPLIED HERE: Checking for 'error' field (if App Script uses it) or 'result' field ---
+                // Check for 'error' status
                 } else if (result && (result.status === 'error' || result.result === 'error')) {
                     displayMessage(`Login Failed: ${result.message || 'Invalid username or password.'}`, 'error');
                 } else {
-                    // LOG THE RECEIVED RESULT FOR DEBUGGING
                     console.error('Apps Script returned an unexpected structure or status:', result);
                     displayMessage('An unknown error occurred during login. Check console for Apps Script response data.', 'error');
                 }
 
             } catch (error) {
-                // Error already handled and displayed in fetchAppsScript, just log for consistency
                 console.log('Login attempt failed due to network or invalid response.');
             } finally {
                 loginButton.disabled = false;
@@ -173,7 +266,19 @@
             }
         }
 
+        /**
+         * Handles the logout action.
+         */
+        function handleLogout() {
+            displayMessage('Logging out...', 'info');
+            // Clear any local state and show the login form
+            showLoginForm();
+        }
+
+
+        // Event Listeners
         loginForm.addEventListener('submit', handleAdminLogin);
+        logoutButton.addEventListener('click', handleLogout);
 
     </script>
 </body>

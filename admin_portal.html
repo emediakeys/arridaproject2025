@@ -142,13 +142,21 @@
             try {
                 const result = await fetchAppsScript(payload);
 
-                if (result && result.status === 'success') {
-                    displayMessage(`Login successful! Welcome, ${username}.`, 'success');
-                    // In a real app, you would redirect to the main admin dashboard here:
-                    // window.location.href = '/admin/dashboard.html'; 
-                    console.log('Admin data:', result.adminData);
+                // --- FIX APPLIED HERE: Checking for 'result' field instead of 'status' ---
+                if (result && (result.status === 'success' || result.result === 'success')) {
+                    const adminUsername = username;
+                    const assignedCourse = result.assignedCourse || 'N/A';
+                    
+                    displayMessage(`Login successful! Welcome, ${adminUsername}. Assigned Course: ${assignedCourse}`, 'success');
+                    
+                    // You can now proceed to store the assigned course or redirect
+                    console.log('Admin data:', {
+                        message: result.message,
+                        assignedCourse: assignedCourse
+                    });
 
-                } else if (result && result.status === 'error') {
+                // --- FIX APPLIED HERE: Checking for 'error' field (if App Script uses it) or 'result' field ---
+                } else if (result && (result.status === 'error' || result.result === 'error')) {
                     displayMessage(`Login Failed: ${result.message || 'Invalid username or password.'}`, 'error');
                 } else {
                     // LOG THE RECEIVED RESULT FOR DEBUGGING

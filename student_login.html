@@ -70,8 +70,19 @@
     </div>
 
     <script>
-        // CRITICAL: Replace this placeholder with your deployed Google Apps Script Web App URL (ending in /exec)
+        // CRITICAL: SCRIPT_URL updated with the user-provided Apps Script URL
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxgGM2FjzriSnAyDvlMuUqjioWLPc7578PGVNtZN2XH_2lNXcAGP1hsFFq3cIvlWXzmZw/exec'; 
+        
+        // --- Utility function to convert key/value object to URLSearchParams string ---
+        function jsonToUrlParams(data) {
+            const params = new URLSearchParams();
+            for (const key in data) {
+                if (data.hasOwnProperty(key)) {
+                    params.append(key, data[key]);
+                }
+            }
+            return params.toString();
+        }
 
         const studentForm = document.getElementById('studentForm');
         const messageBox = document.getElementById('messageBox');
@@ -99,7 +110,7 @@
          * @param {HTMLElement} submitButton - The button element to control loading state
          */
         async function submitLogin(action, formData, submitButton) {
-            if (SCRIPT_URL === 'SCRIPT_URL') {
+            if (SCRIPT_URL === 'YOUR_WEB_APP_URL_HERE') {
                 showMessage('error', 'Configuration Error: Please replace "YOUR_WEB_APP_URL_HERE" with your deployed Apps Script URL.');
                 return;
             }
@@ -112,6 +123,10 @@
             const payload = { ...formData, action };
             messageBox.classList.add('hidden');
 
+            // --- CRITICAL FIX: Encode payload as form data for GAS compatibility ---
+            // This bypasses the CORS issue caused by Content-Type: application/json
+            const formBody = jsonToUrlParams(payload);
+
             // --- Exponential Backoff Retry Logic ---
             let responseData = null;
             const maxRetries = 3;
@@ -121,17 +136,19 @@
                 try {
                     const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(payload)
+                        // IMPORTANT: DO NOT set Content-Type header when sending standard form data
+                        // This allows the request to be simple/non-preflighted, resolving the CORS issue.
+                        body: formBody // Sending the URL-encoded string directly
                     });
 
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     
-                    responseData = await response.json();
+                    // We need to parse the response as text first, because GAS returns ContentType: text/html by default, 
+                    // even if we return ContentService.MimeType.JSON
+                    const responseText = await response.text();
+                    responseData = JSON.parse(responseText); // Now safely parse the JSON content
                     break; // Success, exit the loop
                 } catch (error) {
                     if (attempt < maxRetries - 1) {

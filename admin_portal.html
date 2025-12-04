@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - School Management</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for better dashboard aesthetics */
+        :root {
+            --primary-color: #10b981; /* Emerald 500 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .sidebar {
+            transition: width 0.3s ease;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .nav-item:hover, .nav-item.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -2px rgba(16, 185, 129, 0.3);
+        }
+        /* Style for the action buttons */
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        /* Scrollable container for tables/lists */
+        .data-container {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+    </style>
+    <!-- Load Lucide icons for clean interface -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <!-- Main Container controlled by JS -->
+    <div id="app"></div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygblQTf_k_UQ1q-3tPJRZ-n4TU3BbfUlFhnBKTpCHa60AIGJkMczCtKBSXc6ilLvk/exec"; 
+        
+        // --- STATE MANAGEMENT ---
+        let adminState = {
+            isLoggedIn: false,
+            username: '',
+            assignedCourse: '',
+            activeTab: 'students',
+            students: [],
+            announcements: [],
+            assignments: [],
+            attendance: [],
+            loading: false,
+            message: null,
+            error: false
+        };
+
+        // --- UTILITY FUNCTIONS ---
+        function render(component) {
+            const app = document.getElementById('app');
+            app.innerHTML = component();
+            // Re-render icons after adding HTML
+            lucide.createIcons();
+            // Bind events after render
+            if (adminState.isLoggedIn) {
+                bindDashboardEvents();
+            } else {
+                bindLoginEvents();
+            }
+        }
+
+        function showMessage(msg, isError = false) {
+            adminState.message = msg;
+            adminState.error = isError;
+            render(adminState.isLoggedIn ? AdminDashboard : AdminLogin); // Re-render the current view to show message
+        }
+
+        async function fetchAppsScript(action, payload = {}) {
+            adminState.loading = true;
+            render(AdminDashboard); // Show loading state
+
+            const dataToSend = { action, ...payload };
+            
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataToSend)
+                });
+                
+                const result = await response.json();
+                
+                adminState.loading = false;
+                return result;
+            } catch (error) {
+                console.error('API Fetch Error:', error);
+                adminState.loading = false;
+                return { result: 'error', message: 'Network error or invalid server response.' };
+            }
+        }
+
+        // --- AUTHENTICATION ---
+
+        function checkAuth() {
+            const storedState = localStorage.getItem('adminState');
+            if (storedState) {
+                const state = JSON.parse(storedState);
+                if (state.isLoggedIn && state.assignedCourse) {
+                    adminState = { ...adminState, ...state, isLoggedIn: true };
+                    loadInitialData();
+                    return;
+                }
+            }
+            adminState.isLoggedIn = false;
+            render(AdminLogin);
+        }
+
+        function saveAdminState() {
+            localStorage.setItem('adminState', JSON.stringify({
+                isLoggedIn: adminState.isLoggedIn,
+                username: adminState.username,
+                assignedCourse: adminState.assignedCourse
+            }));
+        }
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const form = e.target;
+            const username = form.username.value.trim();
+            const password = form.password.value;
+
+            showMessage('Logging in...');
+
+            const result = await fetchAppsScript('adminLogin', { username, password });
+
+            if (result.result === 'success') {
+                adminState.isLoggedIn = true;
+                adminState.username = username;
+                adminState.assignedCourse = result.assignedCourse;
+                saveAdminState();
+                showMessage('Login successful! Welcome.', false);
+                loadInitialData();
+            } else {
+                adminState.isLoggedIn = false;
+                showMessage(result.message || 'Login failed. Check credentials.', true);
+                render(AdminLogin);
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('adminState');
+            adminState = { 
+                isLoggedIn: false, 
+                username: '', 
+                assignedCourse: '', 
+                activeTab: 'students' 
+            };
+            render(AdminLogin);
+        }
+
+        function bindLoginEvents() {
+            const loginForm = document.getElementById('adminLoginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleAdminLogin);
+            }
+        }
+
+        // --- DATA LOADING & DASHBOARD MANAGEMENT ---
+
+        async function loadInitialData() {
+            if (!adminState.isLoggedIn) return;
+
+            adminState.loading = true;
+            render(AdminDashboard);
+
+            const course = adminState.assignedCourse;
+
+            // Fetch students, announcements, and assignments concurrently
+            const [studentsResult, announcementsResult, assignmentsResult] = await Promise.all([
+                fetchAppsScript('getStudentsByCourse', { course }),
+                fetchAppsScript('getAnnouncementsByCourse', { course }),
+                fetchAppsScript('getAssignmentsByCourse', { course })
+            ]);
+
+            adminState.students = studentsResult.result === 'success' ? studentsResult.data : [];
+            adminState.announcements = announcementsResult.result === 'success' ? announcementsResult.data : [];
+            adminState.assignments = assignmentsResult.result === 'success' ? assignmentsResult.data : [];
+            
+            adminState.loading = false;
+            render(AdminDashboard);
+        }
+
+        function changeTab(tabName) {
+            adminState.activeTab = tabName;
+            adminState.message = null; // Clear messages on tab change
+            render(AdminDashboard);
+        }
+
+        // --- CRUD OPERATIONS ---
+
+        async function handleAddAnnouncement(e) {
+            e.preventDefault();
+            const form = e.target;
+            const title = form.title.value;
+            const content = form.content.value;
+            const course = adminState.assignedCourse;
+            
+            showMessage('Adding Announcement...');
+            
+            const result = await fetchAppsScript('addAnnouncement', { course, title, content });
+
+            if (result.result === 'success') {
+                showMessage('Announcement posted successfully!', false);
+                form.reset();
+                loadInitialData(); // Reload list
+            } else {
+                showMessage(result.message || 'Failed to post announcement.', true);
+                render(AdminDashboard);
+            }
+        }
+
+        async function handleAddAssignment(e) {
+            e.preventDefault();
+            const form = e.target;
+            const title = form.title.value;
+            const description = form.description.value;
+            const dueDate = form.dueDate.value;
+            const course = adminState.assignedCourse;
+
+            showMessage('Adding Assignment...');
+            
+            const result = await fetchAppsScript('addAssignment', { course, title, description, dueDate });
+
+            if (result.result === 'success') {
+                showMessage('Assignment added successfully!', false);
+                form.reset();
+                loadInitialData(); // Reload list
+            } else {
+                showMessage(result.message || 'Failed to add assignment.', true);
+                render(AdminDashboard);
+            }
+        }
+
+        async function handleRemoveStudent(admNo, course) {
+            if (!confirm(`Are you sure you want to remove student ${admNo} from ${course}? This action cannot be undone.`)) {
+                return;
+            }
+
+            showMessage(`Removing student ${admNo}...`);
+            
+            const result = await fetchAppsScript('removeStudent', { admNo, course });
+
+            if (result.result === 'success') {
+                showMessage(`Student ${admNo} removed successfully.`, false);
+                loadInitialData(); // Reload students list
+            } else {
+                showMessage(result.message || 'Failed to remove student.', true);
+                render(AdminDashboard);
+            }
+        }
+
+        async function handleRecordAttendance(e) {
+            e.preventDefault();
+            const form = e.target;
+            const admNo = form.admNo.value;
+            const status = form.status.value;
+            const date = form.date.value;
+            const course = adminState.assignedCourse;
+            
+            showMessage('Recording Attendance...');
+            
+            const result = await fetchAppsScript('recordAttendance', { admNo, status, date, course });
+
+            if (result.result === 'success') {
+                showMessage(`Attendance recorded for ${admNo} on ${date}.`, false);
+                form.reset();
+            } else {
+                showMessage(result.message || 'Failed to record attendance. Check Admin No.', true);
+            }
+            render(AdminDashboard);
+        }
+
+
+        // --- UI COMPONENTS ---
+
+        function AdminLogin() {
+            return `
+                <div class="min-h-screen flex items-center justify-center p-4">
+                    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
+                        <div class="text-center mb-8">
+                            <h2 class="text-3xl font-extrabold text-gray-900">Admin Login</h2>
+                            <p class="mt-2 text-sm text-gray-600">Access the School Management Dashboard</p>
+                        </div>
+                        <form id="adminLoginForm" class="space-y-6">
+                            <div>
+                                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                <input type="text" id="username" name="username" required 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500" placeholder="Enter username">
+                            </div>
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input type="password" id="password" name="password" required 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500" placeholder="Enter password">
+                            </div>
+                            <button type="submit" 
+                                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150 ease-in-out">
+                                <span data-lucide="log-in" class="w-5 h-5 mr-2"></span> Log In
+                            </button>
+                        </form>
+                        <p id="statusMessage" class="mt-4 text-center text-sm ${adminState.error ? 'text-red-600' : 'text-emerald-600'}">${adminState.message || ''}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function AdminDashboard() {
+            const tabs = [
+                { id: 'students', name: 'Students', icon: 'users' },
+                { id: 'announcements', name: 'Announcements', icon: 'megaphone' },
+                { id: 'assignments', name: 'Assignments', icon: 'clipboard-list' },
+                { id: 'attendance', name: 'Attendance', icon: 'calendar-check' },
+            ];
+
+            return `
+                <div class="min-h-screen flex">
+                    <!-- Sidebar -->
+                    <div class="sidebar w-64 bg-gray-800 text-white flex flex-col p-4 shadow-2xl">
+                        <div class="flex-shrink-0 text-xl font-bold py-4 border-b border-gray-700 mb-6">
+                            <span data-lucide="graduation-cap" class="inline-block w-6 h-6 mr-2"></span> Admin Panel
+                        </div>
+                        
+                        <!-- Admin Info -->
+                        <div class="text-sm p-3 bg-gray-700 rounded-lg mb-6">
+                            <p class="font-semibold">${adminState.username}</p>
+                            <p class="text-xs text-gray-300">Course: ${adminState.assignedCourse}</p>
+                        </div>
+
+                        <!-- Navigation -->
+                        <nav class="flex-grow">
+                            ${tabs.map(tab => `
+                                <div class="nav-item ${adminState.activeTab === tab.id ? 'active' : 'text-gray-300'}" 
+                                     data-tab="${tab.id}">
+                                    <span data-lucide="${tab.icon}" class="w-5 h-5 mr-3"></span>
+                                    ${tab.name}
+                                </div>
+                            `).join('')}
+                        </nav>
+
+                        <!-- Logout -->
+                        <div class="mt-auto pt-4 border-t border-gray-700">
+                            <button id="logoutBtn" class="w-full flex items-center justify-center p-3 text-red-400 hover:bg-gray-700 rounded-lg transition duration-150">
+                                <span data-lucide="log-out" class="w-5 h-5 mr-2"></span> Logout
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Content -->
+                    <main class="flex-grow p-8">
+                        <h1 class="text-3xl font-bold text-gray-800 mb-6">
+                            ${tabs.find(t => t.id === adminState.activeTab).name} Management
+                        </h1>
+
+                        <p class="mb-4 text-sm font-medium ${adminState.error ? 'text-red-600 bg-red-100' : 'text-emerald-600 bg-emerald-100'} p-3 rounded-lg"
+                            style="${adminState.message ? 'display: block;' : 'display: none;'}">
+                            ${adminState.message || ''}
+                        </p>
+
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            ${adminState.loading ? LoadingSpinner() : renderActiveTabContent()}
+                        </div>
+                    </main>
+                </div>
+            `;
+        }
+        
+        function LoadingSpinner() {
+            return `
+                <div class="flex flex-col items-center justify-center py-20">
+                    <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-4 text-gray-600">Loading data for ${adminState.assignedCourse}...</p>
+                </div>
+            `;
+        }
+
+        function renderActiveTabContent() {
+            switch (adminState.activeTab) {
+                case 'students':
+                    return StudentList();
+                case 'announcements':
+                    return AnnouncementsTab();
+                case 'assignments':
+                    return AssignmentsTab();
+                case 'attendance':
+                    return AttendanceTab();
+                default:
+                    return `<p class="text-gray-500">Select a tab to begin management.</p>`;
+            }
+        }
+
+        // --- TAB CONTENTS ---
+
+        function StudentList() {
+            return `
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">All Students in ${adminState.assignedCourse} (${adminState.students.length})</h2>
+                ${adminState.students.length === 0 ? 
+                    `<p class="text-gray-500">No students found for this course.</p>` :
+                    `<div class="data-container">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adm. No</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${adminState.students.map(student => `
+                                    <tr data-admno="${student.admNo}">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${student.admNo}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${student.firstName} ${student.lastName}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${student.email}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button onclick="handleRemoveStudent('${student.admNo}', '${adminState.assignedCourse}')" 
+                                                class="action-btn bg-red-500 text-white hover:bg-red-600 transition">
+                                                Graduate/Remove
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`
+                }
+            `;
+        }
+
+        function AnnouncementsTab() {
+            return `
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Post New Announcement Form -->
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Post New Announcement</h2>
+                        <form id="announcementForm" class="space-y-4 bg-gray-50 p-6 rounded-lg border">
+                            <div>
+                                <label for="announcementTitle" class="block text-sm font-medium text-gray-700">Title</label>
+                                <input type="text" id="announcementTitle" name="title" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="announcementContent" class="block text-sm font-medium text-gray-700">Content</label>
+                                <textarea id="announcementContent" name="content" rows="4" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500"></textarea>
+                            </div>
+                            <button type="submit" class="action-btn bg-emerald-600 text-white hover:bg-emerald-700 w-full transition">
+                                <span data-lucide="send" class="w-4 h-4 mr-2 inline-block"></span> Post Announcement
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Existing Announcements List -->
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Recent Announcements</h2>
+                        ${adminState.announcements.length === 0 ? 
+                            `<p class="text-gray-500 p-4 border rounded-lg">No announcements posted yet.</p>` :
+                            `<div class="space-y-4 data-container">
+                                ${adminState.announcements.map(ann => `
+                                    <div class="p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+                                        <p class="font-bold text-gray-900">${ann.title}</p>
+                                        <p class="text-sm text-gray-600">${ann.content.substring(0, 100)}...</p>
+                                        <p class="text-xs text-gray-400 mt-1">Posted: ${ann.date}</p>
+                                    </div>
+                                `).join('')}
+                            </div>`
+                        }
+                    </div>
+                </div>
+            `;
+        }
+
+        function AssignmentsTab() {
+            return `
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Post New Assignment Form -->
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Create New Assignment</h2>
+                        <form id="assignmentForm" class="space-y-4 bg-gray-50 p-6 rounded-lg border">
+                            <div>
+                                <label for="assignmentTitle" class="block text-sm font-medium text-gray-700">Title</label>
+                                <input type="text" id="assignmentTitle" name="title" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="assignmentDescription" class="block text-sm font-medium text-gray-700">Description</label>
+                                <textarea id="assignmentDescription" name="description" rows="4" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500"></textarea>
+                            </div>
+                            <div>
+                                <label for="assignmentDueDate" class="block text-sm font-medium text-gray-700">Due Date</label>
+                                <input type="date" id="assignmentDueDate" name="dueDate" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <button type="submit" class="action-btn bg-blue-600 text-white hover:bg-blue-700 w-full transition">
+                                <span data-lucide="plus-circle" class="w-4 h-4 mr-2 inline-block"></span> Create Assignment
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Existing Assignments List -->
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Open Assignments</h2>
+                        ${adminState.assignments.length === 0 ? 
+                            `<p class="text-gray-500 p-4 border rounded-lg">No assignments currently active.</p>` :
+                            `<div class="space-y-4 data-container">
+                                ${adminState.assignments.map(ass => `
+                                    <div class="p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+                                        <p class="font-bold text-gray-900">${ass.title}</p>
+                                        <p class="text-sm text-gray-600">${ass.description.substring(0, 100)}...</p>
+                                        <p class="text-xs ${new Date(ass.dueDate) < new Date() ? 'text-red-500' : 'text-emerald-500'} mt-1">Due: ${ass.dueDate}</p>
+                                    </div>
+                                `).join('')}
+                            </div>`
+                        }
+                    </div>
+                </div>
+            `;
+        }
+        
+        function AttendanceTab() {
+            return `
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Record Attendance Form -->
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Record Daily Attendance</h2>
+                        <form id="attendanceForm" class="space-y-4 bg-gray-50 p-6 rounded-lg border">
+                            <div>
+                                <label for="admNo" class="block text-sm font-medium text-gray-700">Student Admission No.</label>
+                                <input type="text" id="admNo" name="admNo" required list="studentAdms"
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                                <datalist id="studentAdms">
+                                    ${adminState.students.map(s => `<option value="${s.admNo} - ${s.firstName} ${s.lastName}">`).join('')}
+                                </datalist>
+                                <p class="text-xs text-gray-500 mt-1">Start typing Admission No. or Name.</p>
+                            </div>
+                            <div>
+                                <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
+                                <input type="date" id="date" name="date" value="${new Date().toISOString().slice(0, 10)}" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                                <select id="status" name="status" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                                    <option value="Present">Present</option>
+                                    <option value="Absent">Absent</option>
+                                    <option value="Late">Late</option>
+                                    <option value="Excused">Excused Absence</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="action-btn bg-indigo-600 text-white hover:bg-indigo-700 w-full transition">
+                                <span data-lucide="check-square" class="w-4 h-4 mr-2 inline-block"></span> Record Attendance
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Attendance History (Simplified View) -->
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Attendance Focus</h2>
+                        <div class="bg-yellow-50 p-4 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                            <p class="font-semibold mb-2">Note on History:</p>
+                            <p>For performance, a detailed attendance log is managed in the Apps Script backend. You can record attendance here, and the data will be stored for future retrieval/reporting.</p>
+                            <p class="mt-2">Use the Student List tab to verify Admission Numbers.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- BINDING EVENTS ---
+
+        function bindDashboardEvents() {
+            // Tab switching
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.onclick = () => changeTab(item.getAttribute('data-tab'));
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').onclick = handleLogout;
+            
+            // Forms binding (only bind if element exists)
+            const announcementForm = document.getElementById('announcementForm');
+            if(announcementForm) {
+                announcementForm.onsubmit = handleAddAnnouncement;
+            }
+            const assignmentForm = document.getElementById('assignmentForm');
+            if(assignmentForm) {
+                assignmentForm.onsubmit = handleAddAssignment;
+            }
+            const attendanceForm = document.getElementById('attendanceForm');
+            if(attendanceForm) {
+                attendanceForm.onsubmit = handleRecordAttendance;
+            }
+        }
+
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', checkAuth);
+
+    </script>
+
+</body>
+</html>

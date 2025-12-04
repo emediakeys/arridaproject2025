@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     // --- CONFIGURATION ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKX1fK1SQBKlKohKpAr-_rumIc-aAGPX8dJ08CZvsgdNrDRsdZtP2Nx0qCGlH4oP0o/exec"; 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygblQTf_k_UQ1q-3tPJRZ-n4TU3BbfUlFhnBKTpCHa60AIGJkMczCtKBSXc6ilLvk/exec"; 
     
     // **PAYSTACK CONFIGURATION**
     // ⚠️ REPLACE THIS WITH YOUR ACTUAL PAYSTACK PUBLIC KEY

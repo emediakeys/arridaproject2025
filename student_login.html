@@ -71,7 +71,7 @@
 
     <script>
         // CRITICAL: Replace this placeholder with your deployed Google Apps Script Web App URL (ending in /exec)
-        const SCRIPT_URL = 'YOUR_WEB_APP_URL_HERE'; 
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMSN5Zo37bSQAn3wLCHXnT3t904YuX-5nKXS6r23EsZ76AOiYfAubHV-o_BeM63oug/exec'; 
 
         const studentForm = document.getElementById('studentForm');
         const messageBox = document.getElementById('messageBox');
@@ -99,7 +99,7 @@
          * @param {HTMLElement} submitButton - The button element to control loading state
          */
         async function submitLogin(action, formData, submitButton) {
-            if (SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbzK_4j-hUj9Hil2jA_IHX3KpMP7qul0mQLxydOrraei8264cO_ro9OY92RwpwYP3-B6/exec') {
+            if (SCRIPT_URL === 'SCRIPT_URL') {
                 showMessage('error', 'Configuration Error: Please replace "YOUR_WEB_APP_URL_HERE" with your deployed Apps Script URL.');
                 return;
             }

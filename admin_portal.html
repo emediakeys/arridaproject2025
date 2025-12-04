@@ -102,14 +102,17 @@
                     throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
                 }
 
+                // We try to parse the response as JSON
                 const result = await response.json();
                 return result;
 
             } catch (error) {
                 // This catch block handles network errors and the 'Failed to fetch' TypeError
-                console.error("API Fetch Error:", error);
-                // Display a user-friendly message for the CORS/Network error
-                displayMessage("Connection failed. Please check the network and ensure the Apps Script is correctly deployed (Execute as Me, Access Anyone).", 'error');
+                console.error("API Fetch Error (Network or JSON Parse failure):", error);
+                
+                // If this error is hit, the request either failed completely (network/CORS) 
+                // or the response body could not be parsed as JSON.
+                displayMessage("Connection failed or server returned invalid data format. Check console for details.", 'error');
                 
                 // Re-throw the error for the calling function to handle
                 throw error; 
@@ -148,12 +151,14 @@
                 } else if (result && result.status === 'error') {
                     displayMessage(`Login Failed: ${result.message || 'Invalid username or password.'}`, 'error');
                 } else {
-                    displayMessage('An unknown error occurred during login.', 'error');
+                    // LOG THE RECEIVED RESULT FOR DEBUGGING
+                    console.error('Apps Script returned an unexpected structure or status:', result);
+                    displayMessage('An unknown error occurred during login. Check console for Apps Script response data.', 'error');
                 }
 
             } catch (error) {
-                // Error already displayed in fetchAppsScript, just log for debugging
-                console.log('Login attempt failed.');
+                // Error already handled and displayed in fetchAppsScript, just log for consistency
+                console.log('Login attempt failed due to network or invalid response.');
             } finally {
                 loginButton.disabled = false;
                 loginButton.textContent = 'Sign In';

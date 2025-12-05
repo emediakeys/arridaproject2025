@@ -3,723 +3,359 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Portal - Dashboard</title>
+    <title>Student Portal</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom styles for better dashboard aesthetics */
         :root {
-            --primary-color: #3b82f6; /* Blue 500 for students */
+            --primary-color: #3b82f6; /* Blue 500 */
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #f8fafc; /* Slate 50 */
         }
-        .sidebar {
-            transition: width 0.3s ease;
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            cursor: pointer;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .nav-item:hover, .nav-item.active {
+        .btn-primary {
             background-color: var(--primary-color);
-            color: white;
-            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -2px rgba(59, 130, 246, 0.2);
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb; /* Blue 600 */
         }
         .card {
             background-color: white;
-            padding: 1.5rem;
             border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
         }
-        .form-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        .scroll-area {
+            max-height: 400px;
         }
-        .form-input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
-            outline: none;
+        .scroll-area::-webkit-scrollbar {
+            width: 6px;
         }
-        /* Mobile specific styles */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                padding: 0.5rem;
-            }
-            .nav-item {
-                justify-content: center;
-                text-align: center;
-                padding: 0.75rem 1rem;
-            }
+        .scroll-area::-webkit-scrollbar-thumb {
+            background-color: #94a3b8;
+            border-radius: 3px;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
-    <!-- Icons for Navigation -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body>
+<body class="min-h-screen flex items-center justify-center p-4">
 
-    <!-- Main Container -->
-    <div id="app" class="min-h-screen flex flex-col md:flex-row bg-gray-100">
-        <!-- Content will be fully replaced on login/logout -->
-    </div>
-
-    <!-- Message Modal/Box -->
-    <div id="messageModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
-            <h3 id="modalTitle" class="text-xl font-semibold text-gray-900 mb-3">Message</h3>
-            <p id="modalMessage" class="text-gray-700 mb-6"></p>
-            <button onclick="closeModal()" class="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">Close</button>
-        </div>
-    </div>
-    
-    <!-- Loading Indicator Overlay (Used during API calls) -->
-    <div id="apiLoadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
-            <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
-            <p class="mt-4 text-gray-600 font-semibold" id="loadingMessage">Processing request...</p>
-        </div>
-    </div>
-
-
+    <!-- Configuration: REPLACE THIS URL -->
     <script>
-        // Global State
-        // THIS IS THE URL PROVIDED BY THE USER:
-        const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbwGQORz9mdic63hpRIYJ9UiK8AyjzeFWMDYwH-f_iIWo4gn9afr38bVLE2piJDpY4oY4Q/exec';
-        
-        let studentData = {};
-        let currentTab = 'profile';
+        // *** IMPORTANT: REPLACE THIS WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL ***
+        const SERVICE_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE"; 
+    </script>
 
-        // --- UI UTILITIES ---
+    <!-- Main Application Container -->
+    <div id="app" class="w-full max-w-4xl">
+        <!-- Content will be injected here -->
+    </div>
 
-        function showMessage(title, message, isSuccess = true) {
-            setLoading(false); // Ensure loading is off when message is shown
-            
-            const modal = document.getElementById('messageModal');
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').textContent = message;
-            
-            const titleEl = document.getElementById('modalTitle');
-            titleEl.classList.remove('text-red-600', 'text-green-600', 'text-gray-900');
-            titleEl.classList.add(isSuccess ? 'text-green-600' : 'text-red-600');
-            
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
+    <!-- JavaScript Logic -->
+    <script>
+        let loggedInStudent = null;
 
-        function closeModal() {
-            document.getElementById('messageModal').classList.remove('flex');
-            document.getElementById('messageModal').classList.add('hidden');
-        }
-
-        /**
-         * Shows/hides the loading overlay.
-         * @param {boolean} isLoading 
-         * @param {string} message 
-         */
-        function setLoading(isLoading, message = 'Processing request...') {
-            const overlay = document.getElementById('apiLoadingOverlay');
-            const msgEl = document.getElementById('loadingMessage');
-            
-            if (isLoading) {
-                msgEl.textContent = message;
-                overlay.classList.remove('hidden');
-                overlay.classList.add('flex');
-            } else {
-                overlay.classList.remove('flex');
-                overlay.classList.add('hidden');
-            }
-        }
-        
-        // --- CORE API HANDLER with Exponential Backoff ---
-
-        /**
-         * Generic API call function with exponential backoff for robustness.
-         * @param {Object} data - The payload to send (including 'action').
-         * @param {number} maxRetries - Maximum number of retries.
-         * @returns {Promise<Object>} The parsed JSON response.
-         */
-        async function makeApiCall(data, maxRetries = 3) {
-            const url = ENDPOINT_URL;
-            let attempt = 0;
-            
-            // Only show loading for the first time or if necessary for long operations
-            // We rely on handleStudentLogin to call setLoading(true) first.
-            // Removed specific check for 'portalContent' class here for robustness during initial login.
-
-            while (attempt < maxRetries) {
-                try {
-                    // Apps Script expects URL-encoded data for simple POST
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        mode: 'cors',
-                        cache: 'no-cache',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams(data)
-                    });
-
-                    // Check for network/HTTP errors
-                    if (!response.ok) {
-                        const errorBody = await response.text();
-                        console.error(`Attempt ${attempt + 1}: HTTP Error ${response.status}: ${errorBody}`);
-                        throw new Error(`HTTP Error ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    setLoading(false);
-                    return result; // Success
-
-                } catch (error) {
-                    attempt++;
-                    console.warn(`API call attempt ${attempt} failed: ${error.message}`);
-                    
-                    if (attempt >= maxRetries) {
-                        setLoading(false);
-                        showMessage('Connection Error', `Operation failed after ${maxRetries} attempts. Please check the network connection and the Apps Script URL. Error: ${error.message}`, false);
-                        throw error;
-                    }
-
-                    // Exponential backoff delay (1s, 2s, 4s, ...)
-                    const delay = Math.pow(2, attempt) * 1000;
-                    await new Promise(resolve => setTimeout(resolve, delay));
+        // --- UTILITY FUNCTIONS ---
+        async function postData(data) {
+            // Safety check for development/testing environment
+            if (SERVICE_URL === "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+                console.error("SERVICE_URL is not set. Please update the script URL. Simulating data for ADM-001.");
+                const storedStudent = JSON.parse(sessionStorage.getItem('studentData'));
+                
+                // Simulate Login
+                if (data.action === 'studentLogin' && data.admNo === 'ADM-001' && data.password === '12345') {
+                     return { 
+                        result: "success", 
+                        data: { 
+                            "Admission_No": "ADM-001", 
+                            "First Name": "Ibrahim", 
+                            "Last_Name": "Shuaibu", 
+                            "Email": "test@example.com", 
+                            "Course_Applied": "Pharmacy Technician" 
+                        } 
+                     };
                 }
+                
+                // Simulate Announcements (using the correct, standardized keys: title, content, date)
+                if (data.action === 'getStudentAnnouncements' && storedStudent) {
+                    return { 
+                        result: "success", 
+                        data: [
+                            // These keys MUST match the keys used in renderAnnouncements
+                            { title: 'Welcome to Pharmacy', content: 'Orientation is next week, starting Monday at 9 AM in the main hall.', date: '2025-12-05' },
+                            { title: 'Library Access', content: 'New electronic library resources are now available. Check your email for login details.', date: '2025-12-01' }
+                        ] 
+                    };
+                }
+                
+                // Simulate Assignments (using the correct, standardized keys: title, description, dueDate)
+                if (data.action === 'getStudentAssignments' && storedStudent) {
+                    return { 
+                        result: "success", 
+                        data: [
+                            // These keys MUST match the keys used in renderAssignments
+                            { title: 'Pharmacology Essay', description: 'Write a 1000-word essay on the kinetics of Aspirin.', dueDate: '2025-12-15' },
+                            { title: 'Chemistry Lab Report', description: 'Report on the titration experiment performed last week.', dueDate: '2025-12-20' }
+                        ] 
+                    };
+                }
+                return { result: "error", message: "Service URL not set, and simulation failed." };
             }
+
+            const formData = new FormData();
+            for (const key in data) {
+                formData.append(key, data[key]);
+            }
+
+            let response;
+            try {
+                response = await fetch(SERVICE_URL, {
+                    method: 'POST',
+                    body: formData,
+                    redirect: 'follow'
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                return { result: 'error', message: `Network error: ${error.message}` };
+            }
+        }
+
+        function showLoading(elementId) {
+            document.getElementById(elementId).innerHTML = `
+                <div class="flex justify-center items-center py-8">
+                    <div class="loader mr-3"></div> 
+                    <p class="text-gray-500">Loading data...</p>
+                </div>
+            `;
+        }
+
+        function renderMessage(elementId, message, type = 'error') {
+            const color = type === 'error' ? 'text-red-500' : 'text-green-500';
+            document.getElementById(elementId).innerHTML = `<p class="text-center ${color}">${message}</p>`;
         }
 
 
         // --- AUTHENTICATION ---
 
-        function checkAuth() {
-            const storedData = localStorage.getItem('studentData');
-            if (storedData) {
-                studentData = JSON.parse(storedData);
-                renderDashboard();
+        function showLogin() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card p-8 w-full max-w-sm mx-auto">
+                    <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">Student Login</h2>
+                    <form id="loginForm">
+                        <div class="mb-4">
+                            <label for="admNo" class="block text-sm font-medium text-gray-600 mb-1">Admission Number</label>
+                            <input type="text" id="admNo" name="admNo" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" value="ADM-001">
+                        </div>
+                        <div class="mb-6">
+                            <label for="password" class="block text-sm font-medium text-gray-600 mb-1">Password</label>
+                            <input type="password" id="password" name="password" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" value="12345">
+                        </div>
+                        <button type="submit" class="btn-primary w-full text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition duration-150">
+                            Log In
+                        </button>
+                        <p id="loginMessage" class="mt-4 text-center text-sm text-red-500 hidden"></p>
+                    </form>
+                </div>
+            `;
+            document.getElementById('loginForm').onsubmit = handleLogin;
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const admNo = document.getElementById('admNo').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const messageElement = document.getElementById('loginMessage');
+            messageElement.classList.remove('hidden');
+            messageElement.textContent = 'Logging in...';
+
+            const response = await postData({ 
+                action: 'studentLogin', 
+                admNo: admNo, 
+                password: password 
+            });
+
+            if (response.result === 'success') {
+                loggedInStudent = response.data;
+                // Store student data (which includes First Name, Last_Name, and Course_Applied)
+                sessionStorage.setItem('studentData', JSON.stringify(response.data));
+                showDashboard();
             } else {
-                renderLogin();
+                messageElement.textContent = response.message || 'Login failed due to an unknown error.';
+            }
+        }
+
+        function checkAuth() {
+            const studentDataString = sessionStorage.getItem('studentData');
+            if (studentDataString) {
+                loggedInStudent = JSON.parse(studentDataString);
+                showDashboard();
+            } else {
+                showLogin();
             }
         }
 
         function handleLogout() {
-            localStorage.removeItem('studentData');
-            studentData = {};
-            renderLogin();
+            sessionStorage.removeItem('studentData');
+            loggedInStudent = null;
+            showLogin();
         }
 
-        async function handleStudentLogin(event) {
-            console.log("--- handleStudentLogin started ---"); // DEBUG LOG 1
-            
-            // Prevent the default form submission (page reload)
-            event.preventDefault(); 
-            console.log("Default event prevented."); // DEBUG LOG 2
+        // --- DATA FETCHING ---
 
-            const admNo = document.getElementById('admNo').value;
-            const password = document.getElementById('password').value;
-            
-            if (!admNo || !password) {
-                showMessage('Missing Credentials', 'Please enter both Admission Number and Password.', false);
+        async function fetchAnnouncements() {
+            if (!loggedInStudent) return [];
+            showLoading('announcementList');
+
+            const response = await postData({
+                action: 'getStudentAnnouncements',
+                admNo: loggedInStudent.Admission_No
+            });
+
+            if (response.result === 'success') {
+                // ADDED LOGGING: Check the structure of the data coming from Apps Script
+                console.log('Announcements Data Received:', response.data); 
+                return response.data || [];
+            } else {
+                renderMessage('announcementList', response.message || 'Failed to load announcements.');
+                return [];
+            }
+        }
+
+        async function fetchAssignments() {
+            if (!loggedInStudent) return [];
+            showLoading('assignmentList');
+
+            const response = await postData({
+                action: 'getStudentAssignments',
+                admNo: loggedInStudent.Admission_No
+            });
+
+            if (response.result === 'success') {
+                // ADDED LOGGING: Check the structure of the data coming from Apps Script
+                console.log('Assignments Data Received:', response.data);
+                return response.data || [];
+            } else {
+                renderMessage('assignmentList', response.message || 'Failed to load assignments.');
+                return [];
+            }
+        }
+
+        // --- DASHBOARD RENDERING ---
+
+        function renderAnnouncements(announcements) {
+            const listElement = document.getElementById('announcementList');
+            if (announcements.length === 0) {
+                listElement.innerHTML = '<p class="text-gray-500 italic text-center py-4">No new announcements for your course.</p>';
                 return;
             }
 
-            const data = {
-                action: 'studentLogin',
-                admNo: admNo,
-                password: password
-            };
-
-            setLoading(true, 'Authenticating...');
-
-            try {
-                const response = await makeApiCall(data);
-
-                if (response.result === 'success') {
-                    // Save authenticated data
-                    // Ensure the keys match the spreadsheet columns (e.g., 'First Name' -> 'firstName', 'Course_Applied' -> 'course')
-                    studentData = {
-                        admNo: response.data.Admission_No,
-                        firstName: response.data['First Name'],
-                        lastName: response.data.Last_Name,
-                        email: response.data.Email,
-                        course: response.data.Course_Applied
-                    };
-                    localStorage.setItem('studentData', JSON.stringify(studentData));
-                    showMessage('Login Successful', `Welcome back, ${studentData.firstName}!`, true);
-                    renderDashboard();
-                } else {
-                    // Handle functional failure (e.g., wrong credentials)
-                    showMessage('Login Failed', response.message || 'Invalid Admission Number or Password.', false);
-                }
-            } catch (e) {
-                // Error already handled and displayed by makeApiCall
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        // --- CONTENT RENDERING ---
-
-        function renderLogin() {
-            document.getElementById('app').innerHTML = `
-                <div class="min-h-screen flex items-center justify-center w-full p-4 bg-gray-200">
-                    <div class="card w-full max-w-md">
-                        <h2 class="text-3xl font-bold text-center text-blue-600 mb-6">Student Login</h2>
-                        <form id="loginForm">
-                            <div class="mb-4">
-                                <label for="admNo" class="block text-gray-700 font-medium mb-2">Admission Number</label>
-                                <input type="text" id="admNo" name="admNo" class="form-input" required placeholder="e.g., ADM-001">
-                            </div>
-                            <div class="mb-6">
-                                <label for="password" class="block text-gray-700 font-medium mb-2">Password</label>
-                                <input type="password" id="password" name="password" class="form-input" required placeholder="••••••••">
-                            </div>
-                            <button type="submit" class="w-full py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-200">
-                                <i class="fas fa-sign-in-alt mr-2"></i> Log In
-                            </button>
-                        </form>
-                        <p class="mt-4 text-center text-sm text-gray-500">
-                            (Use your Admission No. and Password from the student sheet)
-                        </p>
-                    </div>
+            // CRITICAL: Ensure Apps Script sends 'title', 'content', and 'date'
+            listElement.innerHTML = announcements.map(announcement => `
+                <div class="border-l-4 border-yellow-500 p-3 bg-yellow-50 rounded-md">
+                    <p class="font-bold text-gray-800">${announcement.title || 'N/A: Title Missing'}</p>
+                    <p class="text-sm text-gray-600 mt-1">${announcement.content || 'N/A: Content Missing'}</p>
+                    <p class="text-xs text-gray-500 mt-2">Posted: ${announcement.date ? new Date(announcement.date).toLocaleDateString() : 'N/A'}</p>
                 </div>
-            `;
-            document.getElementById('loginForm').onsubmit = handleStudentLogin;
-            console.log("Login form event listener attached to 'loginForm'."); // DEBUG LOG 3
-        }
-
-        function renderDashboard() {
-            // Restore the main structure
-            document.getElementById('app').innerHTML = `
-                <!-- Sidebar / Navigation -->
-                <div class="sidebar w-full md:w-64 bg-white p-4 shadow-xl md:shadow-2xl flex flex-row md:flex-col justify-between md:justify-start items-center md:items-stretch">
-                    <div class="md:sticky md:top-4 w-full">
-                        <h1 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                            <i class="fas fa-graduation-cap text-2xl mr-2 text-blue-500"></i> Student Portal
-                        </h1>
-                        <p class="text-sm font-semibold text-gray-500 mb-4 truncate">${studentData.firstName} ${studentData.lastName}</p>
-                        
-                        <!-- Navigation Items -->
-                        <nav class="flex md:flex-col space-x-2 md:space-x-0 overflow-x-auto md:overflow-visible" id="navContainer">
-                            <!-- Nav items dynamically inserted below -->
-                        </nav>
-
-                        <!-- Logout Button -->
-                        <button id="logoutBtn" class="w-full mt-6 py-2 px-4 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-200">
-                            <i class="fas fa-sign-out-alt mr-2"></i> Log Out
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Content Area -->
-                <main id="contentArea" class="flex-1 p-4 md:p-10">
-                    <div id="portalContent" class="h-full"></div>
-                </main>
-            `;
-
-            // Populate navigation
-            const navItems = [
-                { tab: 'profile', icon: 'fas fa-user-circle', label: 'My Profile' },
-                { tab: 'announcements', icon: 'fas fa-bullhorn', label: 'Announcements' },
-                { tab: 'assignments', icon: 'fas fa-tasks', label: 'Assignments' },
-                { tab: 'letter', icon: 'fas fa-file-alt', label: 'Admission Letter' },
-                { tab: 'payments', icon: 'fas fa-wallet', label: 'Payments (Mock)' },
-            ];
-
-            const navContainer = document.getElementById('navContainer');
-            navContainer.innerHTML = navItems.map(item => `
-                <a class="nav-item ${item.tab === currentTab ? 'active' : ''}" data-tab="${item.tab}">
-                    <i class="${item.icon} w-6 h-6 mr-3"></i>
-                    <span class="text-sm font-medium">
-                        ${item.label}
-                    </span>
-                </a>
             `).join('');
-
-            // Bind events and load the current tab content
-            bindDashboardEvents();
-            loadTabContent(currentTab);
         }
 
-        function bindDashboardEvents() {
-            // Tab switching
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.onclick = () => {
-                    const newTab = item.getAttribute('data-tab');
-                    changeTab(newTab);
-                };
-            });
-
-            // Logout
-            document.getElementById('logoutBtn').onclick = handleLogout;
-        }
-
-        function changeTab(tabName) {
-            currentTab = tabName;
-            // Update active class in sidebar
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            const newActiveItem = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
-            if (newActiveItem) {
-                newActiveItem.classList.add('active'); 
+        function renderAssignments(assignments) {
+            const listElement = document.getElementById('assignmentList');
+            if (assignments.length === 0) {
+                listElement.innerHTML = '<p class="text-gray-500 italic text-center py-4">No assignments currently posted for your course.</p>';
+                return;
             }
-            // Load content
-            loadTabContent(tabName);
-        }
 
-        function loadTabContent(tabName) {
-            const contentDiv = document.getElementById('portalContent');
-            
-            // Clear previous content and show an inline loader if fetching
-            contentDiv.innerHTML = `
-                <div class="text-center py-20" id="inlineLoader">
-                    <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
-                    <p class="mt-4 text-gray-600">Loading ${tabName} data...</p>
-                </div>
-            `; 
-
-            switch (tabName) {
-                case 'profile':
-                    renderProfile();
-                    document.getElementById('inlineLoader').remove();
-                    break;
-                case 'announcements':
-                    fetchAndRenderAnnouncements();
-                    break;
-                case 'assignments':
-                    fetchAndRenderAssignments();
-                    break;
-                case 'letter':
-                    renderAdmissionLetter();
-                    document.getElementById('inlineLoader').remove();
-                    break;
-                case 'payments':
-                    renderPayments();
-                    document.getElementById('inlineLoader').remove();
-                    break;
-                default:
-                    document.getElementById('inlineLoader').remove();
-                    contentDiv.innerHTML = `<h2 class="text-xl font-bold">Welcome, ${studentData.firstName}!</h2><p class="mt-2 text-gray-600">Please select a section from the left navigation.</p>`;
-            }
-        }
-
-        // --- SECTION RENDERERS ---
-
-        function renderProfile() {
-            const contentDiv = document.getElementById('portalContent');
-            const data = studentData;
-
-            contentDiv.innerHTML = `
-                <div class="max-w-4xl mx-auto">
-                    <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-blue-600">My Profile</h2>
-                    
-                    <div class="card grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="col-span-1 md:col-span-2">
-                            <h3 class="text-xl font-semibold mb-3 text-gray-700"><i class="fas fa-id-card mr-2"></i> Student Details</h3>
-                        </div>
-
-                        ${renderDetail('Admission No', data.admNo, 'font-mono bg-blue-100 text-blue-800')}
-                        ${renderDetail('Full Name', `${data.firstName} ${data.lastName}`)}
-                        ${renderDetail('Email', data.email)}
-                        ${renderDetail('Course', data.course, 'text-green-700 font-bold')}
-
+            // CRITICAL: Ensure Apps Script sends 'title', 'description', and 'dueDate'
+            listElement.innerHTML = assignments.map(assignment => `
+                <div class="p-3 border border-gray-200 rounded-md hover:shadow-sm transition bg-green-50">
+                    <div class="flex justify-between items-start">
+                        <p class="font-bold text-gray-800">${assignment.title || 'N/A: Title Missing'}</p>
+                        <span class="text-sm font-medium text-red-600 bg-red-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+                            Due: ${assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'N/A'}
+                        </span>
                     </div>
-
-                    <div class="card mt-6">
-                        <h3 class="text-xl font-semibold mb-3 text-gray-700"><i class="fas fa-info-circle mr-2"></i> Quick Status</h3>
-                        <p class="text-lg text-gray-600">Payment Status: <span class="text-yellow-600 font-semibold">Pending Review</span> (Simulated)</p>
-                    </div>
+                    <p class="text-sm text-gray-600 mt-1">${assignment.description || 'N/A: Description Missing'}</p>
                 </div>
-            `;
+            `).join('');
         }
         
-        function renderDetail(label, value, valueClasses = '') {
-            return `
-                <div class="p-4 border rounded-lg bg-gray-50">
-                    <p class="text-sm font-medium text-gray-500">${label}</p>
-                    <p class="text-lg font-bold text-gray-800 ${valueClasses}">${value || 'N/A'}</p>
-                </div>
-            `;
+        async function loadDashboardData() {
+            // Fetch assignments and announcements concurrently
+            const [announcements, assignments] = await Promise.all([
+                fetchAnnouncements(),
+                fetchAssignments()
+            ]);
+
+            renderAnnouncements(announcements);
+            renderAssignments(assignments);
         }
 
-        // --- ANNOUNCEMENTS ---
+        function showDashboard() {
+            // CRITICAL FIX: Ensure we use the exact keys returned by the script for student details
+            const studentFirstName = loggedInStudent['First Name'];
+            const studentLastName = loggedInStudent['Last_Name'];
+            const studentCourse = loggedInStudent['Course_Applied'];
 
-        async function fetchAndRenderAnnouncements() {
-            const course = studentData.course;
-            const data = {
-                action: 'getAnnouncementsByCourse',
-                course: course
-            };
-            const contentDiv = document.getElementById('portalContent');
-
-            try {
-                const response = await makeApiCall(data);
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <nav class="flex justify-between items-center py-4 px-6 mb-6 card">
+                    <div class="text-xl font-bold text-gray-700">ARRIDA Student Hub</div>
+                    <button id="logoutBtn" class="bg-red-500 text-white font-semibold py-1 px-4 rounded-lg shadow hover:bg-red-600 transition">
+                        Logout
+                    </button>
+                </nav>
                 
-                let html = `<h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-blue-600">Course Announcements (${course})</h2>`;
+                <div class="p-6 bg-white rounded-lg shadow-lg mb-6">
+                    <h1 class="text-3xl font-extrabold text-gray-800">Welcome, ${studentFirstName || 'Student'} ${studentLastName || 'User'}!</h1>
+                    <p class="text-lg text-blue-600 mt-2">Course: ${studentCourse || 'N/A'}</p>
+                </div>
 
-                if (response.result === 'success' && response.data && response.data.length > 0) {
-                    html += `<div class="space-y-4">`;
-                    // Assuming keys in response.data are Course, Title, Content, Date
-                    response.data.forEach(ann => {
-                        html += `
-                            <div class="card border-l-4 border-blue-500 hover:shadow-lg transition duration-150">
-                                <p class="text-sm text-gray-500 mb-1">${ann.Date || 'N/A'}</p>
-                                <h3 class="text-xl font-semibold text-gray-900 mb-2">${ann.Title || 'No Title'}</h3>
-                                <p class="text-gray-700">${ann.Content || 'No content provided.'}</p>
-                            </div>
-                        `;
-                    });
-                    html += `</div>`;
-                } else if (response.result === 'success') {
-                    html += `<div class="card"><p class="text-gray-600">No announcements posted for your course yet.</p></div>`;
-                } else {
-                    html += `<div class="card bg-red-50"><p class="text-red-700">Error retrieving announcements: ${response.message || 'Unknown server error.'}</p></div>`;
-                }
-                contentDiv.innerHTML = html;
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            } catch (e) {
-                // Error already handled and displayed by makeApiCall
-            }
-        }
+                    <!-- Announcements Section -->
+                    <div class="card p-5">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15.414l3.182-3.182a4 4 0 000-5.656 4 4 0 00-5.656 0l-3.182 3.182m-3.182-3.182l3.182 3.182a4 4 0 010 5.656 4 4 0 01-5.656 0l-3.182-3.182z"/>
+                            </svg>
+                            Course Announcements
+                        </h2>
+                        <div id="announcementList" class="space-y-4 scroll-area overflow-y-auto pr-2">
+                            <!-- Announcements will be loaded here -->
+                        </div>
+                    </div>
 
-        // --- ASSIGNMENTS ---
-
-        async function fetchAndRenderAssignments() {
-            const course = studentData.course;
-            const data = {
-                action: 'getAssignmentsByCourse',
-                course: course
-            };
-            const contentDiv = document.getElementById('portalContent');
-
-            try {
-                const response = await makeApiCall(data);
-                
-                let html = `<h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-blue-600">Course Assignments (${course})</h2>`;
-
-                if (response.result === 'success' && response.data && response.data.length > 0) {
-                    html += `<div class="space-y-4">`;
-                    // Assuming keys in response.data are Course, Title, Description, DueDate
-                    response.data.forEach(ass => {
-                        const dueDateString = ass.DueDate;
-                        // Simple date comparison - assumes YYYY-MM-DD or similar format
-                        const isPastDue = new Date(dueDateString) < new Date();
-                        const statusClass = isPastDue ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800';
-
-                        html += `
-                            <div class="card border-l-4 border-yellow-500 hover:shadow-lg transition duration-150">
-                                <div class="flex justify-between items-start mb-2">
-                                    <h3 class="text-xl font-semibold text-gray-900">${ass.Title || 'No Title'}</h3>
-                                    <span class="px-3 py-1 text-xs font-medium rounded-full ${statusClass}">
-                                        Due: ${dueDateString || 'N/A'}
-                                    </span>
-                                </div>
-                                <p class="text-gray-600 mb-3">${ass.Description || 'No description provided.'}</p>
-                                <button onclick="showMessage('Submission Mock', 'This is a mock functionality. In a real app, this would open a file upload interface.', true)" class="text-sm font-medium text-blue-500 hover:text-blue-700">
-                                    <i class="fas fa-upload mr-1"></i> Submit Assignment (Mock)
-                                </button>
-                            </div>
-                        `;
-                    });
-                    html += `</div>`;
-                } else if (response.result === 'success') {
-                    html += `<div class="card"><p class="text-gray-600">No assignments posted for your course yet.</p></div>`;
-                } else {
-                    html += `<div class="card bg-red-50"><p class="text-red-700">Error retrieving assignments: ${response.message || 'Unknown server error.'}</p></div>`;
-                }
-                contentDiv.innerHTML = html;
-
-            } catch (e) {
-                // Error already handled and displayed by makeApiCall
-            }
-        }
-
-
-        // --- ADMISSION LETTER ---
-
-        function handleDownloadLetter() {
-             const admNo = studentData.admNo;
-             const course = studentData.course;
-
-            // Mock the API call for letter generation (We use a mock download in the frontend)
-            const data = {
-                action: 'generateLetter',
-                admNo: admNo
-            };
-
-            setLoading(true, 'Preparing Admission Letter...');
-
-            makeApiCall(data).then(response => {
-                setLoading(false);
-                if (response.result === 'success' || response.result === 'error') {
-                    // Mock file content generation
-                    showMessage('Letter Ready', 'The Admission Letter has been generated. Starting mock download...', true);
-                    
-                    const content = `
-                        OFFICIAL ADMISSION LETTER\n
-                        \n
-                        Date: ${new Date().toLocaleDateString()}\n
-                        \n
-                        Dear ${studentData.firstName} ${studentData.lastName},\n
-                        \n
-                        We are pleased to inform you of your provisional admission into the ${course} program.\n
-                        \n
-                        Admission Number: ${admNo}\n
-                        \n
-                        Please proceed to the payment section to settle all fees.\n
-                        \n
-                        Sincerely,\n
-                        The Admissions Office
-                    `;
-                    
-                    // Create a blob and trigger download
-                    const blob = new Blob([content], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `Admission_Letter_${admNo}.txt`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-
-
-                } else if (response.result !== 'error') {
-                     // If it was a functional error from the backend (not network error)
-                     showMessage('Letter Generation Failed', response.message || 'The server could not generate your letter at this time. Please check back later.', false);
-                }
-            }).catch(e => {
-                // Error already handled and displayed by makeApiCall
-                setLoading(false);
-            });
-        }
-
-
-        function renderAdmissionLetter() {
-            const contentDiv = document.getElementById('portalContent');
-            const data = studentData;
-
-            contentDiv.innerHTML = `
-                <div class="max-w-4xl mx-auto">
-                    <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-blue-600">Admission Letter</h2>
-                    
-                    <div class="card">
-                        <p class="text-gray-700 mb-4">
-                            You can generate and download your official admission letter for the 
-                            <span class="font-bold text-blue-600">${data.course}</span> program here.
-                        </p>
-                        <ul class="list-disc list-inside space-y-2 text-gray-600 mb-6 p-4 bg-blue-50 rounded-lg">
-                            <li><i class="fas fa-exclamation-circle text-yellow-500 mr-2"></i> This letter is provisional pending full fee payment and document verification.</li>
-                            <li><i class="fas fa-file-pdf text-red-500 mr-2"></i> The downloaded file will be a mock text document in this application.</li>
-                        </ul>
-
-                        <button id="downloadLetterBtn" class="w-full md:w-auto py-3 px-6 bg-blue-500 text-white font-bold rounded-lg shadow-lg hover:bg-blue-600 transition duration-200">
-                            <i class="fas fa-download mr-2"></i> Download Admission Letter
-                        </button>
-
-                        <div id="letterStatus" class="mt-4 text-sm text-gray-500">
-                            <i class="fas fa-clock mr-1"></i> Click the button above to initiate the download.
+                    <!-- Assignments Section -->
+                    <div class="card p-5">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2m-9 0V3h4v2m-2 2v12m-2-6h6"/>
+                            </svg>
+                            Upcoming Assignments
+                        </h2>
+                        <div id="assignmentList" class="space-y-4 scroll-area overflow-y-auto pr-2">
+                            <!-- Assignments will be loaded here -->
                         </div>
                     </div>
                 </div>
             `;
-            document.getElementById('downloadLetterBtn').onclick = handleDownloadLetter;
-        }
-
-        // --- PAYMENTS (Mocked as per previous requirements) ---
-
-        function renderPayments() {
-            const contentDiv = document.getElementById('portalContent');
-            const data = studentData;
-
-            contentDiv.innerHTML = `
-                <div class="max-w-4xl mx-auto">
-                    <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-blue-600">Fee Payment Section (Mock)</h2>
-                    
-                    <div class="card mb-6">
-                        <h3 class="text-xl font-semibold mb-3 text-gray-700"><i class="fas fa-money-check-alt mr-2"></i> Pending Balances</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                             ${renderFeeDetail('Tuition Fee', '₦50,000', 'text-blue-500')}
-                             ${renderFeeDetail('Exam Fee', '₦5,000', 'text-yellow-500')}
-                             ${renderFeeDetail('Acceptance Fee', '₦10,000', 'text-green-500')}
-                        </div>
-                        <p class="mt-6 text-xl font-bold text-gray-800">Total Outstanding: ₦65,000</p>
-                        <div class="mt-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-800">
-                            <i class="fas fa-info-circle mr-2"></i> Note: This is a temporary section. All payments are mock transactions and will not be recorded in the live sheet.
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3 class="text-xl font-semibold mb-3 text-gray-700"><i class="fas fa-credit-card mr-2"></i> Record Payment</h3>
-                        <form id="paymentForm">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="mb-4">
-                                    <label for="paymentType" class="block text-gray-700 font-medium mb-2">Fee Type</label>
-                                    <select id="paymentType" name="paymentType" class="form-input" required>
-                                        <option value="">Select Fee Type</option>
-                                        <option value="tuition">Tuition Fee</option>
-                                        <option value="exam">Exam Fee</option>
-                                        <option value="acceptance">Acceptance Fee</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                <div class="mb-4">
-                                    <label for="amount" class="block text-gray-700 font-medium mb-2">Amount Paid (₦)</label>
-                                    <input type="number" id="amount" name="amount" class="form-input" required placeholder="e.g., 50000" min="100">
-                                </div>
-                            </div>
-                             <div class="mb-6">
-                                <label for="paymentRef" class="block text-gray-700 font-medium mb-2">Transaction Reference / Receipt No.</label>
-                                <input type="text" id="paymentRef" name="paymentRef" class="form-input" required placeholder="e.g., BANKREF123456">
-                            </div>
-
-                            <button type="submit" class="w-full py-3 bg-green-500 text-white font-bold rounded-lg shadow-lg hover:bg-green-600 transition duration-200">
-                                <i class="fas fa-check-circle mr-2"></i> Submit Mock Payment
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            `;
-            document.getElementById('paymentForm').onsubmit = handleMockPaymentSubmission;
-        }
-
-        function renderFeeDetail(label, value, colorClass) {
-            return `
-                <div class="p-4 border rounded-lg bg-white shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">${label}</p>
-                    <p class="text-xl font-bold ${colorClass}">${value}</p>
-                </div>
-            `;
-        }
-
-        function handleMockPaymentSubmission(event) {
-            event.preventDefault();
-            const form = event.target;
-            const type = form.paymentType.value;
-            const amount = form.amount.value;
-            const ref = form.paymentRef.value;
-
-            // Simple client-side validation check
-            if (amount <= 0 || !ref) {
-                showMessage('Error', 'Please enter a valid amount and transaction reference.', false);
-                return;
-            }
-
-            // Mock success message
-            showMessage(
-                'Mock Payment Recorded', 
-                `Thank you, ${studentData.firstName}. Your mock payment of ₦${amount} for '${type}' fee, with reference '${ref}', has been submitted for administrative review.`, 
-                true
-            );
-            form.reset();
+            document.getElementById('logoutBtn').onclick = handleLogout;
+            loadDashboardData(); // Start fetching data
         }
 
 
@@ -730,4 +366,3 @@
 
 </body>
 </html>
-

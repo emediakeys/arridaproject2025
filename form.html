@@ -3,172 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Admission Portal with Paystack</title>
-    <!-- Load Tailwind CSS -->
+    <title>Student Admission Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Paystack Standard Inline Script -->
-    <script src="https://js.paystack.co/v1/inline.js"></script>
     <style>
-        /* Custom styles for better aesthetics */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .container {
-            max-width: 900px;
-            width: 100%;
-            margin: 2rem;
-            background: white;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
+        /* Custom styles for better form aesthetics and ensuring file input visibility */
         .form-group label {
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 0.5rem;
-            display: block;
+            transition: color 0.2s;
         }
-        .form-group input[type="text"],
-        .form-group input[type="email"],
-        .form-group select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            transition: border-color 0.2s;
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: #3b82f6; /* Blue-500 on focus */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* Focus ring */
         }
-        .form-group input:focus, .form-group select:focus {
-            border-color: #3b82f6;
-            outline: none;
-            box-shadow: 0 0 0 1px #3b82f6;
-        }
-        .row {
-            display: flex;
-            gap: 1rem;
-        }
-        .col {
-            flex: 1;
-            margin-bottom: 1rem;
-        }
-        fieldset {
-            border: 1px solid #e5e7eb;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border-radius: 0.75rem;
-        }
-        legend {
-            font-size: 1.25rem;
-            font-weight: 700;
-            padding: 0 0.5rem;
-            color: #1f2937;
-        }
-        /* Custom Modal Styling */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none; /* Hidden by default */
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 0.75rem;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        /* Style for the disabled submit button */
+        .btn-submit:disabled {
+            @apply bg-gray-400 cursor-not-allowed;
         }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 p-4 sm:p-8">
 
-<div class="container">
+<div class="max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-2xl">
     <header class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">Student Application Form</h1>
-        <p class="text-gray-500">Complete all sections and make the required payment to submit.</p>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-800">Student Application Form</h1>
+        <p class="text-gray-500 mt-2">Please fill in all details carefully to complete your admission.</p>
     </header>
-
-    <!-- Success/Error Modal -->
-    <div id="statusModal" class="modal">
-        <div class="modal-content">
-            <h3 id="modalTitle" class="text-2xl font-bold mb-4"></h3>
-            <p id="modalMessage" class="mb-6 text-gray-600"></p>
-            <button id="modalCloseBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-150">Close</button>
-        </div>
-    </div>
 
     <form id="admissionForm">
         
-        <fieldset>
-            <legend>1. Biodata & Passport</legend>
+        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8">
+            <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">1. Biodata & Passport</legend>
+            
             <div class="form-group mb-4">
-                <label for="passport">Upload Passport Photograph (Max 2MB)</label>
-                <input type="file" id="passport" accept="image/png, image/jpeg" required>
-                <div id="preview-container" class="mt-2 w-24 h-24 rounded-full overflow-hidden border border-gray-300 flex items-center justify-center">
-                    <img id="passport-preview" src="https://placehold.co/96x96/e5e7eb/6b7280?text=Photo" alt="Passport Preview" class="object-cover w-full h-full" onerror="this.src='https://placehold.co/96x96/e5e7eb/6b7280?text=Photo';">
-                </div>
+                <label for="passport" class="block text-sm font-medium text-gray-700 mb-2">Upload Passport Photograph (Max 2MB)</label>
+                <input type="file" id="passport" accept="image/png, image/jpeg" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <div id="preview-container" class="mt-4">
+                    </div>
                 <input type="hidden" id="passportBase64">
             </div>
             
-            <div class="row">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="col">
-                    <label>First Name</label>
-                    <input type="text" name="firstName" required class="mt-1">
+                    <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
+                    <input type="text" id="firstName" name="firstName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                 </div>
                 <div class="col">
-                    <label>Last Name</label>
-                    <input type="text" name="lastName" required class="mt-1">
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col">
-                    <label>Email Address</label>
-                    <input type="email" name="email" id="email" required class="mt-1">
-                </div>
-                <div class="col">
-                    <label>Phone Number</label>
-                    <input type="text" name="phone" required class="mt-1">
+                    <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>
+                    <input type="text" id="lastName" name="lastName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                 </div>
             </div>
 
-            <div class="row">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div class="col">
-                    <label>Gender</label>
-                    <select name="gender" required class="mt-1">
+                    <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                    <input type="date" id="dob" name="dob" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div class="col">
+                    <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
+                    <select id="gender" name="gender" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                         <option value="">Select...</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                     </select>
                 </div>
-                <div class="col">
-                    <label>Date of Birth</label>
-                    <input type="date" name="dob" required class="mt-1">
-                </div>
-            </div>
-            
-            <div class="form-group mb-4">
-                <label>Address</label>
-                <textarea name="address" rows="3" required class="w-full p-2 border border-gray-300 rounded-lg mt-1"></textarea>
             </div>
         </fieldset>
-
-        <fieldset>
-            <legend>2. Academic & Document Uploads</legend>
+        
+        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8">
+            <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">2. Contact & Login Details</legend>
+            
             <div class="form-group mb-4">
-                <label>Course Applied For</label>
-                <select name="courseApplied" required class="mt-1">
-                    <option value="">Select...</option>
+                <label for="address" class="block text-sm font-medium text-gray-700">Home Address</label>
+                <textarea id="address" name="address" rows="2" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="col">
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                    <input type="email" id="email" name="email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div class="col">
+                    <label for="password" class="block text-sm font-medium text-gray-700">Create Password</label>
+                    <input type="password" id="password" name="password" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <small class="block text-xs text-gray-500 mt-1">You will use this to login to the dashboard.</small>
+                </div>
+            </div>
+        </fieldset>
+        
+        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8">
+            <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">3. Background Information & Documents</legend>
+            
+            <div class="form-group mb-4">
+                <label for="course" class="block text-sm font-medium text-gray-700">Course Applying For</label>
+                <select name="course" id="course" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <option value="">-- Select Course --</option>
                     <option value="Community Health Extension Workers">Community Health Extension Workers</option>
                     <option value="Public Health">Public Health</option>
                     <option value="Pharmacy Technician">Pharmacy Technician</option>
@@ -176,270 +103,246 @@
                 </select>
             </div>
 
-            <div class="row">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div class="col">
-                    <label for="birthCert">Upload Birth Certificate (Max 2MB)</label>
-                    <input type="file" id="birthCert" accept="application/pdf,image/*" required>
+                    <label for="birthCert" class="block text-sm font-medium text-gray-700">Upload Birth Certificate (PDF/Image)</label>
+                    <input type="file" id="birthCert" accept=".pdf, image/*" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
                     <input type="hidden" id="birthCertBase64">
                 </div>
                 <div class="col">
-                    <label for="olevel">Upload O'Level Result (Max 2MB)</label>
-                    <input type="file" id="olevel" accept="application/pdf,image/*" required>
+                    <label for="olevel" class="block text-sm font-medium text-gray-700">Upload O'Level Result (PDF/Image)</label>
+                    <input type="file" id="olevel" accept=".pdf, image/*" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
                     <input type="hidden" id="olevelBase64">
                 </div>
             </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="col">
+                    <label for="nokName" class="block text-sm font-medium text-gray-700">Next of Kin Name</label>
+                    <input type="text" id="nokName" name="nokName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div class="col">
+                    <label for="nokPhone" class="block text-sm font-medium text-gray-700">Next of Kin Phone</label>
+                    <input type="tel" id="nokPhone" name="nokPhone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+            </div>
+
+            <div class="form-group mb-4">
+                <label for="sponsor" class="block text-sm font-medium text-gray-700">Sponsor Name</label>
+                <input type="text" id="sponsor" name="sponsor" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+
+            <div class="form-group">
+                <label for="prevSchool" class="block text-sm font-medium text-gray-700">Previous School Attended</label>
+                <input type="text" id="prevSchool" name="prevSchool" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
         </fieldset>
         
-        <fieldset class="text-center">
-            <legend>3. Payment Summary</legend>
-            <div class="text-2xl font-bold text-green-600 mb-4">
-                Application Fee: <span id="feeDisplay">₦5,000.00</span>
-            </div>
-            <p class="text-sm text-gray-500">
-                You will be redirected to the Paystack payment gateway upon clicking 'Pay & Submit'.
-            </p>
-        </fieldset>
-
-        <div class="text-center mt-8">
-            <button type="submit" id="submitBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-200 disabled:opacity-50">
-                Pay & Submit Application
+        <div class="payment-section text-center bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+            <p class="text-lg font-bold text-gray-800 mb-4">Application Fee: <strong class="text-green-600">₦7,500</strong></p>
+            
+            <button type="button" id="payBtn" class="btn-pay w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-150 ease-in-out shadow-md">
+                Pay ₦7,500 Now
             </button>
-            <div id="loading" style="display: none;" class="mt-4 text-indigo-600 font-semibold">
-                Processing payment and submission... Please wait.
-            </div>
+            <p id="payment-status" class="mt-4 text-green-700 font-bold hidden">
+                <svg class="inline w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Payment Successful!
+            </p>
+
+            <hr class="my-6 border-gray-300">
+
+            <button type="submit" id="submitBtn" class="btn-submit w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 px-8 rounded-lg text-lg transition duration-150 ease-in-out shadow-xl" disabled>
+                Submit Application
+            </button>
         </div>
+
     </form>
+    <div id="loading" class="text-center mt-6 p-4 bg-blue-100 text-blue-800 rounded-md font-semibold hidden">
+        Processing Application...
+    </div>
 </div>
 
-<script type="module">
-    // --- Configuration ---
-    // NOTE: Replace this with your actual Google Apps Script URL
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGQORz9mdic63hpRIYJ9UiK8AyjzeFWMDYwH-f_iIWo4gn9afr38bVLE2piJDpY4oY4Q/exec'; 
-    // NOTE: Replace this with your actual Paystack Public Key
-    const PAYSTACK_PUBLIC_KEY = 'pk_test_29f23a0e0bde6c074ae9efb019002a8d95e721b4'; 
-    // Application Fee in NGN (5000 NGN)
-    const APPLICATION_FEE_NGN = 5000;
-    // Paystack requires amount in kobo (NGN * 100)
-    const APPLICATION_FEE_KOBO = APPLICATION_FEE_NGN * 100;
-
-    // --- DOM Elements ---
-    const form = document.getElementById('admissionForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const loadingDiv = document.getElementById('loading');
-    const feeDisplay = document.getElementById('feeDisplay');
-    const passportInput = document.getElementById('passport');
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+    // --- JAVASCRIPT LOGIC (Original form.js content) ---
+    document.addEventListener('DOMContentLoaded', function() {
     
-    // Base64 hidden fields
-    const passportBase64Field = document.getElementById('passportBase64');
-    const birthCertBase64Field = document.getElementById('birthCertBase64');
-    const olevelBase64Field = document.getElementById('olevelBase64');
-
-    // --- Helper Functions ---
-
-    /**
-     * Converts a file input (image or PDF) to a Base64 string for embedding.
-     * @param {File} file - The file object from the input.
-     * @returns {Promise<string>} Base64 string (including data URI prefix).
-     */
-    const toBase64 = (file) => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
-
-    /**
-     * Custom Modal Function (replaces alert())
-     */
-    function showStatusModal(title, message, isSuccess = true) {
-        const modal = document.getElementById('statusModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalMessage = document.getElementById('modalMessage');
-        const modalCloseBtn = document.getElementById('modalCloseBtn');
-
-        modalTitle.textContent = title;
-        modalMessage.textContent = message;
-
-        modalTitle.className = isSuccess ? 'text-2xl font-bold mb-4 text-green-600' : 'text-2xl font-bold mb-4 text-red-600';
+        // --- CONFIGURATION ---
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGQORz9mdic63hpRIYJ9UiK8AyjzeFWMDYwH-f_iIWo4gn9afr38bVLE2piJDpY4oY4Q/exec"; 
         
-        modal.style.display = 'flex';
-        modalCloseBtn.onclick = () => {
-            modal.style.display = 'none';
-            if (isSuccess) {
-                // Optionally redirect or reset on success
-                form.reset();
-            }
-        };
-        // Close modal when clicking outside
-        modal.onclick = (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
-        };
-    }
+        // **PAYSTACK CONFIGURATION**
+        // ⚠️ REPLACE THIS WITH YOUR ACTUAL PAYSTACK PUBLIC KEY
+        const PAYSTACK_PUBLIC_KEY = "pk_test_29f23a0e0bde6c074ae9efb019002a8d95e721b4"; 
+        const APPLICATION_FEE_NAIRA = 7500;
+        // Paystack takes amount in kobo (100 kobo = 1 Naira)
+        const APPLICATION_FEE_KOBO = APPLICATION_FEE_NAIRA * 100;
+        
+        // --- Element and Field Variables ---
+        const payBtn = document.getElementById('payBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const paymentStatus = document.getElementById('payment-status');
+        const form = document.getElementById('admissionForm');
+        const emailInput = document.getElementById('email'); // To get the student's email for Paystack
+        
+        // Passport Elements
+        const passportInput = document.getElementById('passport');
+        const passportBase64Field = document.getElementById('passportBase64');
+        const previewContainer = document.getElementById('preview-container');
+        
+        // Document Elements
+        const birthCertInput = document.getElementById('birthCert');
+        const birthCertBase64Field = document.getElementById('birthCertBase64');
+        const olevelInput = document.getElementById('olevel');
+        const olevelBase64Field = document.getElementById('olevelBase64');
+        
+        // Holds the transaction reference after successful payment
+        let transactionReference = null;
 
-    // --- File Preview Logic ---
-    passportInput.addEventListener('change', function() {
-        const file = this.files[0];
-        const preview = document.getElementById('passport-preview');
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                preview.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        } else {
-            preview.src = 'https://placehold.co/96x96/e5e7eb/6b7280?text=Photo';
+        // --- 1. FILE TO BASE64 CONVERSION LOGIC ---
+        
+        function convertFileToBase64(fileInput, base64Field, previewElement = null) {
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        base64Field.value = e.target.result;
+                        if (previewElement) {
+                            // Tailwind styling for image preview
+                            previewElement.innerHTML = `<img src="${e.target.result}" alt="Passport Preview" class="max-w-[150px] mt-2 rounded-md border-4 border-blue-200 shadow-lg">`;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
         }
-    });
 
-    // --- Paystack Integration ---
-
-    /**
-     * Initiates the Paystack payment gateway popup.
-     * @param {string} email - Applicant's email address.
-     * @param {number} amountKobo - Payment amount in kobo.
-     * @param {Function} successCallback - Function to run on successful payment.
-     */
-    function payWithPaystack(email, amountKobo, successCallback) {
-        let handler = PaystackPop.setup({
-            key: PAYSTACK_PUBLIC_KEY,
-            email: email,
-            amount: amountKobo,
-            currency: 'NGN', 
-            // reference: '' // Paystack can generate a unique reference if omitted
-            metadata: {
-                custom_fields: [
-                    {
-                        display_name: "Application Fee",
-                        variable_name: "application_fee",
-                        value: APPLICATION_FEE_NGN
-                    }
-                ]
-            },
-            callback: function(response){
-                // Payment was successful! Call the form submission logic.
-                successCallback(response.reference);
-            },
-            onClose: function(){
-                // User closed the payment popup
-                loadingDiv.style.display = 'none';
-                submitBtn.disabled = false;
-                showStatusModal("Payment Cancelled", "The payment popup was closed. Please try again to submit your application.", false);
-            }
-        });
-        handler.openIframe();
-    }
-
-
-    // --- Form Submission Logic (Now triggered by Paystack success) ---
-
-    async function handleFormSubmission(transactionReference) {
-        // 1. Gather all form data
-        const formData = new FormData(form);
-        const dataObject = {};
-        formData.forEach((value, key) => dataObject[key] = value);
-
-        // 2. Add the crucial Base64 documents and Payment Reference manually
-        dataObject['passportBase64'] = passportBase64Field.value;
-        dataObject['birthCertBase64'] = birthCertBase64Field.value;
-        dataObject['olevelBase64'] = olevelBase64Field.value;
-        dataObject['paymentRef'] = transactionReference; // Paystack reference
-
-        // 3. Send the JSON data to the Google Apps Script Web App
-        try {
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(dataObject)
+        convertFileToBase64(passportInput, passportBase64Field, previewContainer);
+        convertFileToBase64(birthCertInput, birthCertBase64Field);
+        convertFileToBase64(olevelInput, olevelBase64Field);
+        
+        // --- 2. PAYSTACK INTEGRATION ---
+        
+        payBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Temporary validation for required fields
+            const requiredFields = form.querySelectorAll('[required]');
+            let allFilled = true;
+            requiredFields.forEach(field => {
+                // We only check if basic fields like name/email are filled before payment, 
+                // but the form's checkValidity() handles all required fields.
+                if (field.value.trim() === '' && field.id !== 'passport' && field.id !== 'birthCert' && field.id !== 'olevel') {
+                    allFilled = false;
+                }
             });
 
-            const data = await response.json();
-            loadingDiv.style.display = 'none';
+            const studentEmail = emailInput.value.trim();
 
-            if(data.result === "success") {
-                showStatusModal(
-                    "Submission Successful!", 
-                    "Your Admission Number is: " + data.admNo + ". Check your email shortly for the receipt.",
-                    true
-                );
-            } else {
-                // Submission failed *after* successful payment
-                showStatusModal(
-                    "Submission Error", 
-                    "Payment was successful, but application submission failed: " + data.message + ". Please contact support with Payment Ref: " + transactionReference, 
-                    false
-                );
+            if (!studentEmail || !allFilled) {
+                alert("Please fill in your name and a valid email address first.");
+                emailInput.focus();
+                return;
             }
 
-        } catch (error) {
-            console.error('Network or Server Error during submission:', error);
-            loadingDiv.style.display = 'none';
-            showStatusModal(
-                "Network Error", 
-                "A network error occurred during submission. Please check your connection and contact support with Payment Ref: " + transactionReference, 
-                false
-            );
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Pay & Submit Application";
-        }
-    }
+            payBtn.textContent = "Opening Payment...";
+            payBtn.disabled = true;
 
+            const handler = PaystackPop.setup({
+                key: PAYSTACK_PUBLIC_KEY,
+                email: studentEmail,
+                amount: APPLICATION_FEE_KOBO,
+                currency: 'NGN',
+                ref: '' + Math.floor((Math.random() * 1000000000) + 1), // Unique transaction reference
+                metadata: {
+                    custom_fields: [{
+                        display_name: "Application Fee",
+                        variable_name: "application_fee",
+                        value: APPLICATION_FEE_NAIRA
+                    }]
+                },
+                callback: function(response){
+                    // Payment was successful. 
+                    transactionReference = response.reference;
+                    
+                    payBtn.classList.add('hidden'); // Hide pay button using Tailwind class
+                    paymentStatus.classList.remove('hidden'); // Show success message
+                    
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Submit Application (Payment Confirmed)";
+                    
+                    alert("Payment Successful! Reference: " + transactionReference + ". You can now submit your form.");
+                },
+                onClose: function(){
+                    // User closed the popup
+                    payBtn.textContent = `Pay ₦${APPLICATION_FEE_NAIRA} Now`;
+                    payBtn.disabled = false;
+                    alert('Payment cancelled. You must pay to submit the form.');
+                }
+            });
 
-    // --- Main Form Event Listener (Triggers Paystack) ---
+            handler.openIframe(); 
+        });
 
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
+        // --- 3. HANDLE FORM SUBMISSION ---
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            
+            if (!transactionReference) {
+                alert("Please complete the ₦7,500 payment before submitting.");
+                return; 
+            }
 
-        // 1. Disable button and show loading
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Loading...";
-        loadingDiv.style.display = 'block';
+            document.getElementById('loading').classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Sending Data...";
 
-        const emailInput = document.getElementById('email');
-        const email = emailInput.value.trim();
+            // Collect all data from the form fields
+            const formData = new FormData(form);
+            const dataObject = {};
+            formData.forEach((value, key) => dataObject[key] = value);
 
-        if (!email) {
-            loadingDiv.style.display = 'none';
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Pay & Submit Application";
-            showStatusModal("Validation Error", "Please enter a valid email address.", false);
-            return;
-        }
+            // Add the crucial Base64 documents and Payment Reference manually
+            dataObject['passportBase64'] = passportBase64Field.value;
+            dataObject['birthCertBase64'] = birthCertBase64Field.value;
+            dataObject['olevelBase64'] = olevelBase64Field.value;
+            dataObject['paymentRef'] = transactionReference; // **NEW: Send the Paystack reference**
 
-        try {
-            // 2. Convert files to Base64 first
-            const [passportBase64, birthCertBase64, olevelBase64] = await Promise.all([
-                toBase64(document.getElementById('passport').files[0]),
-                toBase64(document.getElementById('birthCert').files[0]),
-                toBase64(document.getElementById('olevel').files[0])
-            ]);
+            // Send the JSON data to the Google Apps Script Web App
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(dataObject)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').classList.add('hidden');
+                if(data.result === "success") {
+                    alert("Success! Your Admission Number is: " + data.admNo + ". Check your email shortly for the receipt.");
+                    form.reset();
+                    // Reset UI after successful submission
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = "Submit Application";
+                    payBtn.classList.remove('hidden');
+                    paymentStatus.classList.add('hidden');
+                    previewContainer.innerHTML = '';
+                    transactionReference = null;
 
-            // Store Base64 strings in hidden fields
-            passportBase64Field.value = passportBase64;
-            birthCertBase64Field.value = birthCertBase64;
-            olevelBase64Field.value = olevelBase64;
+                } else {
+                    alert("Submission Error: " + data.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Try Submitting Again";
+                }
+            })
+            .catch(error => {
+                console.error('Network Error:', error);
+                alert("A network error occurred. Please check your connection and try again.");
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Try Submitting Again";
+            });
+        });
 
-            // 3. Initiate Paystack payment
-            payWithPaystack(email, APPLICATION_FEE_KOBO, handleFormSubmission);
-
-            // Note: The loading indicator stays on until Paystack callback/onClose is executed.
-
-        } catch (error) {
-            console.error('File conversion error:', error);
-            loadingDiv.style.display = 'none';
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Pay & Submit Application";
-            showStatusModal("File Error", "Could not process all file uploads. Please ensure all files are under 2MB.", false);
-        }
     });
-
-    // --- Initial Setup ---
-    feeDisplay.textContent = `₦${APPLICATION_FEE_NGN.toLocaleString('en-NG')}.00`;
-
 </script>
 </body>
 </html>

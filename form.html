@@ -207,8 +207,8 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "YOUR_GOOGLE_WEB_APP_URL_HERE"; // <<< REMEMBER TO REPLACE THIS
-    const PAYSTACK_PUBLIC_KEY = "YOUR_PAYSTACK_PUBLIC_KEY_HERE"; // <<< REMEMBER TO REPLACE THIS
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGQORz9mdic63hpRIYJ9UiK8AyjzeFWMDYwH-f_iIWo4gn9afr38bVLE2piJDpY4oY4Q/exec"; // <<< REMEMBER TO REPLACE THIS
+    const PAYSTACK_PUBLIC_KEY = "Ypk_test_29f23a0e0bde6c074ae9efb019002a8d95e721b4"; // <<< REMEMBER TO REPLACE THIS
     const APPLICATION_FEE_NAIRA = 7500;
     const APPLICATION_FEE_KOBO = APPLICATION_FEE_NAIRA * 100;
     
@@ -322,7 +322,7 @@
 
         try {
             const handler = PaystackPop.setup({
-                key: pk_test_29f23a0e0bde6c074ae9efb019002a8d95e721b4,
+                key: PAYSTACK_PUBLIC_KEY,
                 email: email,
                 amount: APPLICATION_FEE_KOBO,
                 currency: 'NGN',

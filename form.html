@@ -44,22 +44,22 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="col">
                     <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
-                    <input type="text" id="firstName" name="firstName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <input type="text" id="firstName" **name="firstName"** required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                 </div>
                 <div class="col">
                     <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>
-                    <input type="text" id="lastName" name="lastName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <input type="text" id="lastName" **name="lastName"** required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div class="col">
                     <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
-                    <input type="date" id="dob" name="dob" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <input type="date" id="dob" **name="dob"** required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                 </div>
                 <div class="col">
                     <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
-                    <select id="gender" name="gender" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <select id="gender" **name="gender"** required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                         <option value="">Select...</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -73,17 +73,17 @@
             
             <div class="form-group mb-4">
                 <label for="address" class="block text-sm font-medium text-gray-700">Home Address</label>
-                <textarea id="address" name="address" rows="2" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
+                <textarea id="address" **name="address"** rows="2" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="col">
                     <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
-                    <input type="email" id="email" name="email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <input type="email" id="email" **name="email"** required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                 </div>
                 <div class="col">
                     <label for="password" class="block text-sm font-medium text-gray-700">Create Password</label>
-                    <input type="password" id="password" name="password" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <input type="password" id="password" **name="password"** required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                     <small class="block text-xs text-gray-500 mt-1">You will use this to login to the dashboard.</small>
                 </div>
             </div>
@@ -94,7 +94,7 @@
             
             <div class="form-group mb-4">
                 <label for="course" class="block text-sm font-medium text-gray-700">Course Applying For</label>
-                <select name="course" id="course" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                <select **name="course"** id="course" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                     <option value="">-- Select Course --</option>
                     <option value="Community Health Extension Workers">Community Health Extension Workers</option>
                     <option value="Public Health">Public Health</option>
@@ -119,22 +119,22 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div class="col">
                     <label for="nokName" class="block text-sm font-medium text-gray-700">Next of Kin Name</label>
-                    <input type="text" id="nokName" name="nokName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <input type="text" id="nokName" **name="nokName"** required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                 </div>
                 <div class="col">
                     <label for="nokPhone" class="block text-sm font-medium text-gray-700">Next of Kin Phone</label>
-                    <input type="tel" id="nokPhone" name="nokPhone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <input type="tel" id="nokPhone" **name="nokPhone"** required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                 </div>
             </div>
 
             <div class="form-group mb-4">
                 <label for="sponsor" class="block text-sm font-medium text-gray-700">Sponsor Name</label>
-                <input type="text" id="sponsor" name="sponsor" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                <input type="text" id="sponsor" **name="sponsor"** required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
             </div>
 
             <div class="form-group">
                 <label for="prevSchool" class="block text-sm font-medium text-gray-700">Previous School Attended</label>
-                <input type="text" id="prevSchool" name="prevSchool" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                <input type="text" id="prevSchool" **name="prevSchool"** required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
             </div>
         </fieldset>
         
@@ -168,6 +168,7 @@
     document.addEventListener('DOMContentLoaded', function() {
     
         // --- CONFIGURATION ---
+        // ⚠️ ENSURE THIS URL IS THE LATEST DEPLOYMENT URL FOR YOUR GOOGLE APPS SCRIPT
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGQORz9mdic63hpRIYJ9UiK8AyjzeFWMDYwH-f_iIWo4gn9afr38bVLE2piJDpY4oY4Q/exec"; 
         
         // **PAYSTACK CONFIGURATION**
@@ -226,21 +227,14 @@
         payBtn.addEventListener('click', function(e) {
             e.preventDefault();
             
-            // Temporary validation for required fields
-            const requiredFields = form.querySelectorAll('[required]');
-            let allFilled = true;
-            requiredFields.forEach(field => {
-                // We only check if basic fields like name/email are filled before payment, 
-                // but the form's checkValidity() handles all required fields.
-                if (field.value.trim() === '' && field.id !== 'passport' && field.id !== 'birthCert' && field.id !== 'olevel') {
-                    allFilled = false;
-                }
-            });
-
+            // Basic client-side check for critical fields before initiating payment
             const studentEmail = emailInput.value.trim();
+            const studentFirstName = document.getElementById('firstName').value.trim();
+            const studentLastName = document.getElementById('lastName').value.trim();
 
-            if (!studentEmail || !allFilled) {
-                alert("Please fill in your name and a valid email address first.");
+
+            if (!studentEmail || !studentFirstName || !studentLastName) {
+                alert("Please fill in your first name, last name, and a valid email address before paying.");
                 emailInput.focus();
                 return;
             }
@@ -294,27 +288,41 @@
                 return; 
             }
 
+            // Client-side validation: Check all required fields again, including files
+            if (!form.checkValidity()) {
+                 alert("Please fill in all required fields and upload all required documents before submitting.");
+                 return;
+            }
+
+
             document.getElementById('loading').classList.remove('hidden');
             submitBtn.disabled = true;
             submitBtn.textContent = "Sending Data...";
 
-            // Collect all data from the form fields
+            // Collect all data from the form fields using 'name' attributes
             const formData = new FormData(form);
             const dataObject = {};
+            // CRITICAL: Ensure values are captured using the 'name' attribute
             formData.forEach((value, key) => dataObject[key] = value);
 
             // Add the crucial Base64 documents and Payment Reference manually
             dataObject['passportBase64'] = passportBase64Field.value;
             dataObject['birthCertBase64'] = birthCertBase64Field.value;
             dataObject['olevelBase64'] = olevelBase64Field.value;
-            dataObject['paymentRef'] = transactionReference; // **NEW: Send the Paystack reference**
+            dataObject['paymentRef'] = transactionReference; // **Send the Paystack reference**
 
             // Send the JSON data to the Google Apps Script Web App
             fetch(SCRIPT_URL, {
                 method: 'POST',
                 body: JSON.stringify(dataObject)
             })
-            .then(response => response.json())
+            .then(response => {
+                // Check if response is okay, sometimes fetch fails silently
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 document.getElementById('loading').classList.add('hidden');
                 if(data.result === "success") {
@@ -336,7 +344,7 @@
             })
             .catch(error => {
                 console.error('Network Error:', error);
-                alert("A network error occurred. Please check your connection and try again.");
+                alert("A network error occurred. Please check your connection or Apps Script URL and try again. Details: " + error.message);
                 submitBtn.disabled = false;
                 submitBtn.textContent = "Try Submitting Again";
             });
@@ -346,5 +354,3 @@
 </script>
 </body>
 </html>
-
-

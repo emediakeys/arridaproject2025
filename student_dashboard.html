@@ -130,6 +130,15 @@
             <button onclick="closeModal()" class="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">Close</button>
         </div>
     </div>
+    
+    <!-- Login Loading Indicator (Hidden by default) -->
+    <div id="loginLoadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
+            <p class="mt-4 text-gray-600 font-semibold">Authenticating...</p>
+        </div>
+    </div>
+
 
     <script>
         // Global State
@@ -140,6 +149,10 @@
         // --- UI UTILITIES ---
 
         function showMessage(title, message, isSuccess = true) {
+            // Ensure login loading overlay is hidden when a message is shown
+            document.getElementById('loginLoadingOverlay')?.classList.remove('flex');
+            document.getElementById('loginLoadingOverlay')?.classList.add('hidden');
+
             const modal = document.getElementById('messageModal');
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalMessage').textContent = message;
@@ -157,15 +170,35 @@
             document.getElementById('messageModal').classList.add('hidden');
         }
 
+        /**
+         * Shows a loading spinner. Behavior depends on whether the user is in the dashboard or login screen.
+         * For dashboard, it uses #portalContent. For login, it uses #loginLoadingOverlay.
+         */
         function setLoading(isLoading) {
             const content = document.getElementById('portalContent');
+            const loginOverlay = document.getElementById('loginLoadingOverlay');
+            
             if (isLoading) {
-                content.innerHTML = `
-                    <div class="text-center py-20">
-                        <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
-                        <p class="mt-4 text-gray-600">Processing request...</p>
-                    </div>
-                `;
+                if (content) {
+                    // Dashboard view: show spinner in main content area
+                    content.innerHTML = `
+                        <div class="text-center py-20">
+                            <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
+                            <p class="mt-4 text-gray-600">Processing request...</p>
+                        </div>
+                    `;
+                } else if (loginOverlay) {
+                    // Login view: show fullscreen overlay
+                    loginOverlay.classList.remove('hidden');
+                    loginOverlay.classList.add('flex');
+                }
+            } else {
+                if (loginOverlay) {
+                    // Hide fullscreen overlay if it was used for login
+                    loginOverlay.classList.remove('flex');
+                    loginOverlay.classList.add('hidden');
+                }
+                // Note: The dashboard content clears the spinner by rendering the actual content.
             }
         }
 
@@ -176,7 +209,7 @@
          * Includes basic error handling and returns the JSON result object.
          */
         async function postData(data) {
-            setLoading(true);
+            setLoading(true); // Start loading spinner/overlay
             try {
                 const response = await fetch(ENDPOINT_URL, {
                     method: 'POST',
@@ -187,11 +220,11 @@
                 });
                 
                 const result = await response.json();
-                setLoading(false);
+                setLoading(false); // Stop loading spinner/overlay
                 return result;
 
             } catch (error) {
-                setLoading(false);
+                setLoading(false); // Stop loading spinner/overlay on error
                 console.error('API Request Failed:', error);
                 showMessage('Connection Error', 'Could not connect to the server or process the request.', false);
                 return { result: 'error', message: 'Network error or server connection failed.' };
@@ -227,6 +260,7 @@
                 password: password
             };
 
+            // Call postData which will handle the loading state
             postData(data).then(response => {
                 if (response.result === 'success') {
                     // Save authenticated data

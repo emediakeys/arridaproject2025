@@ -27,7 +27,7 @@
             margin-bottom: 0.5rem;
         }
         .nav-item:hover, .nav-item.active {
-            background-color: var(--primary-color);
+            background-color: var--primary-color);
             color: white;
             box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -2px rgba(59, 130, 246, 0.2);
         }
@@ -45,7 +45,7 @@
             transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
         .form-input:focus {
-            border-color: var(--primary-color);
+            border-color: var--primary-color);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
             outline: none;
         }
@@ -153,7 +153,6 @@
             const url = ENDPOINT_URL;
             let attempt = 0;
             
-            // Only show loading for the first time or if necessary for long operations
             // We rely on handleStudentLogin to call setLoading(true) first.
             // Removed specific check for 'portalContent' class here for robustness during initial login.
 
@@ -467,13 +466,19 @@
 
                 if (response.result === 'success' && response.data && response.data.length > 0) {
                     html += `<div class="space-y-4">`;
-                    // Assuming keys in response.data are Course, Title, Content, Date
+                    // FIX: Changed ann.Title, ann.Content, ann.Date to standard camelCase/lowercase (ann.title, ann.content, ann.date) 
+                    // to match typical Apps Script JSON output.
                     response.data.forEach(ann => {
+                        // Use a safer check that handles both cases if possible, but prioritize camelCase/lowercase
+                        const title = ann.title || ann.Title;
+                        const content = ann.content || ann.Content;
+                        const date = ann.date || ann.Date;
+
                         html += `
                             <div class="card border-l-4 border-blue-500 hover:shadow-lg transition duration-150">
-                                <p class="text-sm text-gray-500 mb-1">${ann.Date || 'N/A'}</p>
-                                <h3 class="text-xl font-semibold text-gray-900 mb-2">${ann.Title || 'No Title'}</h3>
-                                <p class="text-gray-700">${ann.Content || 'No content provided.'}</p>
+                                <p class="text-sm text-gray-500 mb-1">${date || 'N/A'}</p>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-2">${title || 'No Title'}</h3>
+                                <p class="text-gray-700">${content || 'No content provided.'}</p>
                             </div>
                         `;
                     });
@@ -507,9 +512,13 @@
 
                 if (response.result === 'success' && response.data && response.data.length > 0) {
                     html += `<div class="space-y-4">`;
-                    // Assuming keys in response.data are Course, Title, Description, DueDate
+                    // FIX: Changed ass.Title, ass.Description, ass.DueDate to standard camelCase/lowercase (ass.title, ass.description, ass.dueDate) 
+                    // to match typical Apps Script JSON output.
                     response.data.forEach(ass => {
-                        const dueDateString = ass.DueDate;
+                        const title = ass.title || ass.Title;
+                        const description = ass.description || ass.Description;
+                        const dueDateString = ass.dueDate || ass.DueDate;
+
                         // Simple date comparison - assumes YYYY-MM-DD or similar format
                         const isPastDue = new Date(dueDateString) < new Date();
                         const statusClass = isPastDue ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800';
@@ -517,12 +526,12 @@
                         html += `
                             <div class="card border-l-4 border-yellow-500 hover:shadow-lg transition duration-150">
                                 <div class="flex justify-between items-start mb-2">
-                                    <h3 class="text-xl font-semibold text-gray-900">${ass.Title || 'No Title'}</h3>
+                                    <h3 class="text-xl font-semibold text-gray-900">${title || 'No Title'}</h3>
                                     <span class="px-3 py-1 text-xs font-medium rounded-full ${statusClass}">
                                         Due: ${dueDateString || 'N/A'}
                                     </span>
                                 </div>
-                                <p class="text-gray-600 mb-3">${ass.Description || 'No description provided.'}</p>
+                                <p class="text-gray-600 mb-3">${description || 'No description provided.'}</p>
                                 <button onclick="showMessage('Submission Mock', 'This is a mock functionality. In a real app, this would open a file upload interface.', true)" class="text-sm font-medium text-blue-500 hover:text-blue-700">
                                     <i class="fas fa-upload mr-1"></i> Submit Assignment (Mock)
                                 </button>

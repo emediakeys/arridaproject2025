@@ -154,9 +154,8 @@
             let attempt = 0;
             
             // Only show loading for the first time or if necessary for long operations
-            if (!document.getElementById('portalContent').classList.contains('loading')) {
-                setLoading(true);
-            }
+            // We rely on handleStudentLogin to call setLoading(true) first.
+            // Removed specific check for 'portalContent' class here for robustness during initial login.
 
             while (attempt < maxRetries) {
                 try {
@@ -217,9 +216,19 @@
         }
 
         async function handleStudentLogin(event) {
-            event.preventDefault();
+            console.log("--- handleStudentLogin started ---"); // DEBUG LOG 1
+            
+            // Prevent the default form submission (page reload)
+            event.preventDefault(); 
+            console.log("Default event prevented."); // DEBUG LOG 2
+
             const admNo = document.getElementById('admNo').value;
             const password = document.getElementById('password').value;
+            
+            if (!admNo || !password) {
+                showMessage('Missing Credentials', 'Please enter both Admission Number and Password.', false);
+                return;
+            }
 
             const data = {
                 action: 'studentLogin',
@@ -283,6 +292,7 @@
                 </div>
             `;
             document.getElementById('loginForm').onsubmit = handleStudentLogin;
+            console.log("Login form event listener attached to 'loginForm'."); // DEBUG LOG 3
         }
 
         function renderDashboard() {

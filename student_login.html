@@ -3,199 +3,444 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Portal Login (Student Only)</title>
+    <title>Student Portal - Dashboard</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Configure Tailwind for custom styles and Inter font -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        'primary-blue': '#104e8b',
-                        'secondary-yellow': '#fdb714',
-                    }
-                }
+    <style>
+        /* Custom styles for better dashboard aesthetics */
+        :root {
+            --primary-color: #3b82f6; /* Blue 500 for students */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .sidebar {
+            transition: width 0.3s ease;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .nav-item:hover, .nav-item.active {
+            background-color: var--primary-color);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -2px rgba(59, 130, 246, 0.2);
+        }
+        .card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .form-input:focus {
+            border-color: var--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+            outline: none;
+        }
+        /* Mobile specific styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 0.5rem;
+            }
+            .nav-item {
+                justify-content: center;
+                text-align: center;
+                padding: 0.75rem 1rem;
             }
         }
-    </script>
-    <style>
-        /* Optional custom styles for subtle aesthetics */
-        body {
-            background-color: #f3f4f6;
-            font-family: 'Inter', sans-serif;
-        }
-        .login-card {
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 10px -5px rgba(0, 0, 0, 0.04);
-        }
     </style>
+    <!-- Icons for Navigation -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body>
 
-    <!-- Login Card Container -->
-    <div id="loginContainer" class="login-card w-full max-w-md bg-white rounded-xl overflow-hidden">
-        
-        <!-- Header -->
-        <header class="bg-primary-blue p-6 text-white text-center rounded-t-xl">
-            <h1 class="text-3xl font-bold">Student Portal Login</h1>
-            <p class="mt-1 text-sm opacity-90">Enter your Admission Number and Password.</p>
-        </header>
+    <!-- Main Container -->
+    <div id="app" class="min-h-screen flex flex-col md:flex-row bg-gray-100">
+        <!-- Content will be fully replaced on login/logout -->
+    </div>
 
-        <!-- Content Area -->
-        <div class="p-6">
-
-            <!-- Student Login Form -->
-            <form id="studentForm" class="login-form">
-                <div class="mb-4">
-                    <label for="studentAdmNo" class="block text-sm font-medium text-gray-700 mb-1">Admission Number</label>
-                    <input type="text" id="studentAdmNo" name="admNo" placeholder="ACHSTS0001" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-blue focus:border-primary-blue transition duration-150">
-                </div>
-                <div class="mb-6">
-                    <label for="studentPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="studentPassword" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-blue focus:border-primary-blue transition duration-150">
-                </div>
-                <button type="submit" class="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-secondary-yellow hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-yellow transition duration-300">
-                    <span id="studentLoadingSpinner" class="hidden animate-spin h-5 w-5 mr-3 border-2 border-white border-t-transparent rounded-full"></span>
-                    Login
-                </button>
-            </form>
-
-            <!-- Message Box (Error/Success) -->
-            <div id="messageBox" class="mt-6 p-3 rounded-lg text-sm hidden" role="alert"></div>
-
+    <!-- Message Modal/Box -->
+    <div id="messageModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
+            <h3 id="modalTitle" class="text-xl font-semibold text-gray-900 mb-3">Message</h3>
+            <p id="modalMessage" class="text-gray-700 mb-6"></p>
+            <button onclick="closeModal()" class="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">Close</button>
+        </div>
+    </div>
+    
+    <!-- Loading Indicator Overlay (Used during API calls) -->
+    <div id="apiLoadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
+            <p class="mt-4 text-gray-600 font-semibold" id="loadingMessage">Processing request...</p>
         </div>
     </div>
 
+
     <script>
-        // CRITICAL: SCRIPT_URL updated with the user-provided Apps Script URL
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbykFPD94TZUpuerC-BFUKEqywM5k87M-Sugyyz2HzZnhrjFsi1C2yZkBkxBMO8mHAFEcg/exec'; 
+        // Global State
+        // THIS IS THE URL PROVIDED BY THE USER:
+        const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbwGQORz9mdic63hpRIYJ9UiK8AyjzeFWMDYwH-f_iIWo4gn9afr38bVLE2piJDpY4oY4Q/exec';
         
-        // --- Utility function to convert key/value object to URLSearchParams string ---
-        function jsonToUrlParams(data) {
-            const params = new URLSearchParams();
-            for (const key in data) {
-                if (data.hasOwnProperty(key)) {
-                    params.append(key, data[key]);
+        let studentData = {};
+        let currentTab = 'profile';
+
+        // --- UI UTILITIES ---
+
+        function showMessage(title, message, isSuccess = true) {
+            setLoading(false); // Ensure loading is off when message is shown
+            
+            const modal = document.getElementById('messageModal');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            
+            const titleEl = document.getElementById('modalTitle');
+            titleEl.classList.remove('text-red-600', 'text-green-600', 'text-gray-900');
+            titleEl.classList.add(isSuccess ? 'text-green-600' : 'text-red-600');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('messageModal').classList.remove('flex');
+            document.getElementById('messageModal').classList.add('hidden');
+        }
+
+        /**
+         * Shows/hides the loading overlay.
+         * @param {boolean} isLoading 
+         * @param {string} message 
+         */
+        function setLoading(isLoading, message = 'Processing request...') {
+            const overlay = document.getElementById('apiLoadingOverlay');
+            const msgEl = document.getElementById('loadingMessage');
+            
+            if (isLoading) {
+                msgEl.textContent = message;
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            } else {
+                overlay.classList.remove('flex');
+                overlay.classList.add('hidden');
+            }
+        }
+        
+        // --- CORE API HANDLER with Exponential Backoff ---
+
+        /**
+         * Generic API call function with exponential backoff for robustness.
+         * @param {Object} data - The payload to send (including 'action').
+         * @param {number} maxRetries - Maximum number of retries.
+         * @returns {Promise<Object>} The parsed JSON response.
+         */
+        async function makeApiCall(data, maxRetries = 3) {
+            const url = ENDPOINT_URL;
+            let attempt = 0;
+            
+            // We rely on handleStudentLogin to call setLoading(true) first.
+            // Removed specific check for 'portalContent' class here for robustness during initial login.
+
+            while (attempt < maxRetries) {
+                try {
+                    // Apps Script expects URL-encoded data for simple POST
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        mode: 'cors',
+                        cache: 'no-cache',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams(data)
+                    });
+
+                    // Check for network/HTTP errors
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        console.error(`Attempt ${attempt + 1}: HTTP Error ${response.status}: ${errorBody}`);
+                        throw new Error(`HTTP Error ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    setLoading(false);
+                    return result; // Success
+
+                } catch (error) {
+                    attempt++;
+                    console.warn(`API call attempt ${attempt} failed: ${error.message}`);
+                    
+                    if (attempt >= maxRetries) {
+                        setLoading(false);
+                        showMessage('Connection Error', `Operation failed after ${maxRetries} attempts. Please check the network connection and the Apps Script URL. Error: ${error.message}`, false);
+                        throw error;
+                    }
+
+                    // Exponential backoff delay (1s, 2s, 4s, ...)
+                    const delay = Math.pow(2, attempt) * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
                 }
             }
-            return params.toString();
         }
 
-        const studentForm = document.getElementById('studentForm');
-        const messageBox = document.getElementById('messageBox');
-        const studentLoadingSpinner = document.getElementById('studentLoadingSpinner');
 
-        /**
-         * Utility function to display messages.
-         * @param {string} type - 'success' or 'error'
-         * @param {string} message - The message text
-         */
-        function showMessage(type, message) {
-            messageBox.textContent = message;
-            messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
-            if (type === 'error') {
-                messageBox.classList.add('bg-red-100', 'text-red-700');
-            } else if (type === 'success') {
-                messageBox.classList.add('bg-green-100', 'text-green-700');
+        // --- AUTHENTICATION ---
+
+        function checkAuth() {
+            const storedData = localStorage.getItem('studentData');
+            if (storedData) {
+                studentData = JSON.parse(storedData);
+                renderDashboard();
+            } else {
+                renderLogin();
             }
         }
-        
-        /**
-         * Main function to send data to the Apps Script backend.
-         * @param {string} action - 'studentLogin' (fixed action)
-         * @param {object} formData - Data object from the form
-         * @param {HTMLElement} submitButton - The button element to control loading state
-         */
-        async function submitLogin(action, formData, submitButton) {
-            if (SCRIPT_URL === 'YOUR_WEB_APP_URL_HERE') {
-                showMessage('error', 'Configuration Error: Please replace "YOUR_WEB_APP_URL_HERE" with your deployed Apps Script URL.');
+
+        function handleLogout() {
+            localStorage.removeItem('studentData');
+            studentData = {};
+            renderLogin();
+        }
+
+        async function handleStudentLogin(event) {
+            console.log("--- handleStudentLogin started ---"); // DEBUG LOG 1
+            
+            // Prevent the default form submission (page reload)
+            event.preventDefault(); 
+            console.log("Default event prevented."); // DEBUG LOG 2
+
+            const admNo = document.getElementById('admNo').value;
+            const password = document.getElementById('password').value;
+            
+            if (!admNo || !password) {
+                showMessage('Missing Credentials', 'Please enter both Admission Number and Password.', false);
                 return;
             }
 
-            // Show loading state
-            submitButton.disabled = true;
-            const spinner = studentLoadingSpinner; // Only one spinner now
-            spinner.classList.remove('hidden');
+            const data = {
+                action: 'studentLogin',
+                admNo: admNo,
+                password: password
+            };
 
-            const payload = { ...formData, action };
-            messageBox.classList.add('hidden');
+            setLoading(true, 'Authenticating...');
 
-            // --- CRITICAL FIX: Encode payload as form data for GAS compatibility ---
-            // This bypasses the CORS issue caused by Content-Type: application/json
-            const formBody = jsonToUrlParams(payload);
+            try {
+                const response = await makeApiCall(data);
 
-            // --- Exponential Backoff Retry Logic ---
-            let responseData = null;
-            const maxRetries = 3;
-            const initialDelay = 1000; // 1 second
-
-            for (let attempt = 0; attempt < maxRetries; attempt++) {
-                try {
-                    const response = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        // IMPORTANT: DO NOT set Content-Type header when sending standard form data
-                        // This allows the request to be simple/non-preflighted, resolving the CORS issue.
-                        body: formBody // Sending the URL-encoded string directly
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    
-                    // We need to parse the response as text first, because GAS returns ContentType: text/html by default, 
-                    // even if we return ContentService.MimeType.JSON
-                    const responseText = await response.text();
-                    responseData = JSON.parse(responseText); // Now safely parse the JSON content
-                    break; // Success, exit the loop
-                } catch (error) {
-                    if (attempt < maxRetries - 1) {
-                        const delay = initialDelay * Math.pow(2, attempt);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                    } else {
-                        // Log error for debugging, show generic message to user
-                        console.error("Fetch failed after multiple retries:", error);
-                        showMessage('error', 'Login server connection failed. Please try again.');
-                        // Ensure state is reset on final failure
-                        spinner.classList.add('hidden');
-                        submitButton.disabled = false;
-                        return; 
-                    }
+                if (response.result === 'success') {
+                    // Save authenticated data
+                    // Ensure the keys match the spreadsheet columns (e.g., 'First Name' -> 'firstName', 'Course_Applied' -> 'course')
+                    studentData = {
+                        admNo: response.data.Admission_No,
+                        firstName: response.data['First Name'],
+                        lastName: response.data.Last_Name,
+                        email: response.data.Email,
+                        course: response.data.Course_Applied
+                    };
+                    localStorage.setItem('studentData', JSON.stringify(studentData));
+                    showMessage('Login Successful', `Welcome back, ${studentData.firstName}!`, true);
+                    renderDashboard();
+                } else {
+                    // Handle functional failure (e.g., wrong credentials)
+                    showMessage('Login Failed', response.message || 'Invalid Admission Number or Password.', false);
                 }
-            }
-
-            // Hide loading state
-            spinner.classList.add('hidden');
-            submitButton.disabled = false;
-
-            // Handle response
-            if (responseData && responseData.result === 'success') {
-                // Simplified success handling for student login only
-                console.log("Student Login Successful. Retrieved data:", responseData.data);
-                showMessage('success', `Welcome ${responseData.data.firstName}! Your course is ${responseData.data.course}. (Check console for full data)`);
-                // In a real application, you would store the token/session and redirect here.
-
-            } else if (responseData) {
-                // Backend returned an 'error' result
-                showMessage('error', responseData.message || 'Login failed due to an unknown error.');
+            } catch (e) {
+                // Error already handled and displayed by makeApiCall
+            } finally {
+                setLoading(false);
             }
         }
 
-        // --- Event Listener ---
+        // --- CONTENT RENDERING ---
 
-        studentForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formElements = e.target.elements;
-            const formData = {
-                admNo: formElements.admNo.value,
-                password: formElements.password.value
-            };
-            // Action is hardcoded to 'studentLogin'
-            submitLogin('studentLogin', formData, e.submitter);
-        });
+        function renderLogin() {
+            document.getElementById('app').innerHTML = `
+                <div class="min-h-screen flex items-center justify-center w-full p-4 bg-gray-200">
+                    <div class="card w-full max-w-md">
+                        <h2 class="text-3xl font-bold text-center text-blue-600 mb-6">Student Login</h2>
+                        <form id="loginForm">
+                            <div class="mb-4">
+                                <label for="admNo" class="block text-gray-700 font-medium mb-2">Admission Number</label>
+                                <input type="text" id="admNo" name="admNo" class="form-input" required placeholder="e.g., ADM-001">
+                            </div>
+                            <div class="mb-6">
+                                <label for="password" class="block text-gray-700 font-medium mb-2">Password</label>
+                                <input type="password" id="password" name="password" class="form-input" required placeholder="••••••••">
+                            </div>
+                            <button type="submit" class="w-full py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-200">
+                                <i class="fas fa-sign-in-alt mr-2"></i> Log In
+                            </button>
+                        </form>
+                        <p class="mt-4 text-center text-sm text-gray-500">
+                            (Use your Admission No. and Password from the student sheet)
+                        </p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('loginForm').onsubmit = handleStudentLogin;
+            console.log("Login form event listener attached to 'loginForm'."); // DEBUG LOG 3
+        }
 
-    </script>
-</body>
-</html>
+        function renderDashboard() {
+            // Restore the main structure
+            document.getElementById('app').innerHTML = `
+                <!-- Sidebar / Navigation -->
+                <div class="sidebar w-full md:w-64 bg-white p-4 shadow-xl md:shadow-2xl flex flex-row md:flex-col justify-between md:justify-start items-center md:items-stretch">
+                    <div class="md:sticky md:top-4 w-full">
+                        <h1 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                            <i class="fas fa-graduation-cap text-2xl mr-2 text-blue-500"></i> Student Portal
+                        </h1>
+                        <p class="text-sm font-semibold text-gray-500 mb-4 truncate">${studentData.firstName} ${studentData.lastName}</p>
+                        
+                        <!-- Navigation Items -->
+                        <nav class="flex md:flex-col space-x-2 md:space-x-0 overflow-x-auto md:overflow-visible" id="navContainer">
+                            <!-- Nav items dynamically inserted below -->
+                        </nav>
+
+                        <!-- Logout Button -->
+                        <button id="logoutBtn" class="w-full mt-6 py-2 px-4 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-200">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Log Out
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <main id="contentArea" class="flex-1 p-4 md:p-10">
+                    <div id="portalContent" class="h-full"></div>
+                </main>
+            `;
+
+            // Populate navigation
+            const navItems = [
+                { tab: 'profile', icon: 'fas fa-user-circle', label: 'My Profile' },
+                { tab: 'announcements', icon: 'fas fa-bullhorn', label: 'Announcements' },
+                { tab: 'assignments', icon: 'fas fa-tasks', label: 'Assignments' },
+                { tab: 'letter', icon: 'fas fa-file-alt', label: 'Admission Letter' },
+                { tab: 'payments', icon: 'fas fa-wallet', label: 'Payments (Mock)' },
+            ];
+
+            const navContainer = document.getElementById('navContainer');
+            navContainer.innerHTML = navItems.map(item => `
+                <a class="nav-item ${item.tab === currentTab ? 'active' : ''}" data-tab="${item.tab}">
+                    <i class="${item.icon} w-6 h-6 mr-3"></i>
+                    <span class="text-sm font-medium">
+                        ${item.label}
+                    </span>
+                </a>
+            `).join('');
+
+            // Bind events and load the current tab content
+            bindDashboardEvents();
+            loadTabContent(currentTab);
+        }
+
+        function bindDashboardEvents() {
+            // Tab switching
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.onclick = () => {
+                    const newTab = item.getAttribute('data-tab');
+                    changeTab(newTab);
+                };
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').onclick = handleLogout;
+        }
+
+        function changeTab(tabName) {
+            currentTab = tabName;
+            // Update active class in sidebar
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const newActiveItem = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
+            if (newActiveItem) {
+                newActiveItem.classList.add('active'); 
+            }
+            // Load content
+            loadTabContent(tabName);
+        }
+
+        function loadTabContent(tabName) {
+            const contentDiv = document.getElementById('portalContent');
+            
+            // Clear previous content and show an inline loader if fetching
+            contentDiv.innerHTML = `
+                <div class="text-center py-20" id="inlineLoader">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
+                    <p class="mt-4 text-gray-600">Loading ${tabName} data...</p>
+                </div>
+            `; 
+
+            switch (tabName) {
+                case 'profile':
+                    renderProfile();
+                    document.getElementById('inlineLoader').remove();
+                    break;
+                case 'announcements':
+                    fetchAndRenderAnnouncements();
+                    break;
+                case 'assignments':
+                    fetchAndRenderAssignments();
+                    break;
+                case 'letter':
+                    renderAdmissionLetter();
+                    document.getElementById('inlineLoader').remove();
+                    break;
+                case 'payments':
+                    renderPayments();
+                    document.getElementById('inlineLoader').remove();
+                    break;
+                default:
+                    document.getElementById('inlineLoader').remove();
+                    contentDiv.innerHTML = `<h2 class="text-xl font-bold">Welcome, ${studentData.firstName}!</h2><p class="mt-2 text-gray-600">Please select a section from the left navigation.</p>`;
+            }
+        }
+
+        // --- SECTION RENDERERS ---
+
+        function renderProfile() {
+            const contentDiv = document.getElementById('portalContent');
+            const data = studentData;
+
+            contentDiv.innerHTML = `
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-blue-600">My Profile</h2>
+                    
+                    <div class="card grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="col-span-1 md:col-span-2">
+                            <h3 class="text-xl font-semibold mb-3 text-gray-700"><i class="fas fa-id-card mr-2"></i> Student Details</h3>
+                        </div>
+
+                        ${renderDetail('Admission No', data.admNo, 'font-mono bg-blue-100 text-blue-800')}
+                        ${renderDetail('Full Name', `${data.firstName} ${data.lastName}`)}
+                        ${renderDetail('Email', data.email)}
+                        ${renderDetail('Course', data.course, 'text-green-700 font-bold')}
+
+                    </div>
+
+                    <div class="card mt-6">
+                        <h3 class="text-xl font-semibold mb-3 text-gray-700"><i class="fas fa-info-circle mr-2"></i> Quick Status</h3>
+                        <p class="text-lg text-gray-600">Payment Status: <span class="text-yellow-600 font-semibold">Pending Review</span> (Simulated)</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderDetail(label, value, valueClasses = '') {
+            return `
+                <div class="p-4 border rounded-lg bg-gray-50">
+                    <p class="text-sm font-medium text-gray-5

@@ -29,824 +29,704 @@
         .nav-item:hover, .nav-item.active {
             background-color: var(--primary-color);
             color: white;
-            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -2px rgba(16, 185, 129, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -2px rgba(16, 185, 129, 0.3);
         }
-        .card {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        /* Style for the action buttons */
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
         }
-        .form-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-        }
-        .form-input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.5);
-            outline: none;
-        }
-        /* Mobile specific styles */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                padding: 0.5rem;
-            }
-            .nav-item {
-                justify-content: center;
-                text-align: center;
-                padding: 0.75rem 1rem;
-            }
+        /* Scrollable container for tables/lists */
+        .data-container {
+            max-height: 70vh;
+            overflow-y: auto;
         }
     </style>
-    <!-- Icons for Navigation -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Load Lucide icons for clean interface -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
-    <!-- Main Container -->
-    <div id="app" class="min-h-screen flex flex-col md:flex-row bg-gray-100">
-        <!-- Content will be fully replaced on login/logout -->
-    </div>
-
-    <!-- Message Modal/Box -->
-    <div id="messageModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
-            <h3 id="modalTitle" class="text-xl font-semibold text-gray-900 mb-3">Message</h3>
-            <p id="modalMessage" class="text-gray-700 mb-6"></p>
-            <button onclick="closeModal()" class="w-full py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition">Close</button>
-        </div>
-    </div>
-    
-    <!-- Loading Indicator Overlay (Used during API calls) -->
-    <div id="apiLoadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
-            <i class="fas fa-spinner fa-spin text-4xl text-emerald-500"></i>
-            <p class="mt-4 text-gray-600 font-semibold" id="loadingMessage">Processing request...</p>
-        </div>
-    </div>
-
+    <!-- Main Container controlled by JS -->
+    <div id="app"></div>
 
     <script>
-        // Global State
-        const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbwGQORz9mdic63hpRIYJ9UiK8AyjzeFWMDYwH-f_iIWo4gn9afr38bVLE2piJDpY4oY4Q/exec';
+        // --- CONFIGURATION ---
+        // CRITICAL: Updated SCRIPT_URL with the user-provided Apps Script URL
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGQORz9mdic63hpRIYJ9UiK8AyjzeFWMDYwH-f_iIWo4gn9afr38bVLE2piJDpY4oY4Q/exec"; 
         
-        let adminData = null; // Admin data will hold credentials or user info if needed for future features
-        let currentTab = 'dashboard';
+        // --- STATE MANAGEMENT ---
+        let adminState = {
+            isLoggedIn: false,
+            username: '',
+            assignedCourse: '',
+            activeTab: 'dashboard', // Changed default tab to Dashboard
+            students: [],
+            announcements: [],
+            assignments: [],
+            attendance: [],
+            loading: false,
+            message: null,
+            error: false
+        };
 
-        // --- UI UTILITIES ---
-
-        function showMessage(title, message, isSuccess = true) {
-            setLoading(false); 
-            
-            const modal = document.getElementById('messageModal');
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').textContent = message;
-            
-            const titleEl = document.getElementById('modalTitle');
-            titleEl.classList.remove('text-red-600', 'text-green-600', 'text-gray-900');
-            titleEl.classList.add(isSuccess ? 'text-green-600' : 'text-red-600');
-            
-            // Set button color based on success
-            const button = modal.querySelector('button');
-            button.classList.remove('bg-red-500', 'hover:bg-red-600', 'bg-emerald-500', 'hover:bg-emerald-600');
-            button.classList.add(isSuccess ? 'bg-emerald-500', 'hover:bg-emerald-600' : 'bg-red-500', 'hover:bg-red-600');
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+        // --- UTILITY FUNCTIONS ---
+        function render(component) {
+            const app = document.getElementById('app');
+            app.innerHTML = component();
+            // Re-render icons after adding HTML
+            lucide.createIcons();
+            // Bind events after render
+            if (adminState.isLoggedIn) {
+                bindDashboardEvents();
+            } else {
+                bindLoginEvents();
+            }
         }
 
-        function closeModal() {
-            document.getElementById('messageModal').classList.remove('flex');
-            document.getElementById('messageModal').classList.add('hidden');
+        function showMessage(msg, isError = false) {
+            adminState.message = msg;
+            adminState.error = isError;
+            render(adminState.isLoggedIn ? AdminDashboard : AdminLogin); // Re-render the current view to show message
         }
-        
-        // Custom Confirmation Modal (replacing alert/confirm)
-        function customConfirm(message) {
-            return new Promise(resolve => {
-                closeModal(); // Hide standard message modal if open
-                
-                const existingConfirmModal = document.getElementById('confirmModal');
-                if (existingConfirmModal) existingConfirmModal.remove(); 
-
-                const confirmHtml = `
-                    <div id="confirmModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-[9999]">
-                        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 transform transition-all duration-300 scale-100">
-                            <h3 class="text-xl font-semibold text-red-600 mb-3"><i class="fas fa-exclamation-triangle mr-2"></i> Confirm Action</h3>
-                            <p class="text-gray-700 mb-6">${message}</p>
-                            <div class="flex justify-end space-x-4">
-                                <button id="cancelConfirm" class="py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">Cancel</button>
-                                <button id="okConfirm" class="py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">Confirm</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.body.insertAdjacentHTML('beforeend', confirmHtml);
-
-                const modal = document.getElementById('confirmModal');
-                document.getElementById('cancelConfirm').onclick = () => {
-                    modal.remove();
-                    resolve(false);
-                };
-                document.getElementById('okConfirm').onclick = () => {
-                    modal.remove();
-                    resolve(true);
-                };
-            });
-        }
-
 
         /**
-         * Shows/hides the loading overlay.
+         * Utility function to convert object to URLSearchParams for CORS-safe POST
          */
-        function setLoading(isLoading, message = 'Processing request...') {
-            const overlay = document.getElementById('apiLoadingOverlay');
-            const msgEl = document.getElementById('loadingMessage');
-            
-            if (isLoading) {
-                msgEl.textContent = message;
-                overlay.classList.remove('hidden');
-                overlay.classList.add('flex');
-            } else {
-                overlay.classList.remove('flex');
-                overlay.classList.add('hidden');
-            }
-        }
-        
-        // --- CORE API HANDLER with Exponential Backoff ---
-
-        async function makeApiCall(data, maxRetries = 3) {
-            const url = ENDPOINT_URL;
-            let attempt = 0;
-            
-            while (attempt < maxRetries) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        mode: 'cors',
-                        cache: 'no-cache',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams(data)
-                    });
-
-                    if (!response.ok) {
-                        const errorBody = await response.text();
-                        console.error(`Attempt ${attempt + 1}: HTTP Error ${response.status}: ${errorBody}`);
-                        throw new Error(`HTTP Error ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    setLoading(false);
-                    return result; 
-
-                } catch (error) {
-                    attempt++;
-                    console.warn(`API call attempt ${attempt} failed: ${error.message}`);
-                    
-                    if (attempt >= maxRetries) {
-                        setLoading(false);
-                        showMessage('Connection Error', `Operation failed after ${maxRetries} attempts. Please check the network connection and the Apps Script URL. Error: ${error.message}`, false);
-                        throw error;
-                    }
-
-                    const delay = Math.pow(2, attempt) * 1000;
-                    await new Promise(resolve => setTimeout(resolve, delay));
+        function jsonToUrlParams(data) {
+            const params = new URLSearchParams();
+            for (const key in data) {
+                if (data.hasOwnProperty(key)) {
+                    params.append(key, data[key]);
                 }
             }
+            return params;
         }
 
+        /**
+         * Main Fetch Function with CORS Fixes
+         */
+        async function fetchAppsScript(action, payload = {}) {
+            adminState.loading = true;
+            render(adminState.isLoggedIn ? AdminDashboard : AdminLogin); // Show loading state
+
+            const dataToSend = { action, ...payload };
+            const formBody = jsonToUrlParams(dataToSend);
+            
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    // IMPORTANT: No Content-Type header. Body is URLSearchParams.
+                    // This prevents the CORS preflight check failure.
+                    body: formBody 
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Parse text first to handle default GAS text/html responses
+                const responseText = await response.text();
+                // Ensure the response is valid JSON before parsing
+                const result = responseText ? JSON.parse(responseText) : {};
+                
+                adminState.loading = false;
+                return result;
+
+            } catch (error) {
+                console.error('API Fetch Error:', error);
+                adminState.loading = false;
+                return { result: 'error', message: 'Network error or invalid server response. Check console.' };
+            }
+        }
 
         // --- AUTHENTICATION ---
 
         function checkAuth() {
-            const storedAdminData = localStorage.getItem('adminData');
-            if (storedAdminData) {
-                adminData = JSON.parse(storedAdminData);
-                renderDashboard();
+            const storedState = localStorage.getItem('adminState');
+            if (storedState) {
+                const state = JSON.parse(storedState);
+                if (state.isLoggedIn && state.assignedCourse) {
+                    adminState = { ...adminState, ...state, isLoggedIn: true };
+                    loadInitialData();
+                    return;
+                }
+            }
+            adminState.isLoggedIn = false;
+            render(AdminLogin);
+        }
+
+        function saveAdminState() {
+            localStorage.setItem('adminState', JSON.stringify({
+                isLoggedIn: adminState.isLoggedIn,
+                username: adminState.username,
+                assignedCourse: adminState.assignedCourse
+            }));
+        }
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const form = e.target;
+            const username = form.username.value.trim();
+            const password = form.password.value;
+
+            showMessage('Logging in...');
+
+            const result = await fetchAppsScript('adminLogin', { username, password });
+
+            // Check for success (App Script returns { result: 'success' ... })
+            if (result && result.result === 'success') {
+                adminState.isLoggedIn = true;
+                adminState.username = username;
+                adminState.assignedCourse = result.assignedCourse;
+                saveAdminState();
+                showMessage('Login successful! Welcome.', false);
+                loadInitialData();
             } else {
-                renderLogin();
+                adminState.isLoggedIn = false;
+                // Handle case where result might be undefined if network failed
+                const errMsg = result ? result.message : 'Unknown login error';
+                showMessage(errMsg || 'Login failed. Check credentials.', true);
+                render(AdminLogin);
             }
         }
 
         function handleLogout() {
-            localStorage.removeItem('adminData');
-            adminData = null;
-            renderLogin();
+            localStorage.removeItem('adminState');
+            adminState = { 
+                isLoggedIn: false, 
+                username: '', 
+                assignedCourse: '', 
+                activeTab: 'dashboard', // Reset to dashboard
+                students: [], announcements: [], assignments: [], attendance: []
+            };
+            render(AdminLogin);
         }
 
-        async function handleAdminLogin(event) {
-            event.preventDefault(); 
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
-            if (!username || !password) {
-                showMessage('Missing Credentials', 'Please enter both Username and Password.', false);
-                return;
+        function bindLoginEvents() {
+            const loginForm = document.getElementById('adminLoginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleAdminLogin);
+            }
+        }
+
+        // --- DATA LOADING & DASHBOARD MANAGEMENT ---
+
+        async function loadInitialData() {
+            if (!adminState.isLoggedIn) return;
+
+            // Only show loading if we don't have data yet to prevent flickering
+            if(adminState.students.length === 0) {
+                adminState.loading = true;
+                render(AdminDashboard);
             }
 
-            const data = {
-                action: 'adminLogin',
-                username: username,
-                password: password
-            };
-
-            setLoading(true, 'Authenticating Admin...');
+            const course = adminState.assignedCourse;
 
             try {
-                const response = await makeApiCall(data);
+                // Fetch students, announcements, and assignments concurrently
+                const [studentsResult, announcementsResult, assignmentsResult] = await Promise.all([
+                    fetchAppsScript('getStudentsByCourse', { course }),
+                    fetchAppsScript('getAnnouncementsByCourse', { course }),
+                    fetchAppsScript('getAssignmentsByCourse', { course })
+                ]);
 
-                if (response.result === 'success') {
-                    // Assuming the backend returns the username for persistence
-                    adminData = { username: response.data.Username };
-                    localStorage.setItem('adminData', JSON.stringify(adminData));
-                    showMessage('Login Successful', `Welcome, ${adminData.username}!`, true);
-                    renderDashboard();
-                } else {
-                    showMessage('Login Failed', response.message || 'Invalid Username or Password.', false);
-                }
-            } catch (e) {
-                // Error already handled and displayed by makeApiCall
-            } finally {
-                setLoading(false);
+                // The result from Apps Script is expected to be a list of objects (data) or an empty array.
+                adminState.students = studentsResult && studentsResult.result === 'success' ? studentsResult.data : [];
+                adminState.announcements = announcementsResult && announcementsResult.result === 'success' ? announcementsResult.data : [];
+                adminState.assignments = assignmentsResult && assignmentsResult.result === 'success' ? assignmentsResult.data : [];
+            } catch (err) {
+                console.error("Error loading dashboard data", err);
             }
-        }
-
-        // --- CONTENT RENDERING (LOGIN) ---
-
-        function renderLogin() {
-            document.getElementById('app').innerHTML = `
-                <div class="min-h-screen flex items-center justify-center w-full p-4 bg-gray-200">
-                    <div class="card w-full max-w-md">
-                        <h2 class="text-3xl font-bold text-center text-emerald-600 mb-6">Admin Login</h2>
-                        <form id="loginForm">
-                            <div class="mb-4">
-                                <label for="username" class="block text-gray-700 font-medium mb-2">Username</label>
-                                <input type="text" id="username" name="username" class="form-input" required placeholder="Enter Username">
-                            </div>
-                            <div class="mb-6">
-                                <label for="password" class="block text-gray-700 font-medium mb-2">Password</label>
-                                <input type="password" id="password" name="password" class="form-input" required placeholder="••••••••">
-                            </div>
-                            <button type="submit" class="w-full py-3 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition duration-200">
-                                <i class="fas fa-sign-in-alt mr-2"></i> Log In
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            `;
-            document.getElementById('loginForm').onsubmit = handleAdminLogin;
-        }
-
-        // --- DASHBOARD STRUCTURE ---
-
-        function renderDashboard() {
-            document.getElementById('app').innerHTML = `
-                <!-- Sidebar / Navigation -->
-                <div class="sidebar w-full md:w-64 bg-white p-4 shadow-xl md:shadow-2xl flex flex-row md:flex-col justify-between md:justify-start items-center md:items-stretch">
-                    <div class="md:sticky md:top-4 w-full">
-                        <h1 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                            <i class="fas fa-tools text-2xl mr-2 text-emerald-500"></i> Admin Tools
-                        </h1>
-                        <p class="text-sm font-semibold text-gray-500 mb-4 truncate">${adminData.username}</p>
-                        
-                        <!-- Navigation Items -->
-                        <nav class="flex md:flex-col space-x-2 md:space-x-0 overflow-x-auto md:overflow-visible" id="navContainer">
-                            <!-- Nav items dynamically inserted below -->
-                        </nav>
-
-                        <!-- Logout Button -->
-                        <button id="logoutBtn" class="w-full mt-6 py-2 px-4 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-200">
-                            <i class="fas fa-sign-out-alt mr-2"></i> Log Out
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Content Area -->
-                <main id="contentArea" class="flex-1 p-4 md:p-10">
-                    <div id="portalContent" class="h-full"></div>
-                </main>
-            `;
-
-            // Populate navigation
-            const navItems = [
-                { tab: 'dashboard', icon: 'fas fa-chart-line', label: 'Dashboard' },
-                { tab: 'students', icon: 'fas fa-users', label: 'Manage Students' },
-                { tab: 'announcements', icon: 'fas fa-bullhorn', label: 'Announcements' },
-                { tab: 'assignments', icon: 'fas fa-tasks', label: 'Assignments' },
-                { tab: 'attendance', icon: 'fas fa-clipboard-check', label: 'Attendance' },
-            ];
-
-            const navContainer = document.getElementById('navContainer');
-            navContainer.innerHTML = navItems.map(item => `
-                <a class="nav-item ${item.tab === currentTab ? 'active' : ''}" data-tab="${item.tab}">
-                    <i class="${item.icon} w-6 h-6 mr-3"></i>
-                    <span class="text-sm font-medium">
-                        ${item.label}
-                    </span>
-                </a>
-            `).join('');
-
-            bindDashboardEvents();
-            loadTabContent(currentTab);
+            
+            adminState.loading = false;
+            render(AdminDashboard);
         }
 
         function changeTab(tabName) {
-            currentTab = tabName;
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            const newActiveItem = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
-            if (newActiveItem) {
-                newActiveItem.classList.add('active'); 
-            }
-            loadTabContent(tabName);
+            adminState.activeTab = tabName;
+            adminState.message = null; // Clear messages on tab change
+            render(AdminDashboard);
         }
 
-        function loadTabContent(tabName) {
-            const contentDiv = document.getElementById('portalContent');
-            
-            contentDiv.innerHTML = `
-                <div class="text-center py-20" id="inlineLoader">
-                    <i class="fas fa-spinner fa-spin text-4xl text-emerald-500"></i>
-                    <p class="mt-4 text-gray-600">Loading ${tabName} data...</p>
-                </div>
-            `; 
+        // --- CRUD OPERATIONS ---
 
-            switch (tabName) {
-                case 'dashboard':
-                    renderDashboardSummary();
-                    document.getElementById('inlineLoader').remove();
-                    break;
-                case 'students':
-                    fetchAndRenderStudentsList();
-                    break;
-                case 'announcements':
-                    fetchAndRenderAnnouncementsList();
-                    break;
-                case 'assignments':
-                    fetchAndRenderAssignmentsList();
-                    break;
-                case 'attendance':
-                    renderAttendanceForm();
-                    document.getElementById('inlineLoader').remove();
-                    break;
-                default:
-                    document.getElementById('inlineLoader').remove();
-                    contentDiv.innerHTML = `<h2 class="text-xl font-bold">Welcome, Admin!</h2><p class="mt-2 text-gray-600">Please select a section.</p>`;
-            }
-        }
-
-        // --- FORM SUBMISSION HANDLERS ---
-
-        async function handleAddAnnouncement(event) {
-            event.preventDefault();
-            const form = event.target;
-            const course = form.course.value;
+        async function handleAddAnnouncement(e) {
+            e.preventDefault();
+            const form = e.target;
             const title = form.title.value;
             const content = form.content.value;
-            const date = new Date().toISOString().split('T')[0]; // Current date
+            const course = adminState.assignedCourse;
+            
+            showMessage('Adding Announcement...');
+            
+            const result = await fetchAppsScript('addAnnouncement', { course, title, content });
 
-            const data = {
-                action: 'addAnnouncement',
-                Course: course,
-                Title: title,
-                Content: content,
-                Date: date
-            };
-
-            setLoading(true, 'Posting Announcement...');
-            try {
-                const response = await makeApiCall(data);
-                if (response.result === 'success') {
-                    showMessage('Success', 'New announcement posted successfully!', true);
-                    form.reset();
-                    fetchAndRenderAnnouncementsList(); // Refresh list
-                } else {
-                    showMessage('Error', response.message || 'Failed to post announcement.', false);
-                }
-            } catch (e) {
-                // Handled in makeApiCall
-            } finally {
-                setLoading(false);
+            if (result.result === 'success') {
+                showMessage('Announcement posted successfully!', false);
+                // Clear form inputs
+                form.reset();
+                // Refresh data from server
+                loadInitialData(); 
+            } else {
+                showMessage(result.message || 'Failed to post announcement. Check server implementation.', true);
+                render(AdminDashboard);
             }
         }
 
-        async function handleAddAssignment(event) {
-            event.preventDefault();
-            const form = event.target;
-            const course = form.course.value;
+        async function handleAddAssignment(e) {
+            e.preventDefault();
+            const form = e.target;
             const title = form.title.value;
             const description = form.description.value;
             const dueDate = form.dueDate.value;
+            const course = adminState.assignedCourse;
 
-            const data = {
-                action: 'addAssignment',
-                Course: course,
-                Title: title,
-                Description: description,
-                DueDate: dueDate
-            };
+            showMessage('Adding Assignment...');
+            
+            const result = await fetchAppsScript('addAssignment', { course, title, description, dueDate });
 
-            setLoading(true, 'Posting Assignment...');
-            try {
-                const response = await makeApiCall(data);
-                if (response.result === 'success') {
-                    showMessage('Success', 'New assignment posted successfully!', true);
-                    form.reset();
-                    fetchAndRenderAssignmentsList(); // Refresh list
-                } else {
-                    showMessage('Error', response.message || 'Failed to post assignment.', false);
-                }
-            } catch (e) {
-                // Handled in makeApiCall
-            } finally {
-                setLoading(false);
+            if (result.result === 'success') {
+                showMessage('Assignment added successfully!', false);
+                // Clear form inputs
+                form.reset();
+                // Refresh from server
+                loadInitialData(); 
+            } else {
+                showMessage(result.message || 'Failed to add assignment. Check server implementation.', true);
+                render(AdminDashboard);
             }
         }
 
-        async function handleRecordAttendance(event) {
-            event.preventDefault();
-            const form = event.target;
-            const admNo = form.admNo.value;
+        async function handleRemoveStudent(admNo, course) {
+            if (!confirm(`Are you sure you want to remove student ${admNo} from ${course}? This action cannot be undone.`)) {
+                return;
+            }
+
+            showMessage(`Removing student ${admNo}...`);
+            
+            const result = await fetchAppsScript('removeStudent', { admNo, course });
+
+            if (result.result === 'success') {
+                showMessage(`Student ${admNo} removed successfully.`, false);
+                // Remove locally
+                adminState.students = adminState.students.filter(s => s.admNo !== admNo);
+                render(AdminDashboard);
+            } else {
+                showMessage(result.message || 'Failed to remove student. Check server implementation.', true);
+                render(AdminDashboard);
+            }
+        }
+
+        async function handleRecordAttendance(e) {
+            e.preventDefault();
+            const form = e.target;
+            const admNoData = form.admNo.value; // Expecting "ADM - Name" or just ADM
+            // Extract just the ADM NO if user selected from datalist
+            const admNo = admNoData.split(' - ')[0].trim();
             const status = form.status.value;
-            const date = new Date().toISOString().split('T')[0];
-
-            const data = {
-                action: 'recordAttendance',
-                Admission_No: admNo,
-                Status: status,
-                Date: date
-            };
-
-            setLoading(true, 'Recording Attendance...');
-            try {
-                const response = await makeApiCall(data);
-                if (response.result === 'success') {
-                    showMessage('Success', `Attendance recorded for ${admNo} (${status}).`, true);
-                    form.reset();
-                } else {
-                    showMessage('Error', response.message || 'Failed to record attendance.', false);
-                }
-            } catch (e) {
-                // Handled in makeApiCall
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        // --- DELETE HANDLERS (NEW) ---
-
-        async function handleDeleteAnnouncement(id) {
-            if (!id || id === 'undefined' || id === 'null') {
-                showMessage('Error', 'Cannot delete: Unique identifier not found for this announcement.', false);
-                return;
-            }
-
-            const confirmed = await customConfirm(`Are you sure you want to permanently delete announcement ID: ${id}? This action is irreversible.`);
+            const date = form.date.value;
+            const course = adminState.assignedCourse;
             
-            if (!confirmed) return;
-
-            const data = {
-                action: 'deleteAnnouncement', // This action must be implemented in your Apps Script
-                id: id
-            };
-
-            setLoading(true, 'Deleting announcement...');
-
-            try {
-                const response = await makeApiCall(data);
-
-                if (response.result === 'success') {
-                    showMessage('Deletion Successful', `Announcement ID ${id} has been deleted.`, true);
-                    fetchAndRenderAnnouncementsList(); // Refresh the list
-                } else {
-                    showMessage('Deletion Failed', response.message || `Could not delete announcement ID ${id}. Check your Apps Script logs.`, false);
-                }
-            } catch (e) {
-                // Error already handled and displayed by makeApiCall
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        async function handleDeleteAssignment(id) {
-            if (!id || id === 'undefined' || id === 'null') {
-                showMessage('Error', 'Cannot delete: Unique identifier not found for this assignment.', false);
-                return;
-            }
-
-            const confirmed = await customConfirm(`Are you sure you want to permanently delete assignment ID: ${id}? This action is irreversible.`);
+            showMessage('Recording Attendance...');
             
-            if (!confirmed) return;
+            const result = await fetchAppsScript('recordAttendance', { admNo, status, date, course });
 
-            const data = {
-                action: 'deleteAssignment', // This action must be implemented in your Apps Script
-                id: id
-            };
-
-            setLoading(true, 'Deleting assignment...');
-
-            try {
-                const response = await makeApiCall(data);
-
-                if (response.result === 'success') {
-                    showMessage('Deletion Successful', `Assignment ID ${id} has been deleted.`, true);
-                    fetchAndRenderAssignmentsList(); // Refresh the list
-                } else {
-                    showMessage('Deletion Failed', response.message || `Could not delete assignment ID ${id}. Check your Apps Script logs.`, false);
-                }
-            } catch (e) {
-                // Error already handled and displayed by makeApiCall
-            } finally {
-                setLoading(false);
+            if (result.result === 'success') {
+                showMessage(`Attendance recorded for ${admNo} on ${date}.`, false);
+                form.reset();
+                form.date.value = new Date().toISOString().slice(0, 10); // Reset date to today
+            } else {
+                showMessage(result.message || 'Failed to record attendance. Check Admission No. or server implementation.', true);
             }
+            render(AdminDashboard);
         }
 
 
-        // --- DASHBOARD RENDERERS ---
+        // --- UI COMPONENTS ---
 
-        function renderDashboardSummary() {
-            const contentDiv = document.getElementById('portalContent');
-            contentDiv.innerHTML = `
-                <div class="max-w-4xl mx-auto">
-                    <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-emerald-600">Admin Dashboard</h2>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- Stat Card 1 -->
-                        <div class="card bg-white border-l-4 border-blue-500">
-                            <i class="fas fa-users text-3xl text-blue-500 mb-3"></i>
-                            <p class="text-sm text-gray-500">Total Students</p>
-                            <p class="text-3xl font-bold text-gray-800">120</p>
-                            <p class="text-xs text-gray-400 mt-2">(Mock Data)</p>
+        function AdminLogin() {
+            const statusMessage = adminState.message || '';
+            return `
+                <div class="min-h-screen flex items-center justify-center p-4">
+                    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
+                        <div class="text-center mb-8">
+                            <h2 class="text-3xl font-extrabold text-gray-900">Admin Login</h2>
+                            <p class="mt-2 text-sm text-gray-600">Access the School Management Dashboard</p>
                         </div>
-
-                        <!-- Stat Card 2 -->
-                        <div class="card bg-white border-l-4 border-yellow-500">
-                            <i class="fas fa-bullhorn text-3xl text-yellow-500 mb-3"></i>
-                            <p class="text-sm text-gray-500">Active Announcements</p>
-                            <p class="text-3xl font-bold text-gray-800">5</p>
-                            <p class="text-xs text-gray-400 mt-2">(Mock Data)</p>
-                        </div>
-
-                        <!-- Stat Card 3 -->
-                        <div class="card bg-white border-l-4 border-green-500">
-                            <i class="fas fa-clipboard-check text-3xl text-green-500 mb-3"></i>
-                            <p class="text-sm text-gray-500">Avg. Attendance Rate</p>
-                            <p class="text-3xl font-bold text-gray-800">92%</p>
-                            <p class="text-xs text-gray-400 mt-2">(Mock Data)</p>
-                        </div>
-                    </div>
-
-                    <div class="card mt-8">
-                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Quick Access</h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button onclick="changeTab('announcements')" class="py-3 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition font-semibold">
-                                Post New Announcement
+                        <form id="adminLoginForm" class="space-y-6">
+                            <div>
+                                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                <input type="text" id="username" name="username" required 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500" placeholder="Enter username">
+                            </div>
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input type="password" id="password" name="password" required 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500" placeholder="Enter password">
+                            </div>
+                            <button type="submit" 
+                                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150 ease-in-out">
+                                <span data-lucide="log-in" class="w-5 h-5 mr-2"></span> Log In
                             </button>
-                            <button onclick="changeTab('assignments')" class="py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition font-semibold">
-                                Create New Assignment
-                            </button>
-                        </div>
+                        </form>
+                        ${statusMessage ? `<p class="mt-4 text-center text-sm ${adminState.error ? 'text-red-600' : 'text-emerald-600'}">${statusMessage}</p>` : ''}
                     </div>
                 </div>
             `;
         }
 
-        // --- STUDENTS RENDERERS ---
+        function AdminDashboard() {
+            const tabs = [
+                { id: 'dashboard', name: 'Dashboard', icon: 'layout-dashboard' }, // New Dashboard Tab
+                { id: 'students', name: 'Students', icon: 'users' },
+                { id: 'announcements', name: 'Announcements', icon: 'megaphone' },
+                { id: 'assignments', name: 'Assignments', icon: 'clipboard-list' },
+                { id: 'attendance', name: 'Attendance', icon: 'calendar-check' },
+            ];
 
-        async function fetchAndRenderStudentsList() {
-            const contentDiv = document.getElementById('portalContent');
-            const data = { action: 'getAllStudents' };
-
-            try {
-                const response = await makeApiCall(data);
-                let html = `<h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-emerald-600">Student List</h2>`;
-
-                if (response.result === 'success' && response.data && response.data.length > 0) {
-                    html += `
-                        <div class="overflow-x-auto card">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adm No.</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                    `;
-                    response.data.forEach(student => {
-                        html += `
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${student.Admission_No || 'N/A'}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${student['First Name'] || ''} ${student.Last_Name || 'N/A'}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${student.Course_Applied || 'N/A'}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${student.Email || 'N/A'}</td>
-                            </tr>
-                        `;
-                    });
-                    html += `
-                                </tbody>
-                            </table>
+            return `
+                <div class="min-h-screen flex">
+                    <!-- Sidebar -->
+                    <div class="sidebar w-64 bg-gray-800 text-white flex flex-col p-4 shadow-2xl">
+                        <div class="flex-shrink-0 text-xl font-bold py-4 border-b border-gray-700 mb-6">
+                            <span data-lucide="graduation-cap" class="inline-block w-6 h-6 mr-2"></span> Admin Panel
                         </div>
-                    `;
-                } else if (response.result === 'success') {
-                    html += `<div class="card"><p class="text-gray-600">No student records found.</p></div>`;
-                } else {
-                    html += `<div class="card bg-red-50"><p class="text-red-700">Error retrieving students: ${response.message || 'Unknown server error.'}</p></div>`;
-                }
-                contentDiv.innerHTML = html;
-
-            } catch (e) {
-                // Error already handled
-            }
-        }
-
-        // --- ANNOUNCEMENTS RENDERERS ---
-
-        async function fetchAndRenderAnnouncementsList() {
-            const contentDiv = document.getElementById('portalContent');
-            const data = { action: 'getAllAnnouncements' };
-
-            let html = `<h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-emerald-600">Manage Announcements</h2>`;
-
-            // Render form for adding new announcements
-            html += `
-                <div class="card mb-6 bg-emerald-50 border-t-4 border-emerald-500">
-                    <h3 class="text-xl font-semibold mb-3 text-emerald-700"><i class="fas fa-plus-circle mr-2"></i> Post New Announcement</h3>
-                    <form id="announcementForm">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <select id="course" name="course" class="form-input" required>
-                                <option value="">Select Course (Audience)</option>
-                                <option value="All">All Courses</option>
-                                <option value="IT">IT</option>
-                                <option value="Business">Business</option>
-                                <!-- Add more courses as needed -->
-                            </select>
-                            <input type="text" id="title" name="title" class="form-input md:col-span-2" required placeholder="Announcement Title">
-                        </div>
-                        <textarea id="content" name="content" class="form-input mb-4" rows="3" required placeholder="Announcement Content"></textarea>
-                        <button type="submit" class="w-full py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition duration-200">
-                            <i class="fas fa-bullhorn mr-2"></i> Post Announcement
-                        </button>
-                    </form>
-                </div>
-                <h3 class="text-2xl font-semibold text-gray-700 mb-4">Existing Announcements</h3>
-                <div id="announcementsList" class="space-y-4">
-            `;
-            
-            try {
-                const response = await makeApiCall(data);
-                
-                if (response.result === 'success' && response.data && response.data.length > 0) {
-                    
-                    response.data.forEach(item => {
-                        // Crucial: Assume backend provides a unique ID (e.g., RowId or ID)
-                        const announcementId = item.id || item.ID || item.RowId; 
                         
-                        html += `
-                            <div class="card p-4 border-l-4 border-blue-500 flex justify-between items-start">
-                                <div>
-                                    <h4 class="text-lg font-semibold">${item.Title || 'N/A'} (${item.Course || 'N/A'})</h4>
-                                    <p class="text-sm text-gray-500">${item.Date || 'N/A'}</p>
-                                    <p class="mt-2 text-gray-700">${item.Content || 'No Content'}</p>
-                                </div>
-                                <!-- Delete Button added here -->
-                                <button onclick="handleDeleteAnnouncement('${announcementId}')" class="text-red-500 hover:text-red-700 p-2 rounded-lg bg-red-100 transition duration-150 shadow-sm flex items-center text-sm font-medium">
-                                    <i class="fas fa-trash-alt mr-1"></i> Delete
-                                </button>
-                            </div>
-                        `;
-                    });
-                } else if (response.result === 'success') {
-                    html += `<div class="card"><p class="text-gray-600">No announcements posted yet.</p></div>`;
-                } else {
-                    html += `<div class="card bg-red-50"><p class="text-red-700">Error retrieving announcements: ${response.message || 'Unknown server error.'}</p></div>`;
-                }
-            } catch (e) {
-                // Error already handled
-            } finally {
-                html += `</div>`; // Close announcementsList div
-                contentDiv.innerHTML = html;
-                document.getElementById('announcementForm').onsubmit = handleAddAnnouncement; // Rebind form
-            }
-        }
-
-        // --- ASSIGNMENTS RENDERERS ---
-
-        async function fetchAndRenderAssignmentsList() {
-            const contentDiv = document.getElementById('portalContent');
-            const data = { action: 'getAllAssignments' };
-            
-            let html = `<h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-emerald-600">Manage Assignments</h2>`;
-
-            // Render form for adding new assignments
-            html += `
-                <div class="card mb-6 bg-yellow-50 border-t-4 border-yellow-500">
-                    <h3 class="text-xl font-semibold mb-3 text-yellow-700"><i class="fas fa-plus-circle mr-2"></i> Create New Assignment</h3>
-                    <form id="assignmentForm">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                            <select id="course" name="course" class="form-input" required>
-                                <option value="">Select Course (Audience)</option>
-                                <option value="All">All Courses</option>
-                                <option value="IT">IT</option>
-                                <option value="Business">Business</option>
-                                <!-- Add more courses as needed -->
-                            </select>
-                            <input type="text" id="title" name="title" class="form-input md:col-span-2" required placeholder="Assignment Title">
-                            <input type="date" id="dueDate" name="dueDate" class="form-input" required title="Due Date">
+                        <!-- Admin Info -->
+                        <div class="text-sm p-3 bg-gray-700 rounded-lg mb-6">
+                            <p class="font-semibold">${adminState.username}</p>
+                            <p class="text-xs text-gray-300">Course: ${adminState.assignedCourse}</p>
                         </div>
-                        <textarea id="description" name="description" class="form-input mb-4" rows="3" required placeholder="Assignment Description"></textarea>
-                        <button type="submit" class="w-full py-2 bg-yellow-500 text-white font-bold rounded-lg hover:bg-yellow-600 transition duration-200">
-                            <i class="fas fa-tasks mr-2"></i> Post Assignment
-                        </button>
-                    </form>
-                </div>
-                <h3 class="text-2xl font-semibold text-gray-700 mb-4">Existing Assignments</h3>
-                <div id="assignmentsList" class="space-y-4">
-            `;
-            
-            try {
-                const response = await makeApiCall(data);
-                
-                if (response.result === 'success' && response.data && response.data.length > 0) {
-                    
-                    response.data.forEach(item => {
-                        // Crucial: Assume backend provides a unique ID (e.g., RowId or ID)
-                        const assignmentId = item.id || item.ID || item.RowId; 
-                        const isPastDue = item.DueDate && new Date(item.DueDate) < new Date();
-                        const statusClass = isPastDue ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800';
 
-                        html += `
-                            <div class="card p-4 border-l-4 border-yellow-500 flex justify-between items-start">
-                                <div>
-                                    <h4 class="text-lg font-semibold">${item.Title || 'N/A'} (${item.Course || 'N/A'})</h4>
-                                    <p class="text-sm text-gray-500 mb-2">
-                                        Due: <span class="${statusClass} px-2 py-0.5 rounded-full text-xs font-medium">${item.DueDate || 'N/A'}</span>
-                                    </p>
-                                    <p class="mt-2 text-gray-700">${item.Description || 'No Description'}</p>
+                        <!-- Navigation -->
+                        <nav class="flex-grow">
+                            ${tabs.map(tab => `
+                                <div class="nav-item ${adminState.activeTab === tab.id ? 'active' : 'text-gray-300'}" 
+                                     data-tab="${tab.id}">
+                                    <span data-lucide="${tab.icon}" class="w-5 h-5 mr-3"></span>
+                                    ${tab.name}
                                 </div>
-                                <!-- Delete Button added here -->
-                                <button onclick="handleDeleteAssignment('${assignmentId}')" class="text-red-500 hover:text-red-700 p-2 rounded-lg bg-red-100 transition duration-150 shadow-sm flex items-center text-sm font-medium">
-                                    <i class="fas fa-trash-alt mr-1"></i> Delete
-                                </button>
-                            </div>
-                        `;
-                    });
-                } else if (response.result === 'success') {
-                    html += `<div class="card"><p class="text-gray-600">No assignments posted yet.</p></div>`;
-                } else {
-                    html += `<div class="card bg-red-50"><p class="text-red-700">Error retrieving assignments: ${response.message || 'Unknown server error.'}</p></div>`;
-                }
-            } catch (e) {
-                // Error already handled
-            } finally {
-                html += `</div>`; // Close assignmentsList div
-                contentDiv.innerHTML = html;
-                document.getElementById('assignmentForm').onsubmit = handleAddAssignment; // Rebind form
+                            `).join('')}
+                        </nav>
+
+                        <!-- Logout -->
+                        <div class="mt-auto pt-4 border-t border-gray-700">
+                            <button id="logoutBtn" class="w-full flex items-center justify-center p-3 text-red-400 hover:bg-gray-700 rounded-lg transition duration-150">
+                                <span data-lucide="log-out" class="w-5 h-5 mr-2"></span> Logout
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Content -->
+                    <main class="flex-grow p-8">
+                        <h1 class="text-3xl font-bold text-gray-800 mb-6">
+                            ${tabs.find(t => t.id === adminState.activeTab).name} Management
+                        </h1>
+
+                        <p class="mb-4 text-sm font-medium ${adminState.error ? 'text-red-600 bg-red-100' : 'text-emerald-600 bg-emerald-100'} p-3 rounded-lg"
+                            style="${adminState.message ? 'display: block;' : 'display: none;'}">
+                            ${adminState.message || ''}
+                        </p>
+
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            ${adminState.loading ? LoadingSpinner() : renderActiveTabContent()}
+                        </div>
+                    </main>
+                </div>
+            `;
+        }
+        
+        function LoadingSpinner() {
+            return `
+                <div class="flex flex-col items-center justify-center py-20">
+                    <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-4 text-gray-600">Loading data for ${adminState.assignedCourse}...</p>
+                </div>
+            `;
+        }
+
+        function renderActiveTabContent() {
+            switch (adminState.activeTab) {
+                case 'dashboard':
+                    return DashboardTab();
+                case 'students':
+                    return StudentList();
+                case 'announcements':
+                    return AnnouncementsTab();
+                case 'assignments':
+                    return AssignmentsTab();
+                case 'attendance':
+                    return AttendanceTab();
+                default:
+                    return `<p class="text-gray-500">Select a tab to begin management.</p>`;
             }
         }
 
+        // --- NEW DASHBOARD TAB ---
 
-        // --- ATTENDANCE RENDERERS ---
+        function DashboardTab() {
+            const studentCount = adminState.students.length;
+            const assignmentCount = adminState.assignments.length;
+            const announcementCount = adminState.announcements.length;
 
-        function renderAttendanceForm() {
-            const contentDiv = document.getElementById('portalContent');
-
-            contentDiv.innerHTML = `
-                <div class="max-w-xl mx-auto">
-                    <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-emerald-600">Record Attendance</h2>
-
-                    <div class="card bg-blue-50 border-t-4 border-blue-500">
-                        <h3 class="text-xl font-semibold mb-3 text-blue-700"><i class="fas fa-clipboard-check mr-2"></i> Mark Student Attendance</h3>
-                        <form id="attendanceForm">
-                            <div class="mb-4">
-                                <label for="admNo" class="block text-gray-700 font-medium mb-2">Admission Number</label>
-                                <input type="text" id="admNo" name="admNo" class="form-input" required placeholder="e.g., ADM-001">
+            return `
+                <h2 class="text-2xl font-semibold mb-6 text-gray-700">Course Overview: ${adminState.assignedCourse}</h2>
+                
+                <!-- Stat Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- Total Students -->
+                    <div class="bg-blue-50 p-6 rounded-xl shadow-md border-b-4 border-blue-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-blue-600">Total Students</p>
+                                <p class="text-4xl font-extrabold text-blue-900 mt-1">${studentCount}</p>
                             </div>
-                            <div class="mb-6">
-                                <label for="status" class="block text-gray-700 font-medium mb-2">Attendance Status</label>
-                                <select id="status" name="status" class="form-input" required>
+                            <span data-lucide="users" class="w-10 h-10 text-blue-400"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Assignments -->
+                    <div class="bg-yellow-50 p-6 rounded-xl shadow-md border-b-4 border-yellow-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-yellow-600">Active Assignments</p>
+                                <p class="text-4xl font-extrabold text-yellow-900 mt-1">${assignmentCount}</p>
+                            </div>
+                            <span data-lucide="clipboard-list" class="w-10 h-10 text-yellow-400"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Total Announcements -->
+                    <div class="bg-green-50 p-6 rounded-xl shadow-md border-b-4 border-green-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-green-600">Total Announcements</p>
+                                <p class="text-4xl font-extrabold text-green-900 mt-1">${announcementCount}</p>
+                            </div>
+                            <span data-lucide="megaphone" class="w-10 h-10 text-green-400"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Latest Activity Section -->
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                            <span data-lucide="file-text" class="w-5 h-5 mr-2"></span> Latest Assignments
+                        </h3>
+                        ${adminState.assignments.slice(0, 3).length === 0 ? 
+                            `<p class="text-gray-500 p-4 border rounded-lg">No assignments currently active.</p>` :
+                            `<div class="space-y-3">
+                                ${adminState.assignments.slice(0, 3).map(ass => `
+                                    <div class="p-3 border border-gray-200 rounded-lg bg-white shadow-sm">
+                                        <p class="font-bold text-sm text-gray-900">${ass.title}</p>
+                                        <p class="text-xs ${new Date(ass.dueDate) < new Date() ? 'text-red-500' : 'text-emerald-500'} mt-1">Due: ${ass.dueDate}</p>
+                                    </div>
+                                `).join('')}
+                            </div>`
+                        }
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                            <span data-lucide="bell" class="w-5 h-5 mr-2"></span> Recent Announcements
+                        </h3>
+                        ${adminState.announcements.slice(0, 3).length === 0 ? 
+                            `<p class="text-gray-500 p-4 border rounded-lg">No announcements posted yet.</p>` :
+                            `<div class="space-y-3">
+                                ${adminState.announcements.slice(0, 3).map(ann => `
+                                    <div class="p-3 border border-gray-200 rounded-lg bg-white shadow-sm">
+                                        <p class="font-bold text-sm text-gray-900">${ann.title}</p>
+                                        <p class="text-xs text-gray-400 mt-1">Posted: ${ann.date}</p>
+                                    </div>
+                                `).join('')}
+                            </div>`
+                        }
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- TAB CONTENTS ---
+
+        function StudentList() {
+            return `
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">All Students in ${adminState.assignedCourse} (${adminState.students.length})</h2>
+                ${adminState.students.length === 0 ? 
+                    `<p class="text-gray-500">No students found for this course.</p>` :
+                    `<div class="data-container">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adm. No</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${adminState.students.map(student => `
+                                    <tr data-admno="${student.admNo}">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${student.admNo}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${student.firstName} ${student.lastName}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${student.email}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button onclick="handleRemoveStudent('${student.admNo}', '${adminState.assignedCourse}')" 
+                                                class="action-btn bg-red-500 text-white hover:bg-red-600 transition">
+                                                Graduate/Remove
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`
+                }
+            `;
+        }
+
+        function AnnouncementsTab() {
+            return `
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Post New Announcement Form -->
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Post New Announcement</h2>
+                        <form id="announcementForm" class="space-y-4 bg-gray-50 p-6 rounded-lg border">
+                            <div>
+                                <label for="announcementTitle" class="block text-sm font-medium text-gray-700">Title</label>
+                                <input type="text" id="announcementTitle" name="title" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="announcementContent" class="block text-sm font-medium text-gray-700">Content</label>
+                                <textarea id="announcementContent" name="content" rows="4" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500"></textarea>
+                            </div>
+                            <button type="submit" class="action-btn bg-emerald-600 text-white hover:bg-emerald-700 w-full transition">
+                                <span data-lucide="send" class="w-4 h-4 mr-2 inline-block"></span> Post Announcement
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Existing Announcements List -->
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Recent Announcements (${adminState.announcements.length})</h2>
+                        ${adminState.announcements.length === 0 ? 
+                            `<p class="text-gray-500 p-4 border rounded-lg">No announcements posted yet.</p>` :
+                            `<div class="space-y-4 data-container">
+                                ${adminState.announcements.map(ann => `
+                                    <div class="p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+                                        <p class="font-bold text-gray-900">${ann.title}</p>
+                                        <p class="text-sm text-gray-600">${ann.content.substring(0, 100)}${ann.content.length > 100 ? '...' : ''}</p>
+                                        <p class="text-xs text-gray-400 mt-1">Posted: ${ann.date}</p>
+                                    </div>
+                                `).join('')}
+                            </div>`
+                        }
+                    </div>
+                </div>
+            `;
+        }
+
+        function AssignmentsTab() {
+            const openAssignments = adminState.assignments.filter(a => new Date(a.dueDate) >= new Date()).length;
+
+            return `
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Post New Assignment Form -->
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Create New Assignment</h2>
+                        <form id="assignmentForm" class="space-y-4 bg-gray-50 p-6 rounded-lg border">
+                            <div>
+                                <label for="assignmentTitle" class="block text-sm font-medium text-gray-700">Title</label>
+                                <input type="text" id="assignmentTitle" name="title" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="assignmentDescription" class="block text-sm font-medium text-gray-700">Description</label>
+                                <textarea id="assignmentDescription" name="description" rows="4" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500"></textarea>
+                            </div>
+                            <div>
+                                <label for="assignmentDueDate" class="block text-sm font-medium text-gray-700">Due Date</label>
+                                <input type="date" id="assignmentDueDate" name="dueDate" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <button type="submit" class="action-btn bg-blue-600 text-white hover:bg-blue-700 w-full transition">
+                                <span data-lucide="plus-circle" class="w-4 h-4 mr-2 inline-block"></span> Create Assignment
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Existing Assignments List -->
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Open Assignments (${openAssignments})</h2>
+                        ${adminState.assignments.length === 0 ? 
+                            `<p class="text-gray-500 p-4 border rounded-lg">No assignments currently active.</p>` :
+                            `<div class="space-y-4 data-container">
+                                ${adminState.assignments.map(ass => `
+                                    <div class="p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+                                        <p class="font-bold text-gray-900">${ass.title}</p>
+                                        <p class="text-sm text-gray-600">${ass.description.substring(0, 100)}${ass.description.length > 100 ? '...' : ''}</p>
+                                        <p class="text-xs ${new Date(ass.dueDate) < new Date() ? 'text-red-500' : 'text-emerald-500'} mt-1">Due: ${ass.dueDate}</p>
+                                    </div>
+                                `).join('')}
+                            </div>`
+                        }
+                    </div>
+                </div>
+            `;
+        }
+        
+        function AttendanceTab() {
+            return `
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Record Attendance Form -->
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Record Daily Attendance</h2>
+                        <form id="attendanceForm" class="space-y-4 bg-gray-50 p-6 rounded-lg border">
+                            <div>
+                                <label for="admNo" class="block text-sm font-medium text-gray-700">Student Admission No.</label>
+                                <input type="text" id="admNo" name="admNo" required list="studentAdms"
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                                    placeholder="e.g. ADM-001 - John Doe">
+                                <datalist id="studentAdms">
+                                    ${adminState.students.map(s => `<option value="${s.admNo} - ${s.firstName} ${s.lastName}">`).join('')}
+                                </datalist>
+                                <p class="text-xs text-gray-500 mt-1">Start typing Admission No. or Name.</p>
+                            </div>
+                            <div>
+                                <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
+                                <input type="date" id="date" name="date" value="${new Date().toISOString().slice(0, 10)}" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                                <select id="status" name="status" required
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
                                     <option value="Present">Present</option>
                                     <option value="Absent">Absent</option>
                                     <option value="Late">Late</option>
                                     <option value="Excused">Excused Absence</option>
                                 </select>
                             </div>
-                            <button type="submit" class="w-full py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-200">
-                                <i class="fas fa-save mr-2"></i> Record Attendance
+                            <button type="submit" class="action-btn bg-indigo-600 text-white hover:bg-indigo-700 w-full transition">
+                                <span data-lucide="check-square" class="w-4 h-4 mr-2 inline-block"></span> Record Attendance
                             </button>
                         </form>
+                    </div>
 
-                        <div class="mt-6 text-sm text-gray-600 p-3 bg-blue-100 rounded-lg">
-                            <p class="font-semibold">Note:</p>
-                            <p class="mt-1">Today's Date is automatically recorded. You can record attendance here, and the data will be stored for future retrieval/reporting.</p>
+                    <!-- Attendance History (Simplified View) -->
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Attendance Focus</h2>
+                        <div class="bg-yellow-50 p-4 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                            <p class="font-semibold mb-2">Note on History:</p>
+                            <p>For performance, a detailed attendance log is managed in the Apps Script backend. You can record attendance here, and the data will be stored for future retrieval/reporting.</p>
                             <p class="mt-2">Use the Student List tab to verify Admission Numbers.</p>
                         </div>
                     </div>
@@ -865,7 +745,19 @@
             // Logout
             document.getElementById('logoutBtn').onclick = handleLogout;
             
-            // Forms binding is now handled within the fetchAndRender functions to ensure they exist on load
+            // Forms binding (only bind if element exists)
+            const announcementForm = document.getElementById('announcementForm');
+            if(announcementForm) {
+                announcementForm.onsubmit = handleAddAnnouncement;
+            }
+            const assignmentForm = document.getElementById('assignmentForm');
+            if(assignmentForm) {
+                assignmentForm.onsubmit = handleAddAssignment;
+            }
+            const attendanceForm = document.getElementById('attendanceForm');
+            if(attendanceForm) {
+                attendanceForm.onsubmit = handleRecordAttendance;
+            }
         }
 
 

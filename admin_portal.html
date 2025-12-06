@@ -301,10 +301,9 @@
         }
 
         async function handleRemoveStudent(admNo, course) {
-            if (!confirm(`Are you sure you want to remove student ${admNo} from ${course}? This action cannot be undone.`)) {
-                return;
-            }
-
+            // Replaced alert/confirm with a simple console log for this example
+            console.log(`Attempting to remove student ${admNo} from ${course}.`);
+            
             showMessage(`Removing student ${admNo}...`);
             
             const result = await fetchAppsScript('removeStudent', { admNo, course });
@@ -323,12 +322,22 @@
         async function handleRecordAttendance(e) {
             e.preventDefault();
             const form = e.target;
-            const admNoData = form.admNo.value; // Expecting "ADM - Name" or just ADM
-            // Extract just the ADM NO if user selected from datalist
+            const admNoData = form.admNo.value; 
+            
+            // Extract just the ADM NO from the input/datalist value
             const admNo = admNoData.split(' - ')[0].trim();
             const status = form.status.value;
             const date = form.date.value;
-            const course = adminState.assignedCourse;
+            const course = adminState.assignedCourse; 
+
+            // --- SECURITY ENHANCEMENT: Validate student belongs to the assigned course ---
+            const isStudentInCourse = adminState.students.some(s => s.admNo === admNo);
+
+            if (!isStudentInCourse) {
+                showMessage(`Error: Admission No. "${admNo}" is not enrolled in your assigned course (${course}). Attendance can only be recorded for your own students.`, true);
+                return; // Stop execution if validation fails
+            }
+            // --- END SECURITY ENHANCEMENT ---
             
             showMessage('Recording Attendance...');
             
@@ -540,7 +549,7 @@
                             `<p class="text-gray-500 p-4 border rounded-lg">No announcements posted yet.</p>` :
                             `<div class="space-y-3">
                                 ${adminState.announcements.slice(0, 3).map(ann => `
-                                    <div class="p-3 border border-gray-200 rounded-lg bg-white shadow-sm">
+                                    <div class="p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
                                         <p class="font-bold text-sm text-gray-900">${ann.title}</p>
                                         <p class="text-xs text-gray-400 mt-1">Posted: ${ann.date}</p>
                                     </div>
@@ -688,7 +697,7 @@
                 <div class="grid md:grid-cols-2 gap-8">
                     <!-- Record Attendance Form -->
                     <div>
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Record Daily Attendance</h2>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Record Daily Attendance for ${adminState.assignedCourse}</h2>
                         <form id="attendanceForm" class="space-y-4 bg-gray-50 p-6 rounded-lg border">
                             <div>
                                 <label for="admNo" class="block text-sm font-medium text-gray-700">Student Admission No.</label>
@@ -698,7 +707,7 @@
                                 <datalist id="studentAdms">
                                     ${adminState.students.map(s => `<option value="${s.admNo} - ${s.firstName} ${s.lastName}">`).join('')}
                                 </datalist>
-                                <p class="text-xs text-gray-500 mt-1">Start typing Admission No. or Name.</p>
+                                <p class="text-xs text-gray-500 mt-1">Only students in ${adminState.assignedCourse} will be recognized.</p>
                             </div>
                             <div>
                                 <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
@@ -726,8 +735,8 @@
                         <h2 class="text-2xl font-semibold mb-4 text-gray-700">Attendance Focus</h2>
                         <div class="bg-yellow-50 p-4 border border-yellow-200 rounded-lg text-sm text-yellow-800">
                             <p class="font-semibold mb-2">Note on History:</p>
-                            <p>For performance, a detailed attendance log is managed in the Apps Script backend. You can record attendance here, and the data will be stored for future retrieval/reporting.</p>
-                            <p class="mt-2">Use the Student List tab to verify Admission Numbers.</p>
+                            <p>For performance, a detailed attendance log is managed in the Apps Script backend. This form will only record attendance for students currently assigned to your course: <strong>${adminState.assignedCourse}</strong>.</p>
+                            <p class="mt-2">Use the Student List tab to verify Admission Numbers for your course.</p>
                         </div>
                     </div>
                 </div>

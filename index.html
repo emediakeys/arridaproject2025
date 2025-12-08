@@ -1,846 +1,627 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ACHSTS Home</title>
-  <!-- Load Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Load Font Awesome Icons (used in the original file) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <!-- SweetAlert2 CDN (used in the original file) -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <style>
-    /* Custom Configuration for Theme, Font, and Hero */
-    :root {
-      --primary-color: #3b82f6;
-      /* Blue 500 */
-      --secondary-color: #10b981;
-      /* Emerald 500 */
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      scroll-behavior: smooth;
-    }
-
-    /* Custom scroll-padding for smooth scrolling to sections below fixed header */
-    html {
-      scroll-padding-top: 6rem;
-    }
-
-    /* Hero Section Styling (Background Placeholder) */
-    .hero-section {
-      background-image: url('images/DSC_3652.JPG');
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-      /* Parallax effect */
-      height: 100vh;
-    }
-
-    .overlay {
-      background-color: rgba(0, 0, 0, 0.6);
-    }
-
-    /* Mobile Menu Visibility Control */
-    .menu {
-      transition: transform 0.3s ease-in-out;
-    }
-
-    .menu.hidden-on-mobile {
-      transform: translateX(100%);
-    }
-
-    /* Lightbox for Gallery */
-    .lightbox-modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0, 0, 0, 0.9);
-      justify-content: center;
-      align-items: center;
-    }
-
-    .lightbox-content {
-      margin: auto;
-      display: block;
-      width: 90%;
-      max-width: 900px;
-    }
-
-    .lightbox-image {
-      width: 100%;
-      height: auto;
-      max-height: 90vh;
-      object-fit: contain;
-    }
-
-    .lightbox-close {
-      position: absolute;
-      top: 15px;
-      right: 35px;
-      color: #f1f1f1;
-      font-size: 40px;
-      font-weight: bold;
-      transition: 0.3s;
-      cursor: pointer;
-      z-index: 1001;
-    }
-
-    .lightbox-close:hover,
-    .lightbox-close:focus {
-      color: #bbb;
-      text-decoration: none;
-      cursor: pointer;
-    }
-  </style>
-</head>
-
-<body class="text-gray-800 antialiased bg-gray-50">
-
-  <!-- Header / Navbar Section -->
-  <nav class="navbar fixed top-0 left-0 w-full bg-white shadow-lg z-50 transition duration-300 ease-in-out">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-20">
-        <!-- Logo -->
-        <div class="flex-shrink-0">
-          <a href="#hero-section" class="text-2xl font-extrabold text-blue-600 hover:text-blue-800 transition">
-            <i class="fas fa-mosque mr-2"></i><span class="text-gray-800">ACHSTS</span>
-          </a>
-        </div>
-
-        <!-- Desktop Menu -->
-        <ul class="hidden lg:flex space-x-6 items-center">
-          <li><a href="#"
-              class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Home</a></li>
-          <li><a href="#about-section"
-              class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">About</a></li>
-          <li><a href="#gallery"
-              class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Gallery</a></li>
-          <li><a href="#admission"
-              class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Admission</a></li>
-
-          <!-- D R O P D O W N   L O G I N   F I X -->
-          <li class="relative group">
-            <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150 flex items-center">
-              Login <i class="fas fa-chevron-down text-xs ml-1 transition-transform group-hover:rotate-180"></i>
-            </a>
-            <div
-              class="absolute left-1/2 -translate-x-1/2 mt-3 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 z-50 border border-gray-100">
-              <a href="student_dashboard.html"
-                class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-lg transition">
-                <i class="fas fa-user-graduate w-5 mr-2"></i> Student Login
-              </a>
-              <!-- Assuming an Admin Login page exists -->
-              <a href="admin_portal.html"
-                class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-lg transition">
-                <i class="fas fa-user-shield w-5 mr-2"></i> Admin Login
-              </a>
-            </div>
-          </li>
-          <!-- E N D   D R O P D O W N -->
-
-          <li><a href="#news" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">News</a>
-          </li>
-          <li><a href="#team" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Teachers</a>
-          </li>
-          <li><a href="#contact-section"
-              class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Contact</a></li>
-          <li>
-            <a href="https://script.google.com/macros/s/AKfycbzUl_oyu8xzvjBuvPS1Xp9SLOi7Z112Y4fB74xOav8d7Ad2Pv03Lp0ISNWoarlwOKbmmg/exec"
-              class="py-2 px-4 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition duration-150 font-semibold shadow-md">
-              Exam Portal
-            </a>
-          </li>
-          <button id="theme-toggle" class="p-2 rounded-full text-gray-700 hover:bg-gray-100 transition">
-            <i class="fas fa-moon"></i>
-          </button>
-        </ul>
-
-        <!-- Mobile Menu Button & Theme Toggle (Visible on small screens) -->
-        <div class="flex lg:hidden items-center space-x-3">
-          <button id="theme-toggle-mobile" class="p-2 rounded-full text-gray-700 hover:bg-gray-100 transition">
-            <i class="fas fa-moon"></i>
-          </button>
-          <button class="text-2xl text-gray-800 hover:text-blue-600" id="menu-open-button">
-            <i class="fas fa-bars"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mobile Menu (Off-Canvas) -->
-    <ul id="mobile-menu"
-      class="menu hidden-on-mobile fixed top-0 right-0 w-64 h-full bg-white shadow-xl p-6 lg:hidden flex flex-col space-y-4 z-50">
-      <button class="text-2xl text-gray-800 self-end mb-4 hover:text-blue-600" id="menu-close-button">
-        <i class="fas fa-times"></i>
-      </button>
-      <li><a href="#"
-          class="text-gray-700 hover:text-blue-600 font-medium text-lg border-b pb-1 transition duration-150">Home</a>
-      </li>
-      <li><a href="#about-section"
-          class="text-gray-700 hover:text-blue-600 font-medium text-lg border-b pb-1 transition duration-150">About</a>
-      </li>
-      <li><a href="#gallery"
-          class="text-gray-700 hover:text-blue-600 font-medium text-lg border-b pb-1 transition duration-150">Gallery</a>
-      </li>
-      <li><a href="#admission"
-          class="text-gray-700 hover:text-blue-600 font-medium text-lg border-b pb-1 transition duration-150">Admission</a>
-      </li>
-
-      <!-- Mobile Login Links (Expanded) -->
-      <li class="pt-2">
-        <p class="text-gray-500 text-sm font-semibold mb-1">Login</p>
-        <a href="student_dashboard.html"
-          class="block px-3 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition">
-          <i class="fas fa-user-graduate w-5 mr-2"></i> Student Login
-        </a>
-        <a href="admin_portal.html"
-          class="block px-3 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition">
-          <i class="fas fa-user-shield w-5 mr-2"></i> Admin Login
-        </a>
-      </li>
-      <!-- End Mobile Login -->
-
-      <li><a href="#news"
-          class="text-gray-700 hover:text-blue-600 font-medium text-lg border-b pb-1 transition duration-150">News</a>
-      </li>
-      <li><a href="#team"
-          class="text-gray-700 hover:text-blue-600 font-medium text-lg border-b pb-1 transition duration-150">Teachers</a>
-      </li>
-      <li><a href="#contact-section"
-          class="text-gray-700 hover:text-blue-600 font-medium text-lg border-b pb-1 transition duration-150">Contact</a>
-      </li>
-      <li>
-        <a href="https://script.google.com/macros/s/AKfycbzUl_oyu8xzvjBuvPS1Xp9SLOi7Z112Y4fB74xOav8d7Ad2Pv03Lp0ISNWoarlwOKbmmg/exec"
-          class="block w-full text-center py-2 px-4 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition duration-150 font-semibold shadow-md mt-4">
-          Exam Portal
-        </a>
-      </li>
-    </ul>
-  </nav>
-
-  <main>
-    <!-- hero section -->
-    <section class="hero-section flex items-center justify-center text-center">
-      <div class="overlay w-full h-full flex flex-col items-center justify-center p-6 sm:p-12">
-        <h1 class="headline text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white mb-4">
-          Welcome to <span class="text-blue-300">ACHSTS</span>
-        </h1>
-        <h1 class="text-xl sm:text-3xl lg:text-4xl font-light text-white mb-6 max-w-4xl">ARRIDA COLLEGE OF HEALTH
-          SCIENCE TECHNOLOGY SULEJA</h1>
-        <p class="tagline text-lg sm:text-xl text-gray-200 mb-10">
-          Your Health is our Concern.
-        </p>
-        <a href="form.html"
-          class="bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg hover:bg-yellow-400 transition duration-300 transform hover:scale-105">
-          Apply Now
-        </a>
-      </div>
-    </section>
-
-    <!-- about section -->
-    <section class="about-section py-16 md:py-24" id="about-section">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <!-- Image Wrapper -->
-          <div class="relative w-full overflow-hidden rounded-xl shadow-2xl">
-            <!-- Placeholder image URL is used for the image src -->
-            <img src="images/DSC_3728.JPG" alt="Abdulmalik Usaini, Director"
-              class="w-full h-auto object-cover transition duration-500 hover:scale-105">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-          </div>
-
-          <!-- About Details -->
-          <div class="about-details">
-            <p class="text-sm font-semibold uppercase text-blue-600 mb-2">About Our Institution</p>
-            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">ABDULMALIK USAINI</h1>
-            <i class="block text-xl font-medium text-emerald-600 mb-4">Director</i>
-
-            <!-- Social Links -->
-            <div class="flex space-x-4 mb-8">
-              <a href="https://www.tiktok.com/@hanifessaiy?_t=ZM-8wxL6yx5MJC&_r=1"
-                class="text-2xl text-gray-500 hover:text-pink-600 transition"><i class="fa-brands fa-tiktok"></i></a>
-              <a href="https://www.instagram.com/hanif_essaiy?igsh=d3ZoN3FmMGloNGRx&utm_source=qr"
-                class="text-2xl text-gray-500 hover:text-purple-600 transition"><i
-                  class="fa-brands fa-instagram"></i></a>
-              <a href="https://wa.me/2347040686186" class="text-2xl text-gray-500 hover:text-green-500 transition"><i
-                  class="fa-brands fa-whatsapp"></i></a>
-            </div>
-
-            <p class="about-text text-gray-600 mb-4 leading-relaxed">
-              The ARRIDA School of Health Sciences Technology is a leading institution committed to training skilled,
-              compassionate, and competent healthcare professionals. Our mission is to provide high-quality education
-              that
-              combines modern classroom learning with hands-on practical experience.
-            </p>
-            <p class="about-text text-gray-600 mb-8 leading-relaxed">
-              At ARRIDA School of Health Sciences Technology, students learn in a supportive environment equipped with
-              essential facilities, experienced instructors, and a curriculum designed to meet today’s healthcare
-              standards. We focus on building professionals who are prepared to serve in hospitals, laboratories,
-              community health centers, research institutions, and public health organizations.
-            </p>
-
-            <!-- Buttons -->
-            <div class="flex space-x-4">
-              <a href="https://placehold.co/600x800/2563eb/ffffff?text=Download+Flier" download="Ar-rida Flyer"
-                class="py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150">
-                Download Flier
-              </a>
-              <a href="#contact-section"
-                class="py-3 px-6 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-300 transition duration-150">
-                Contact Us
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- services section (Admission) -->
-    <section class="services-section bg-gray-100 py-16 md:py-24" id="admission">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Courses We Offer</h3>
-        <p class="text-gray-600 mb-12 max-w-2xl mx-auto">Explore our diverse range of health science and technology
-          programs designed for future healthcare leaders.</p>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <!-- Course Card 1 (Placeholder data) -->
-          <div
-            class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1">
-            <i class="fas fa-stethoscope text-4xl text-blue-600 mb-4"></i>
-            <h4 class="text-xl font-semibold text-gray-900 mb-2">Community Health</h4>
-            <p class="text-gray-500 text-sm">A program focusing on public health, disease prevention, and community
-              wellness initiatives.</p>
-          </div>
-          <!-- Course Card 2 -->
-          <div
-            class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1">
-            <i class="fas fa-microscope text-4xl text-emerald-600 mb-4"></i>
-            <h4 class="text-xl font-semibold text-gray-900 mb-2">Medical Laboratory Science</h4>
-            <p class="text-gray-500 text-sm">Training for clinical laboratory testing, diagnostics, and biomedical
-              research techniques.</p>
-          </div>
-          <!-- Course Card 3 -->
-          <div
-            class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1">
-            <i class="fas fa-user-nurse text-4xl text-red-500 mb-4"></i>
-            <h4 class="text-xl font-semibold text-gray-900 mb-2">Environmental Health</h4>
-            <p class="text-gray-500 text-sm">Focusing on environmental factors that affect human health and developing
-              public health policies.</p>
-          </div>
-          <div
-            class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1">
-            <i class="fas fa-people-group text-4xl text-blue-500 mb-4"></i>
-            <h4 class="text-xl font-semibold text-gray-900 mb-2">Public Health</h4>
-            <p class="text-gray-500 text-sm">Focusing on the health of communities and populations through education,
-              policy, and disease prevention programs.</p>
-          </div>
-        </div>
-        <div class="mt-12">
-          <a href="form.html"
-            class="py-3 px-8 bg-blue-600 text-white font-bold rounded-full shadow-lg hover:bg-blue-700 transition duration-300">
-            View Admission Requirements
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <section class="gallery-section py-16 md:py-24" id="gallery">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-12">Gallery</h3>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <!-- Placeholder images used for gallery items -->
-          <div
-            class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
-            <img src="images/DSC_3654.JPG" alt="Gallery 1"
-              class="gallery-img w-full h-48 object-cover">
-            <div
-              class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
-              <i class="fas fa-expand text-white text-2xl"></i>
-            </div>
-          </div>
-          <div
-            class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
-            <img src="images/DSC_3656.JPG" alt="Gallery 2"
-              class="gallery-img w-full h-48 object-cover">
-            <div
-              class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
-              <i class="fas fa-expand text-white text-2xl"></i>
-            </div>
-          </div>
-          <div
-            class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
-            <img src="images/DSC_3672.JPG" alt="Gallery 3"
-              class="gallery-img w-full h-48 object-cover">
-            <div
-              class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
-              <i class="fas fa-expand text-white text-2xl"></i>
-            </div>
-          </div>
-          <div
-            class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
-            <img src="images/DSC_3720.JPG" alt="Gallery 4"
-              class="gallery-img w-full h-48 object-cover">
-            <div
-              class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
-              <i class="fas fa-expand text-white text-2xl"></i>
-            </div>
-          </div>
-          <!-- Added a few more for better layout -->
-          <div
-            class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
-            <img src="images/DSC_3751.JPG" alt="Gallery 5"
-              class="gallery-img w-full h-48 object-cover">
-            <div
-              class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
-              <i class="fas fa-expand text-white text-2xl"></i>
-            </div>
-          </div>
-          <div
-            class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
-            <img src="images/DSC_3757.JPG" alt="Gallery 6"
-              class="gallery-img w-full h-48 object-cover">
-            <div
-              class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
-              <i class="fas fa-expand text-white text-2xl"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- News Section -->
-    <section class="news-section bg-gray-100 py-16 md:py-24" id="news">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-12">Latest News</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-left news-list">
-
-          <!-- News Card 1 -->
-          <div
-            class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300">
-            <img src="images/DSC_3720.JPG"
-              alt="Admission into Health Programs" class="news-img w-full h-48 object-cover">
-            <div class="p-6 flex flex-col flex-grow">
-              <h4 class="news-title text-xl font-bold text-gray-900 mb-2">Admission into Health Programs</h4>
-              <p class="news-date text-sm text-gray-500 mb-4">Posted: <span class="font-semibold">September 30,
-                  2025</span></p>
-              <p class="news-body text-gray-600 flex-grow mb-4">
-                We are pleased to announce that admissions are now open for our various health science programs. Apply
-                now to kickstart your career in healthcare!
-              </p>
-              <div class="news-actions flex justify-between items-center border-t pt-4">
-                <div class="share-dropdown relative group">
-                  <button
-                    class="share-btn text-blue-600 hover:text-blue-800 transition flex items-center text-sm font-medium">
-                    <i class="fa-solid fa-share mr-2"></i> <span>Share</span>
-                  </button>
-                  <div
-                    class="share-menu absolute bottom-full mb-2 left-0 w-36 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 z-50 p-2 border border-gray-100">
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="facebook"><i class="fa-brands fa-facebook mr-2 text-blue-600"></i> Facebook</a>
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="twitter"><i class="fa-brands fa-x-twitter mr-2 text-gray-800"></i> Twitter</a>
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="whatsapp"><i class="fa-brands fa-whatsapp mr-2 text-green-500"></i> WhatsApp</a>
-                  </div>
-                </div>
-                <button
-                  class="like-btn text-gray-500 hover:text-red-500 transition flex items-center text-sm font-medium">
-                  <i class="fa-solid fa-thumbs-up mr-1"></i> <span class="like-count">0</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- News Card 2 -->
-          <div
-            class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300">
-            <img src="images/Covr1.jpg" alt="New Library Opened"
-              class="news-img w-full h-48 object-cover">
-            <div class="p-6 flex flex-col flex-grow">
-              <h4 class="news-title text-xl font-bold text-gray-900 mb-2">New Library Opened</h4>
-              <p class="news-date text-sm text-gray-500 mb-4">Posted: <span class="font-semibold">September 28,
-                  2025</span></p>
-              <p class="news-body text-gray-600 flex-grow mb-4">
-                We are excited to announce the opening of our new library, equipped with the latest resources and study
-                spaces for our students.
-              </p>
-              <div class="news-actions flex justify-between items-center border-t pt-4">
-                <div class="share-dropdown relative group">
-                  <button
-                    class="share-btn text-blue-600 hover:text-blue-800 transition flex items-center text-sm font-medium">
-                    <i class="fa-solid fa-share mr-2"></i> <span>Share</span>
-                  </button>
-                  <div
-                    class="share-menu absolute bottom-full mb-2 left-0 w-36 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 z-50 p-2 border border-gray-100">
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="facebook"><i class="fa-brands fa-facebook mr-2 text-blue-600"></i> Facebook</a>
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="twitter"><i class="fa-brands fa-x-twitter mr-2 text-gray-800"></i> Twitter</a>
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="whatsapp"><i class="fa-brands fa-whatsapp mr-2 text-green-500"></i> WhatsApp</a>
-                  </div>
-                </div>
-                <button
-                  class="like-btn text-gray-500 hover:text-red-500 transition flex items-center text-sm font-medium">
-                  <i class="fa-solid fa-thumbs-up mr-1"></i> <span class="like-count">0</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- News Card 3 -->
-          <div
-            class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300">
-            <img src="images/dev.JPG" alt="New CBT Centre Opened"
-              class="news-img w-full h-48 object-cover">
-            <div class="p-6 flex flex-col flex-grow">
-              <h4 class="news-title text-xl font-bold text-gray-900 mb-2">New CBT Centre Opened</h4>
-              <p class="news-date text-sm text-gray-500 mb-4">Posted: <span class="font-semibold">September 25,
-                  2025</span></p>
-              <p class="news-body text-gray-600 flex-grow mb-4">
-                We are thrilled to announce the opening of our new Computer-Based Testing (CBT) Centre, designed to
-                provide students with a modern and efficient testing environment.
-              </p>
-              <div class="news-actions flex justify-between items-center border-t pt-4">
-                <div class="share-dropdown relative group">
-                  <button
-                    class="share-btn text-blue-600 hover:text-blue-800 transition flex items-center text-sm font-medium">
-                    <i class="fa-solid fa-share mr-2"></i> <span>Share</span>
-                  </button>
-                  <div
-                    class="share-menu absolute bottom-full mb-2 left-0 w-36 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 z-50 p-2 border border-gray-100">
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="facebook"><i class="fa-brands fa-facebook mr-2 text-blue-600"></i> Facebook</a>
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="twitter"><i class="fa-brands fa-x-twitter mr-2 text-gray-800"></i> Twitter</a>
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="whatsapp"><i class="fa-brands fa-whatsapp mr-2 text-green-500"></i> WhatsApp</a>
-                  </div>
-                </div>
-                <button
-                  class="like-btn text-gray-500 hover:text-red-500 transition flex items-center text-sm font-medium">
-                  <i class="fa-solid fa-thumbs-up mr-1"></i> <span class="like-count">0</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- My team section -->
-    <section class="my-team py-16 md:py-24" id="team">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-12">Our Teachers & Staff</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-          <!-- Team Card 1 -->
-          <div class="bg-white rounded-xl shadow-lg p-6 text-center transform hover:shadow-xl transition duration-300">
-            <img src="https://placehold.co/100x100/3b82f6/ffffff?text=JN" alt="Teacher 1"
-              class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-blue-100">
-            <h4 class="font-semibold text-gray-900 text-lg">Jane Ndubuisi</h4>
-            <p class="text-sm text-blue-600 mb-3">Head of Academics</p>
-            <div class="flex justify-center space-x-3">
-              <a href="#" class="text-gray-400 hover:text-blue-500"><i class="fa-brands fa-twitter"></i></a>
-              <a href="#" class="text-gray-400 hover:text-blue-500"><i class="fa-brands fa-linkedin"></i></a>
-            </div>
-          </div>
-          <!-- Team Card 2 -->
-          <div class="bg-white rounded-xl shadow-lg p-6 text-center transform hover:shadow-xl transition duration-300">
-            <img src="https://placehold.co/100x100/10b981/ffffff?text=MA" alt="Teacher 2"
-              class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-emerald-100">
-            <h4 class="font-semibold text-gray-900 text-lg">Musa Aliyu</h4>
-            <p class="text-sm text-emerald-600 mb-3">Lead Science Instructor</p>
-            <div class="flex justify-center space-x-3">
-              <a href="#" class="text-gray-400 hover:text-emerald-500"><i class="fa-brands fa-twitter"></i></a>
-              <a href="#" class="text-gray-400 hover:text-emerald-500"><i class="fa-brands fa-linkedin"></i></a>
-            </div>
-          </div>
-          <!-- Team Card 3 -->
-          <div class="bg-white rounded-xl shadow-lg p-6 text-center transform hover:shadow-xl transition duration-300">
-            <img src="https://placehold.co/100x100/f59e0b/ffffff?text=FK" alt="Teacher 3"
-              class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-yellow-100">
-            <h4 class="font-semibold text-gray-900 text-lg">Fatima Khalid</h4>
-            <p class="text-sm text-yellow-600 mb-3">Community Health Coordinator</p>
-            <div class="flex justify-center space-x-3">
-              <a href="#" class="text-gray-400 hover:text-yellow-500"><i class="fa-brands fa-twitter"></i></a>
-              <a href="#" class="text-gray-400 hover:text-yellow-500"><i class="fa-brands fa-linkedin"></i></a>
-            </div>
-          </div>
-          <!-- Team Card 4 -->
-          <div class="bg-white rounded-xl shadow-lg p-6 text-center transform hover:shadow-xl transition duration-300">
-            <img src="https://placehold.co/100x100/ef4444/ffffff?text=AU" alt="Teacher 4"
-              class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-red-100">
-            <h4 class="font-semibold text-gray-900 text-lg">Aisha Umar</h4>
-            <p class="text-sm text-red-600 mb-3">Student Affairs Officer</p>
-            <div class="flex justify-center space-x-3">
-              <a href="#" class="text-gray-400 hover:text-red-500"><i class="fa-brands fa-twitter"></i></a>
-              <a href="#" class="text-gray-400 hover:text-red-500"><i class="fa-brands fa-linkedin"></i></a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Contact section -->
-    <section class="contact-section bg-blue-600 py-16 md:py-24" id="contact-section">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h3 class="text-3xl sm:text-4xl font-bold text-white mb-12 text-center">Contact Us</h3>
-        <div class="bg-white rounded-xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2">
-
-          <!-- Left: Contact Form -->
-          <form id="contact-form" class="p-8 md:p-12 space-y-6">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Send a Message</h2>
-            <input type="text" name="name" placeholder="Full Name" required
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
-            <input type="email" name="email" placeholder="Email Address" required
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
-            <textarea name="message" rows="5" placeholder="Your Message" required
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"></textarea>
-            <button type="submit"
-              class="w-full py-3 px-6 bg-emerald-500 text-white font-semibold rounded-lg shadow-md hover:bg-emerald-600 transition duration-150 transform hover:scale-[1.01]">
-              Send Message
-            </button>
-          </form>
-
-          <!-- Right: Contact Info -->
-          <div class="bg-blue-700 p-8 md:p-12 text-white flex flex-col justify-center">
-            <h2 class="text-2xl font-bold mb-6">Contact Information</h2>
-            <ul class="space-y-4 text-gray-200">
-              <li class="flex items-start">
-                <i class="fa-solid fa-envelope mt-1 mr-3 text-emerald-300"></i>
-                <span>arridainfo2025@gmail.com</span>
-              </li>
-              <li class="flex items-start">
-                <i class="fa-solid fa-phone mt-1 mr-3 text-emerald-300"></i>
-                <span>08038578902, 08028267789</span>
-              </li>
-              <li class="flex items-start">
-                <i class="fa-solid fa-location-dot mt-1 mr-3 text-emerald-300"></i>
-                <span>Bakin Iku, Kaduna Road, Suleja, Nigeria.</span>
-              </li>
-              <li class="flex items-start">
-                <i class="fa-solid fa-calendar-days mt-1 mr-3 text-emerald-300"></i>
-                <span>Monday–Friday, 7:00 AM – 6:00 PM</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <footer class="site-footer bg-gray-900 text-white py-6">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-400">
-        &copy; 2025 ARRIDA. All rights reserved. | Powered by SCTI ICT Team.
-      </div>
-    </footer>
-  </main>
-
-  <!-- Lightbox Modal (For Gallery) -->
-  <div id="lightbox" class="lightbox-modal">
-    <button class="lightbox-close">&times;</button>
-    <div class="lightbox-content">
-      <img id="lightbox-image" class="lightbox-image" src="" alt="Gallery Preview">
-    </div>
-  </div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const navbar = document.querySelector('.navbar');
-      const openMenuBtn = document.getElementById('menu-open-button');
-      const closeMenuBtn = document.getElementById('menu-close-button');
-      const mobileMenu = document.getElementById('mobile-menu');
-      const navLinks = document.querySelectorAll('.nav-link, #mobile-menu a');
-      const galleryItems = document.querySelectorAll('.gallery-item');
-      const lightbox = document.getElementById('lightbox');
-      const lightboxImage = document.getElementById('lightbox-image');
-      const lightboxClose = document.querySelector('.lightbox-close');
-
-      // --- Sticky Navbar & Scroll Behavior ---
-      window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-          navbar.classList.add('shadow-xl', 'bg-opacity-95');
-        } else {
-          navbar.classList.remove('shadow-xl', 'bg-opacity-95');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Admission Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom "Inter" font style for better aesthetics (Added for consistency) */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
         }
-      });
-
-      // Smooth scrolling for all nav links
-      navLinks.forEach(link => {
-        link.addEventListener('click', function (e) {
-          const href = this.getAttribute('href');
-          if (href && href.startsWith('#')) {
-            e.preventDefault();
-            const target = document.querySelector(href);
-            if (target) {
-              target.scrollIntoView({ behavior: 'smooth' });
-              // Close mobile menu after clicking a link
-              if (mobileMenu.classList.contains('active')) {
-                toggleMobileMenu();
-              }
+        /* Original Custom styles for better form aesthetics and ensuring file input visibility */
+        .form-group label {
+            transition: color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: #3b82f6; /* Blue-500 on focus */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* Focus ring */
+        }
+        /* Style for the disabled submit button */
+        .btn-submit:disabled {
+            @apply bg-gray-400 cursor-not-allowed;
+        }
+        
+        /* Modal specific styling for the custom popup */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(2px);
+            z-index: 50;
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%);
             }
-          }
-        });
-      });
-
-      // --- Mobile Menu Toggle ---
-      function toggleMobileMenu() {
-        mobileMenu.classList.toggle('hidden-on-mobile');
-        mobileMenu.classList.toggle('active');
-      }
-
-      openMenuBtn.addEventListener('click', toggleMobileMenu);
-      closeMenuBtn.addEventListener('click', toggleMobileMenu);
-
-      // Close mobile menu when a link inside it is clicked
-      mobileMenu.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-          if (mobileMenu.classList.contains('active')) {
-            setTimeout(toggleMobileMenu, 100); // Give time for smooth scroll to start
-          }
-        });
-      });
-
-      // --- Gallery Lightbox Logic ---
-      galleryItems.forEach(item => {
-        item.addEventListener('click', () => {
-          const imgSrc = item.querySelector('.gallery-img').src;
-          const imgAlt = item.querySelector('.gallery-img').alt;
-          lightboxImage.src = imgSrc;
-          lightboxImage.alt = imgAlt;
-          lightbox.style.display = 'flex';
-        });
-      });
-
-      lightboxClose.addEventListener('click', () => {
-        lightbox.style.display = 'none';
-      });
-
-      lightbox.addEventListener('click', (e) => {
-        if (e.target === lightbox) {
-          lightbox.style.display = 'none';
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
         }
-      });
+        /* Style for print output: hide the "Go Back" button when printing */
+        @media print {
+            .print-hidden {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-8">
 
-      // --- Theme Toggle (Simple Dark Mode) ---
-      const themeToggle = document.getElementById('theme-toggle');
-      const themeToggleMobile = document.getElementById('theme-toggle-mobile');
-      const body = document.body;
+<div class="max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-2xl">
+    <header class="text-center mb-8 print-hidden">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-800">Student Application Form</h1>
+        <p class="text-gray-500 mt-2">Please fill in all details carefully to complete your admission.</p>
+    </header>
 
-      const updateThemeIcon = (isDark) => {
-        themeToggle.querySelector('i').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-        themeToggleMobile.querySelector('i').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-      };
+    <form id="admissionForm">
+        
+        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8 print-hidden">
+            <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">1. Biodata & Passport</legend>
+            
+            <div class="form-group mb-4">
+                <label for="passport" class="block text-sm font-medium text-gray-700 mb-2">Upload Passport Photograph (Max 2MB)</label>
+                <input type="file" id="passport" accept="image/png, image/jpeg" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <div id="preview-container" class="mt-4">
+                    </div>
+                <input type="hidden" id="passportBase64">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="col">
+                    <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
+                    <input type="text" id="firstName" name="firstName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div class="col">
+                    <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>
+                    <input type="text" id="lastName" name="lastName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+            </div>
 
-      const applyTheme = (isDark) => {
-        if (isDark) {
-          body.classList.add('dark');
-          body.classList.remove('antialiased', 'bg-gray-50', 'text-gray-800'); // Remove light mode classes
-          body.classList.add('bg-gray-900', 'text-gray-200'); // Add dark mode classes
-          // Note: Full dark mode conversion for all elements would require extensive CSS,
-          // but we apply basic body classes and let Tailwind handle the rest (which it can't fully do without configuration).
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div class="col">
+                    <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                    <input type="date" id="dob" name="dob" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div class="col">
+                    <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
+                    <select id="gender" name="gender" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        <option value="">Select...</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+        
+        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8 print-hidden">
+            <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">2. Contact & Login Details</legend>
+            
+            <div class="form-group mb-4">
+                <label for="address" class="block text-sm font-medium text-gray-700">Home Address</label>
+                <textarea id="address" name="address" rows="2" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="col">
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                    <input type="email" id="email" name="email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div class="col">
+                    <label for="password" class="block text-sm font-medium text-gray-700">Create Password</label>
+                    <input type="password" id="password" name="password" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <small class="block text-xs text-gray-500 mt-1">You will use this to login to the dashboard.</small>
+                </div>
+            </div>
+        </fieldset>
+        
+        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8 print-hidden">
+            <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">3. Background Information & Documents</legend>
+            
+            <div class="form-group mb-4">
+                <label for="course" class="block text-sm font-medium text-gray-700">Course Applying For</label>
+                <select name="course" id="course" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <option value="">-- Select Course --</option>
+                    <option value="Community Health Extension Workers">Community Health Extension Workers</option>
+                    <option value="Public Health">Public Health</option>
+                    <option value="Pharmacy Technician">Pharmacy Technician</option>
+                    <option value="Medical Laboratory Technician">Medical Laboratory Technician</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="col">
+                    <label for="birthCert" class="block text-sm font-medium text-gray-700">Upload Birth Certificate (PDF/Image)</label>
+                    <input type="file" id="birthCert" accept=".pdf, image/*" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                    <input type="hidden" id="birthCertBase64">
+                </div>
+                <div class="col">
+                    <label for="olevel" class="block text-sm font-medium text-gray-700">Upload O'Level Result (PDF/Image)</label>
+                    <input type="file" id="olevel" accept=".pdf, image/*" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                    <input type="hidden" id="olevelBase64">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="col">
+                    <label for="nokName" class="block text-sm font-medium text-gray-700">Next of Kin Name</label>
+                    <input type="text" id="nokName" name="nokName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div class="col">
+                    <label for="nokPhone" class="block text-sm font-medium text-gray-700">Next of Kin Phone</label>
+                    <input type="tel" id="nokPhone" name="nokPhone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+            </div>
+
+            <div class="form-group mb-4">
+                <label for="sponsor" class="block text-sm font-medium text-gray-700">Sponsor Name</label>
+                <input type="text" id="sponsor" name="sponsor" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+
+            <div class="form-group">
+                <label for="prevSchool" class="block text-sm font-medium text-gray-700">Previous School Attended</label>
+                <input type="text" id="prevSchool" name="prevSchool" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+        </fieldset>
+        
+        <div class="payment-section text-center bg-yellow-50 p-6 rounded-lg border border-yellow-200 print-hidden">
+            <p class="text-lg font-bold text-gray-800 mb-4">Application Fee: <strong class="text-green-600">₦7,500</strong></p>
+            
+            <button type="button" id="payBtn" class="btn-pay w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-150 ease-in-out shadow-md">
+                Pay ₦7,500 Now
+            </button>
+            <p id="payment-status" class="mt-4 text-green-700 font-bold hidden">
+                <svg class="inline w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Payment Successful!
+            </p>
+
+            <hr class="my-6 border-gray-300">
+
+            <button type="submit" id="submitBtn" class="btn-submit w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 px-8 rounded-lg text-lg transition duration-150 ease-in-out shadow-xl" disabled>
+                Submit Application
+            </button>
+        </div>
+
+    </form>
+    <div id="loading" class="text-center mt-6 p-4 bg-blue-100 text-blue-800 rounded-md font-semibold hidden print-hidden">
+        Processing Application...
+    </div>
+</div>
+
+<!-- 
+=======================================================
+1. Custom Popup Modal Structure (Hidden by Default)
+=======================================================
+-->
+<div id="customPopup" class="modal-overlay fixed inset-0 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full relative">
+        
+        <!-- Icon/Indicator (Success/Error) -->
+        <div id="popupIcon" class="flex justify-center mb-4">
+            <!-- SVG Icon will be injected here by JS -->
+        </div>
+
+        <!-- Title -->
+        <h3 id="popupTitle" class="text-xl font-bold text-gray-900 mb-2 text-center"></h3>
+        
+        <!-- Message Content -->
+        <p id="popupMessage" class="text-gray-600 mb-6 text-center"></p>
+        
+        <!-- Action Buttons (NEW DYNAMIC CONTAINER) -->
+        <div id="popupActions" class="flex justify-center gap-4">
+        </div>
+
+    </div>
+</div>
+
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+    // --- CONFIGURATION MOVED TO GLOBAL SCOPE ---
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
+    
+    // **PAYSTACK CONFIGURATION** - Made globally accessible
+    const PAYSTACK_PUBLIC_KEY = "pk_test_29f23a0e0bde6c074ae9efb019002a8d95e721b4"; 
+    const APPLICATION_FEE_NAIRA = 7500;
+    const APPLICATION_FEE_KOBO = APPLICATION_FEE_NAIRA * 100;
+
+    // Global references to the modal elements
+    const popupElement = document.getElementById('customPopup');
+    const popupTitle = document.getElementById('popupTitle');
+    const popupMessage = document.getElementById('popupMessage');
+    const popupIconContainer = document.getElementById('popupIcon');
+    const popupActionsContainer = document.getElementById('popupActions');
+    const mainContainer = document.querySelector('.max-w-3xl.mx-auto');
+
+    // Global variable to hold the submitted data for printing
+    let lastSubmittedData = null;
+
+    // Error Icon SVG (for reuse)
+    const errorIcon = `
+        <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+    `;
+
+    // Success Icon SVG (for reuse)
+    const successIcon = `
+        <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+    `;
+
+
+    /**
+     * Restores the original form content to the main container.
+     * @param {string} encodedContent - The URI-encoded HTML string of the original form content.
+     */
+    function restoreFormContent(encodedContent) {
+        // FIX: Decode the URI-encoded content before setting it as innerHTML
+        const content = decodeURIComponent(encodedContent);
+        mainContainer.innerHTML = content;
+    }
+
+
+    /**
+     * Replaces the native alert() function with a custom, styled popup modal.
+     * @param {string} message - The main message content to display.
+     * @param {string} type - 'success' or 'error' to determine the styling and icon.
+     * @param {string} [title='Notification'] - Optional title for the popup.
+     * @param {Array<Object>} [actions=[]] - Array of button objects: [{text: string, handler: function, isPrimary: boolean}]
+     */
+    function showCustomPopup(message, type = 'error', title = 'Notification', actions = []) {
+        // 1. Set content
+        popupTitle.textContent = title;
+        popupMessage.textContent = message;
+        
+        // 2. Set icon based on type
+        popupIconContainer.innerHTML = ''; // Clear previous icon
+        if (type === 'success') {
+            popupIconContainer.innerHTML = successIcon;
+        } else if (type === 'error') {
+            popupIconContainer.innerHTML = errorIcon;
         } else {
-          body.classList.remove('dark', 'bg-gray-900', 'text-gray-200');
-          body.classList.add('antialiased', 'bg-gray-50', 'text-gray-800');
+            // Default notification icon (e.g., info)
+            popupIconContainer.innerHTML = `
+                <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            `;
         }
-        updateThemeIcon(isDark);
-      };
 
-      const toggleTheme = () => {
-        const isDark = body.classList.contains('dark');
-        applyTheme(!isDark);
-        localStorage.setItem('theme', !isDark ? 'dark' : 'light');
-      };
+        // 3. Set dynamic action buttons
+        popupActionsContainer.innerHTML = ''; // Clear previous buttons
 
-      themeToggle.addEventListener('click', toggleTheme);
-      themeToggleMobile.addEventListener('click', toggleTheme);
+        if (actions.length === 0) {
+            // Default action: 'OK'
+            actions.push({ text: 'OK', handler: closeCustomPopup, isPrimary: true });
+        }
 
-      // Load saved theme
-      if (localStorage.getItem('theme') === 'dark') {
-        applyTheme(true);
-      } else {
-        applyTheme(false);
-      }
+        actions.forEach(action => {
+            const button = document.createElement('button');
+            button.textContent = action.text;
+            // Determine Tailwind classes based on primary status
+            const baseClasses = 'px-5 py-2 font-medium rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2';
+            button.className = action.isPrimary
+                ? `${baseClasses} bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500`
+                : `${baseClasses} bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400`;
+            
+            // Add spacing between buttons
+            if (actions.length > 1) {
+                button.classList.add('mx-1');
+            }
 
-      // --- Contact Form Submission (Placeholder) ---
-      const contactForm = document.getElementById('contact-form');
-      contactForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        // In a real application, you would send this data to a backend (like your Google Apps Script)
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Message Sent!',
-          text: 'Thank you for contacting us. We will get back to you shortly.',
-          confirmButtonColor: '#3b82f6'
-        });
-        contactForm.reset();
-      });
-
-      // --- Share Dropdown Logic ---
-      document.querySelectorAll('.share-dropdown').forEach(dropdown => {
-        const shareBtn = dropdown.querySelector('.share-btn');
-        const shareMenu = dropdown.querySelector('.share-menu');
-
-        // Toggle visibility on click for mobile/touch
-        shareBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          // On desktop, the group-hover should handle it, but for compatibility/touch:
-          shareMenu.classList.toggle('opacity-0');
-          shareMenu.classList.toggle('invisible');
-          shareMenu.classList.toggle('opacity-100');
-          shareMenu.classList.toggle('visible');
+            button.addEventListener('click', action.handler);
+            popupActionsContainer.appendChild(button);
         });
 
-        // Close menu if clicking outside
-        document.addEventListener('click', (e) => {
-          if (!dropdown.contains(e.target) && shareMenu.classList.contains('opacity-100')) {
-            shareMenu.classList.remove('opacity-100', 'visible');
-            shareMenu.classList.add('opacity-0', 'invisible');
-          }
+        // 4. Show the modal
+        popupElement.classList.remove('hidden');
+        popupElement.classList.add('flex');
+    }
+
+    /**
+     * Closes the custom popup modal.
+     */
+    function closeCustomPopup() {
+        popupElement.classList.add('hidden');
+        popupElement.classList.remove('flex');
+        popupActionsContainer.innerHTML = ''; // Clear buttons on close
+    }
+    
+    /**
+     * Generates and prints a summary of the submitted form data, then restores the form.
+     * @param {string} admNo - The generated admission number.
+     */
+    function printSummary(admNo) {
+        if (!lastSubmittedData) {
+            showCustomPopup("Cannot print: No valid submission data found.", 'error', 'Print Failed');
+            return;
+        }
+        
+        closeCustomPopup();
+
+        const data = lastSubmittedData;
+        const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        // Store original content before replacing it
+        const originalContent = mainContainer.innerHTML; 
+
+        // Create the printable HTML content
+        const printContent = `
+            <div class="p-6">
+                <div class="text-center mb-8 border-b pb-4">
+                    <h2 class="text-3xl font-extrabold text-blue-800">Student Application Summary</h2>
+                    <p class="text-lg text-gray-500 mt-2">Admission Number: <strong class="text-blue-600">${admNo}</strong></p>
+                    <p class="text-sm text-gray-500">Date: ${today}</p>
+                </div>
+                
+                <div class="flex justify-between items-start mb-6">
+                    <div class="space-y-1 text-sm">
+                        <p class="font-bold text-gray-800">${data.firstName} ${data.lastName}</p>
+                        <p class="text-gray-600">Email: ${data.email}</p>
+                        <p class="text-gray-600">DOB: ${data.dob} (${data.gender})</p>
+                    </div>
+                    <!-- Passport Photo (using stored Base64) -->
+                    <img src="${data.passportBase64}" alt="Passport Photo" class="w-24 h-24 object-cover border-4 border-blue-200 shadow-lg rounded-lg print:w-32 print:h-32">
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Section 1: Contact & Address -->
+                    <h3 class="text-xl font-semibold text-blue-700 border-b pb-1">Contact & Personal</h3>
+                    <p class="text-sm"><strong>Home Address:</strong> ${data.address}</p>
+                    
+                    <!-- Section 2: Application Details -->
+                    <h3 class="text-xl font-semibold text-blue-700 border-b pb-1 pt-4">Application Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <p><strong>Course:</strong> ${data.course}</p>
+                        <p><strong>Previous School:</strong> ${data.prevSchool}</p>
+                    </div>
+
+                    <!-- Section 3: Next of Kin & Sponsor -->
+                    <h3 class="text-xl font-semibold text-blue-700 border-b pb-1 pt-4">Sponsor & Next of Kin</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <p><strong>Sponsor Name:</strong> ${data.sponsor}</p>
+                        <p><strong>Next of Kin:</strong> ${data.nokName}</p>
+                        <p><strong>NOK Phone:</strong> ${data.nokPhone}</p>
+                    </div>
+
+                    <!-- Section 4: Payment -->
+                    <h3 class="text-xl font-semibold text-blue-700 border-b pb-1 pt-4">Payment Confirmation</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <p class="text-green-700 font-bold"><strong>Fee Paid:</strong> ₦${APPLICATION_FEE_NAIRA}.00</p>
+                        <p><strong>Payment Reference:</strong> ${data.paymentRef}</p>
+                    </div>
+                </div>
+
+                <div class="text-center mt-10 p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 print-hidden">
+                    <p>--- End of Summary. Use your browser's print function (Ctrl+P/Cmd+P) to save this document. ---</p>
+                    <!-- IMPORTANT: The restoreFormContent function now handles decoding the original content. -->
+                    <button onclick='restoreFormContent(this.dataset.originalContent)' data-original-content='${encodeURIComponent(originalContent)}' class="mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">Go Back to Form</button>
+                </div>
+                
+                <div class="text-center mt-10 text-xs text-gray-500 print:block hidden">
+                    Generated from Student Admission Portal on ${today}.
+                </div>
+            </div>
+        `;
+
+        // Temporarily replace the main container content with the print summary
+        mainContainer.innerHTML = printContent;
+        
+        // Trigger the browser's print dialogue
+        window.print();
+    }
+
+
+    // --- JAVASCRIPT LOGIC (Updated with custom popup and print functionality) ---
+    document.addEventListener('DOMContentLoaded', function() {
+    
+        // --- Element and Field Variables ---
+        const payBtn = document.getElementById('payBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const paymentStatus = document.getElementById('payment-status');
+        const form = document.getElementById('admissionForm');
+        const emailInput = document.getElementById('email');
+        
+        // Passport Elements
+        const passportInput = document.getElementById('passport');
+        const passportBase64Field = document.getElementById('passportBase64');
+        const previewContainer = document.getElementById('preview-container');
+        
+        // Document Elements
+        const birthCertInput = document.getElementById('birthCert');
+        const birthCertBase64Field = document.getElementById('birthCertBase64');
+        const olevelInput = document.getElementById('olevel');
+        const olevelBase64Field = document.getElementById('olevelBase64');
+        
+        // Holds the transaction reference after successful payment
+        let transactionReference = null;
+
+        // --- 1. FILE TO BASE64 CONVERSION LOGIC ---
+        
+        function convertFileToBase64(fileInput, base64Field, previewElement = null) {
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        base64Field.value = e.target.result;
+                        if (previewElement) {
+                            // Tailwind styling for image preview
+                            previewElement.innerHTML = `<img src="${e.target.result}" alt="Passport Preview" class="max-w-[150px] mt-2 rounded-md border-4 border-blue-200 shadow-lg">`;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        convertFileToBase64(passportInput, passportBase64Field, previewContainer);
+        convertFileToBase64(birthCertInput, birthCertBase64Field);
+        convertFileToBase64(olevelInput, olevelBase64Field);
+        
+        // --- 2. PAYSTACK INTEGRATION ---
+        
+        payBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Basic client-side check for critical fields before initiating payment
+            const studentEmail = emailInput.value.trim();
+            const studentFirstName = document.getElementById('firstName').value.trim();
+            const studentLastName = document.getElementById('lastName').value.trim();
+
+
+            if (!studentEmail || !studentFirstName || !studentLastName) {
+                // *** ALERT REPLACED ***
+                showCustomPopup("Please fill in your first name, last name, and a valid email address before paying.", 'error', 'Missing Details');
+                emailInput.focus();
+                return;
+            }
+
+            payBtn.textContent = "Opening Payment...";
+            payBtn.disabled = true;
+
+            const handler = PaystackPop.setup({
+                key: PAYSTACK_PUBLIC_KEY,
+                email: studentEmail,
+                amount: APPLICATION_FEE_KOBO,
+                currency: 'NGN',
+                ref: '' + Math.floor((Math.random() * 1000000000) + 1), // Unique transaction reference
+                metadata: {
+                    custom_fields: [{
+                        display_name: "Application Fee",
+                        variable_name: "application_fee",
+                        value: APPLICATION_FEE_NAIRA
+                    }]
+                },
+                callback: function(response){
+                    // Payment was successful. 
+                    transactionReference = response.reference;
+                    
+                    payBtn.classList.add('hidden'); // Hide pay button using Tailwind class
+                    paymentStatus.classList.remove('hidden'); // Show success message
+                    
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Submit Application (Payment Confirmed)";
+                    
+                    // *** ALERT REPLACED ***
+                    showCustomPopup("Payment Successful! Reference: " + transactionReference + ". You can now submit your form.", 'success', 'Payment Confirmed');
+                },
+                onClose: function(){
+                    // User closed the popup
+                    payBtn.textContent = `Pay ₦${APPLICATION_FEE_NAIRA} Now`;
+                    payBtn.disabled = false;
+                    // *** ALERT REPLACED ***
+                    showCustomPopup('Payment cancelled. You must pay to submit the form.', 'error', 'Payment Required');
+                }
+            });
+
+            handler.openIframe(); 
         });
-      });
 
-      // --- Like Button Logic ---
-      document.querySelectorAll('.like-btn').forEach(button => {
-        let liked = false;
-        button.addEventListener('click', () => {
-          const countSpan = button.querySelector('.like-count');
-          let count = parseInt(countSpan.textContent);
+        // --- 3. HANDLE FORM SUBMISSION ---
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            
+            if (!transactionReference) {
+                // *** ALERT REPLACED ***
+                showCustomPopup("Please complete the ₦7,500 payment before submitting.", 'error', 'Payment Required');
+                return; 
+            }
 
-          if (liked) {
-            count--;
-            button.classList.remove('text-red-500');
-            button.classList.add('text-gray-500');
-          } else {
-            count++;
-            button.classList.remove('text-gray-500');
-            button.classList.add('text-red-500');
-          }
-          liked = !liked;
-          countSpan.textContent = count;
+            // Client-side validation: Check all required fields again, including files
+            if (!form.checkValidity()) {
+                // *** ALERT REPLACED ***
+                showCustomPopup("Please fill in all required fields and upload all required documents before submitting.", 'error', 'Incomplete Form');
+                return;
+            }
 
-          // This state should ideally be persisted via a backend/database
+
+            document.getElementById('loading').classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Sending Data...";
+
+            // Collect all data from the form fields using 'name' attributes
+            const formData = new FormData(form);
+            const dataObject = {};
+            // CRITICAL: Ensure values are captured using the 'name' attribute
+            formData.forEach((value, key) => dataObject[key] = value);
+
+            // Add the crucial Base64 documents and Payment Reference manually
+            dataObject['passportBase64'] = passportBase64Field.value;
+            dataObject['birthCertBase64'] = birthCertBase64Field.value;
+            dataObject['olevelBase64'] = olevelBase64Field.value;
+            dataObject['paymentRef'] = transactionReference; // Send the Paystack reference
+            
+            // 💡 CRITICAL FIX: Explicitly set the action for Apps Script routing
+            dataObject['action'] = 'submitApplication'; 
+
+            // Send the JSON data to the Google Apps Script Web App
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(dataObject)
+            })
+            .then(response => {
+                // Check if response is okay, sometimes fetch fails silently
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('loading').classList.add('hidden');
+                if(data.result === "success") {
+                    
+                    // NEW: Store submission data (including passport for print, but excluding large docs)
+                    lastSubmittedData = { ...dataObject };
+                    delete lastSubmittedData.birthCertBase64; // Don't need to print these
+                    delete lastSubmittedData.olevelBase64;     // Don't need to print these
+
+                    // NEW: Show popup with Print button
+                    showCustomPopup(
+                        "Success! Your Admission Number is: " + data.admNo + ". Check your email shortly for the receipt.", 
+                        'success', 
+                        'Application Submitted!',
+                        [
+                            { text: 'Close', handler: closeCustomPopup },
+                            { text: 'Print Application', handler: () => printSummary(data.admNo), isPrimary: true }
+                        ]
+                    );
+
+                    form.reset();
+                    // Reset UI after successful submission
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = "Submit Application";
+                    payBtn.classList.remove('hidden');
+                    paymentStatus.classList.add('hidden');
+                    previewContainer.innerHTML = '';
+                    transactionReference = null;
+
+                } else {
+                    // *** ALERT REPLACED ***
+                    showCustomPopup("Submission Error: " + data.message, 'error', 'Submission Failed');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Try Submitting Again";
+                }
+            })
+            .catch(error => {
+                console.error('Network Error:', error);
+                // *** ALERT REPLACED ***
+                showCustomPopup("A network error occurred. Please check your connection or Apps Script URL and try again. Details: " + error.message, 'error', 'Network Failure');
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Try Submitting Again";
+            });
         });
-      });
 
     });
-  </script>
-
+</script>
 </body>
-
-
 </html>
-
-
-
-
-

@@ -45,19 +45,25 @@
                 transform: translate(-50%, -50%);
             }
         }
+        /* Style for print output: hide the "Go Back" button when printing */
+        @media print {
+            .print-hidden {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-4 sm:p-8">
 
 <div class="max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-2xl">
-    <header class="text-center mb-8">
+    <header class="text-center mb-8 print-hidden">
         <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-800">Student Application Form</h1>
         <p class="text-gray-500 mt-2">Please fill in all details carefully to complete your admission.</p>
     </header>
 
     <form id="admissionForm">
         
-        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8">
+        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8 print-hidden">
             <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">1. Biodata & Passport</legend>
             
             <div class="form-group mb-4">
@@ -95,7 +101,7 @@
             </div>
         </fieldset>
         
-        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8">
+        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8 print-hidden">
             <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">2. Contact & Login Details</legend>
             
             <div class="form-group mb-4">
@@ -116,7 +122,7 @@
             </div>
         </fieldset>
         
-        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8">
+        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8 print-hidden">
             <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">3. Background Information & Documents</legend>
             
             <div class="form-group mb-4">
@@ -165,7 +171,7 @@
             </div>
         </fieldset>
         
-        <div class="payment-section text-center bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+        <div class="payment-section text-center bg-yellow-50 p-6 rounded-lg border border-yellow-200 print-hidden">
             <p class="text-lg font-bold text-gray-800 mb-4">Application Fee: <strong class="text-green-600">₦7,500</strong></p>
             
             <button type="button" id="payBtn" class="btn-pay w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-150 ease-in-out shadow-md">
@@ -184,7 +190,7 @@
         </div>
 
     </form>
-    <div id="loading" class="text-center mt-6 p-4 bg-blue-100 text-blue-800 rounded-md font-semibold hidden">
+    <div id="loading" class="text-center mt-6 p-4 bg-blue-100 text-blue-800 rounded-md font-semibold hidden print-hidden">
         Processing Application...
     </div>
 </div>
@@ -208,12 +214,8 @@
         <!-- Message Content -->
         <p id="popupMessage" class="text-gray-600 mb-6 text-center"></p>
         
-        <!-- Close Button -->
-        <div class="flex justify-center">
-            <button onclick="closeCustomPopup()"
-                    class="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                OK
-            </button>
+        <!-- Action Buttons (NEW DYNAMIC CONTAINER) -->
+        <div id="popupActions" class="flex justify-center gap-4">
         </div>
 
     </div>
@@ -222,11 +224,24 @@
 
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script>
+    // --- CONFIGURATION MOVED TO GLOBAL SCOPE ---
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
+    
+    // **PAYSTACK CONFIGURATION** - Made globally accessible
+    const PAYSTACK_PUBLIC_KEY = "pk_test_29f23a0e0bde6c074ae9efb019002a8d95e721b4"; 
+    const APPLICATION_FEE_NAIRA = 7500;
+    const APPLICATION_FEE_KOBO = APPLICATION_FEE_NAIRA * 100;
+
     // Global references to the modal elements
     const popupElement = document.getElementById('customPopup');
     const popupTitle = document.getElementById('popupTitle');
     const popupMessage = document.getElementById('popupMessage');
     const popupIconContainer = document.getElementById('popupIcon');
+    const popupActionsContainer = document.getElementById('popupActions');
+    const mainContainer = document.querySelector('.max-w-3xl.mx-auto');
+
+    // Global variable to hold the submitted data for printing
+    let lastSubmittedData = null;
 
     // Error Icon SVG (for reuse)
     const errorIcon = `
@@ -244,12 +259,24 @@
 
 
     /**
+     * Restores the original form content to the main container.
+     * @param {string} encodedContent - The URI-encoded HTML string of the original form content.
+     */
+    function restoreFormContent(encodedContent) {
+        // FIX: Decode the URI-encoded content before setting it as innerHTML
+        const content = decodeURIComponent(encodedContent);
+        mainContainer.innerHTML = content;
+    }
+
+
+    /**
      * Replaces the native alert() function with a custom, styled popup modal.
      * @param {string} message - The main message content to display.
-     * @param {string} type - 'success' or 'error' to determine the styling and icon. Defaults to 'error'.
+     * @param {string} type - 'success' or 'error' to determine the styling and icon.
      * @param {string} [title='Notification'] - Optional title for the popup.
+     * @param {Array<Object>} [actions=[]] - Array of button objects: [{text: string, handler: function, isPrimary: boolean}]
      */
-    function showCustomPopup(message, type = 'error', title = 'Notification') {
+    function showCustomPopup(message, type = 'error', title = 'Notification', actions = []) {
         // 1. Set content
         popupTitle.textContent = title;
         popupMessage.textContent = message;
@@ -269,7 +296,33 @@
             `;
         }
 
-        // 3. Show the modal
+        // 3. Set dynamic action buttons
+        popupActionsContainer.innerHTML = ''; // Clear previous buttons
+
+        if (actions.length === 0) {
+            // Default action: 'OK'
+            actions.push({ text: 'OK', handler: closeCustomPopup, isPrimary: true });
+        }
+
+        actions.forEach(action => {
+            const button = document.createElement('button');
+            button.textContent = action.text;
+            // Determine Tailwind classes based on primary status
+            const baseClasses = 'px-5 py-2 font-medium rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2';
+            button.className = action.isPrimary
+                ? `${baseClasses} bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500`
+                : `${baseClasses} bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400`;
+            
+            // Add spacing between buttons
+            if (actions.length > 1) {
+                button.classList.add('mx-1');
+            }
+
+            button.addEventListener('click', action.handler);
+            popupActionsContainer.appendChild(button);
+        });
+
+        // 4. Show the modal
         popupElement.classList.remove('hidden');
         popupElement.classList.add('flex');
     }
@@ -280,19 +333,96 @@
     function closeCustomPopup() {
         popupElement.classList.add('hidden');
         popupElement.classList.remove('flex');
+        popupActionsContainer.innerHTML = ''; // Clear buttons on close
+    }
+    
+    /**
+     * Generates and prints a summary of the submitted form data, then restores the form.
+     * @param {string} admNo - The generated admission number.
+     */
+    function printSummary(admNo) {
+        if (!lastSubmittedData) {
+            showCustomPopup("Cannot print: No valid submission data found.", 'error', 'Print Failed');
+            return;
+        }
+        
+        closeCustomPopup();
+
+        const data = lastSubmittedData;
+        const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        // Store original content before replacing it
+        const originalContent = mainContainer.innerHTML; 
+
+        // Create the printable HTML content
+        const printContent = `
+            <div class="p-6">
+                <div class="text-center mb-8 border-b pb-4">
+                    <h2 class="text-3xl font-extrabold text-blue-800">Student Application Summary</h2>
+                    <p class="text-lg text-gray-500 mt-2">Admission Number: <strong class="text-blue-600">${admNo}</strong></p>
+                    <p class="text-sm text-gray-500">Date: ${today}</p>
+                </div>
+                
+                <div class="flex justify-between items-start mb-6">
+                    <div class="space-y-1 text-sm">
+                        <p class="font-bold text-gray-800">${data.firstName} ${data.lastName}</p>
+                        <p class="text-gray-600">Email: ${data.email}</p>
+                        <p class="text-gray-600">DOB: ${data.dob} (${data.gender})</p>
+                    </div>
+                    <!-- Passport Photo (using stored Base64) -->
+                    <img src="${data.passportBase64}" alt="Passport Photo" class="w-24 h-24 object-cover border-4 border-blue-200 shadow-lg rounded-lg print:w-32 print:h-32">
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Section 1: Contact & Address -->
+                    <h3 class="text-xl font-semibold text-blue-700 border-b pb-1">Contact & Personal</h3>
+                    <p class="text-sm"><strong>Home Address:</strong> ${data.address}</p>
+                    
+                    <!-- Section 2: Application Details -->
+                    <h3 class="text-xl font-semibold text-blue-700 border-b pb-1 pt-4">Application Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <p><strong>Course:</strong> ${data.course}</p>
+                        <p><strong>Previous School:</strong> ${data.prevSchool}</p>
+                    </div>
+
+                    <!-- Section 3: Next of Kin & Sponsor -->
+                    <h3 class="text-xl font-semibold text-blue-700 border-b pb-1 pt-4">Sponsor & Next of Kin</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <p><strong>Sponsor Name:</strong> ${data.sponsor}</p>
+                        <p><strong>Next of Kin:</strong> ${data.nokName}</p>
+                        <p><strong>NOK Phone:</strong> ${data.nokPhone}</p>
+                    </div>
+
+                    <!-- Section 4: Payment -->
+                    <h3 class="text-xl font-semibold text-blue-700 border-b pb-1 pt-4">Payment Confirmation</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <p class="text-green-700 font-bold"><strong>Fee Paid:</strong> ₦${APPLICATION_FEE_NAIRA}.00</p>
+                        <p><strong>Payment Reference:</strong> ${data.paymentRef}</p>
+                    </div>
+                </div>
+
+                <div class="text-center mt-10 p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 print-hidden">
+                    <p>--- End of Summary. Use your browser's print function (Ctrl+P/Cmd+P) to save this document. ---</p>
+                    <!-- IMPORTANT: The restoreFormContent function now handles decoding the original content. -->
+                    <button onclick='restoreFormContent(this.dataset.originalContent)' data-original-content='${encodeURIComponent(originalContent)}' class="mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">Go Back to Form</button>
+                </div>
+                
+                <div class="text-center mt-10 text-xs text-gray-500 print:block hidden">
+                    Generated from Student Admission Portal on ${today}.
+                </div>
+            </div>
+        `;
+
+        // Temporarily replace the main container content with the print summary
+        mainContainer.innerHTML = printContent;
+        
+        // Trigger the browser's print dialogue
+        window.print();
     }
 
-    // --- JAVASCRIPT LOGIC (Updated with custom popup) ---
+
+    // --- JAVASCRIPT LOGIC (Updated with custom popup and print functionality) ---
     document.addEventListener('DOMContentLoaded', function() {
     
-        // --- CONFIGURATION ---
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
-        
-        // **PAYSTACK CONFIGURATION**
-        const PAYSTACK_PUBLIC_KEY = "pk_test_29f23a0e0bde6c074ae9efb019002a8d95e721b4"; 
-        const APPLICATION_FEE_NAIRA = 7500;
-        const APPLICATION_FEE_KOBO = APPLICATION_FEE_NAIRA * 100;
-        
         // --- Element and Field Variables ---
         const payBtn = document.getElementById('payBtn');
         const submitBtn = document.getElementById('submitBtn');
@@ -449,8 +579,23 @@
             .then(data => {
                 document.getElementById('loading').classList.add('hidden');
                 if(data.result === "success") {
-                    // *** ALERT REPLACED ***
-                    showCustomPopup("Success! Your Admission Number is: " + data.admNo + ". Check your email shortly for the receipt.", 'success', 'Application Submitted!');
+                    
+                    // NEW: Store submission data (including passport for print, but excluding large docs)
+                    lastSubmittedData = { ...dataObject };
+                    delete lastSubmittedData.birthCertBase64; // Don't need to print these
+                    delete lastSubmittedData.olevelBase64;     // Don't need to print these
+
+                    // NEW: Show popup with Print button
+                    showCustomPopup(
+                        "Success! Your Admission Number is: " + data.admNo + ". Check your email shortly for the receipt.", 
+                        'success', 
+                        'Application Submitted!',
+                        [
+                            { text: 'Close', handler: closeCustomPopup },
+                            { text: 'Print Application', handler: () => printSummary(data.admNo), isPrimary: true }
+                        ]
+                    );
+
                     form.reset();
                     // Reset UI after successful submission
                     submitBtn.disabled = true;

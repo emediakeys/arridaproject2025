@@ -6,7 +6,13 @@
     <title>Student Admission Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom styles for better form aesthetics and ensuring file input visibility */
+        /* Custom "Inter" font style for better aesthetics (Added for consistency) */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+        }
+        /* Original Custom styles for better form aesthetics and ensuring file input visibility */
         .form-group label {
             transition: color 0.2s;
         }
@@ -17,6 +23,27 @@
         /* Style for the disabled submit button */
         .btn-submit:disabled {
             @apply bg-gray-400 cursor-not-allowed;
+        }
+        
+        /* Modal specific styling for the custom popup */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(2px);
+            z-index: 50;
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
         }
     </style>
 </head>
@@ -162,20 +189,108 @@
     </div>
 </div>
 
+<!-- 
+=======================================================
+1. Custom Popup Modal Structure (Hidden by Default)
+=======================================================
+-->
+<div id="customPopup" class="modal-overlay fixed inset-0 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full relative">
+        
+        <!-- Icon/Indicator (Success/Error) -->
+        <div id="popupIcon" class="flex justify-center mb-4">
+            <!-- SVG Icon will be injected here by JS -->
+        </div>
+
+        <!-- Title -->
+        <h3 id="popupTitle" class="text-xl font-bold text-gray-900 mb-2 text-center"></h3>
+        
+        <!-- Message Content -->
+        <p id="popupMessage" class="text-gray-600 mb-6 text-center"></p>
+        
+        <!-- Close Button -->
+        <div class="flex justify-center">
+            <button onclick="closeCustomPopup()"
+                    class="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                OK
+            </button>
+        </div>
+
+    </div>
+</div>
+
+
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script>
-    // --- JAVASCRIPT LOGIC (Original form.js content) ---
+    // Global references to the modal elements
+    const popupElement = document.getElementById('customPopup');
+    const popupTitle = document.getElementById('popupTitle');
+    const popupMessage = document.getElementById('popupMessage');
+    const popupIconContainer = document.getElementById('popupIcon');
+
+    // Error Icon SVG (for reuse)
+    const errorIcon = `
+        <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+    `;
+
+    // Success Icon SVG (for reuse)
+    const successIcon = `
+        <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+    `;
+
+
+    /**
+     * Replaces the native alert() function with a custom, styled popup modal.
+     * @param {string} message - The main message content to display.
+     * @param {string} type - 'success' or 'error' to determine the styling and icon. Defaults to 'error'.
+     * @param {string} [title='Notification'] - Optional title for the popup.
+     */
+    function showCustomPopup(message, type = 'error', title = 'Notification') {
+        // 1. Set content
+        popupTitle.textContent = title;
+        popupMessage.textContent = message;
+        
+        // 2. Set icon based on type
+        popupIconContainer.innerHTML = ''; // Clear previous icon
+        if (type === 'success') {
+            popupIconContainer.innerHTML = successIcon;
+        } else if (type === 'error') {
+            popupIconContainer.innerHTML = errorIcon;
+        } else {
+            // Default notification icon (e.g., info)
+            popupIconContainer.innerHTML = `
+                <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            `;
+        }
+
+        // 3. Show the modal
+        popupElement.classList.remove('hidden');
+        popupElement.classList.add('flex');
+    }
+
+    /**
+     * Closes the custom popup modal.
+     */
+    function closeCustomPopup() {
+        popupElement.classList.add('hidden');
+        popupElement.classList.remove('flex');
+    }
+
+    // --- JAVASCRIPT LOGIC (Updated with custom popup) ---
     document.addEventListener('DOMContentLoaded', function() {
     
         // --- CONFIGURATION ---
-        // ⚠️ ENSURE THIS URL IS THE LATEST DEPLOYMENT URL FOR YOUR GOOGLE APPS SCRIPT
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
         
         // **PAYSTACK CONFIGURATION**
-        // ⚠️ REPLACE THIS WITH YOUR ACTUAL PAYSTACK PUBLIC KEY
         const PAYSTACK_PUBLIC_KEY = "pk_test_29f23a0e0bde6c074ae9efb019002a8d95e721b4"; 
         const APPLICATION_FEE_NAIRA = 7500;
-        // Paystack takes amount in kobo (100 kobo = 1 Naira)
         const APPLICATION_FEE_KOBO = APPLICATION_FEE_NAIRA * 100;
         
         // --- Element and Field Variables ---
@@ -183,7 +298,7 @@
         const submitBtn = document.getElementById('submitBtn');
         const paymentStatus = document.getElementById('payment-status');
         const form = document.getElementById('admissionForm');
-        const emailInput = document.getElementById('email'); // To get the student's email for Paystack
+        const emailInput = document.getElementById('email');
         
         // Passport Elements
         const passportInput = document.getElementById('passport');
@@ -234,7 +349,8 @@
 
 
             if (!studentEmail || !studentFirstName || !studentLastName) {
-                alert("Please fill in your first name, last name, and a valid email address before paying.");
+                // *** ALERT REPLACED ***
+                showCustomPopup("Please fill in your first name, last name, and a valid email address before paying.", 'error', 'Missing Details');
                 emailInput.focus();
                 return;
             }
@@ -265,13 +381,15 @@
                     submitBtn.disabled = false;
                     submitBtn.textContent = "Submit Application (Payment Confirmed)";
                     
-                    alert("Payment Successful! Reference: " + transactionReference + ". You can now submit your form.");
+                    // *** ALERT REPLACED ***
+                    showCustomPopup("Payment Successful! Reference: " + transactionReference + ". You can now submit your form.", 'success', 'Payment Confirmed');
                 },
                 onClose: function(){
                     // User closed the popup
                     payBtn.textContent = `Pay ₦${APPLICATION_FEE_NAIRA} Now`;
                     payBtn.disabled = false;
-                    alert('Payment cancelled. You must pay to submit the form.');
+                    // *** ALERT REPLACED ***
+                    showCustomPopup('Payment cancelled. You must pay to submit the form.', 'error', 'Payment Required');
                 }
             });
 
@@ -284,14 +402,16 @@
             e.preventDefault(); 
             
             if (!transactionReference) {
-                alert("Please complete the ₦7,500 payment before submitting.");
+                // *** ALERT REPLACED ***
+                showCustomPopup("Please complete the ₦7,500 payment before submitting.", 'error', 'Payment Required');
                 return; 
             }
 
             // Client-side validation: Check all required fields again, including files
             if (!form.checkValidity()) {
-                 alert("Please fill in all required fields and upload all required documents before submitting.");
-                 return;
+                // *** ALERT REPLACED ***
+                showCustomPopup("Please fill in all required fields and upload all required documents before submitting.", 'error', 'Incomplete Form');
+                return;
             }
 
 
@@ -329,7 +449,8 @@
             .then(data => {
                 document.getElementById('loading').classList.add('hidden');
                 if(data.result === "success") {
-                    alert("Success! Your Admission Number is: " + data.admNo + ". Check your email shortly for the receipt.");
+                    // *** ALERT REPLACED ***
+                    showCustomPopup("Success! Your Admission Number is: " + data.admNo + ". Check your email shortly for the receipt.", 'success', 'Application Submitted!');
                     form.reset();
                     // Reset UI after successful submission
                     submitBtn.disabled = true;
@@ -340,14 +461,16 @@
                     transactionReference = null;
 
                 } else {
-                    alert("Submission Error: " + data.message);
+                    // *** ALERT REPLACED ***
+                    showCustomPopup("Submission Error: " + data.message, 'error', 'Submission Failed');
                     submitBtn.disabled = false;
                     submitBtn.textContent = "Try Submitting Again";
                 }
             })
             .catch(error => {
                 console.error('Network Error:', error);
-                alert("A network error occurred. Please check your connection or Apps Script URL and try again. Details: " + error.message);
+                // *** ALERT REPLACED ***
+                showCustomPopup("A network error occurred. Please check your connection or Apps Script URL and try again. Details: " + error.message, 'error', 'Network Failure');
                 submitBtn.disabled = false;
                 submitBtn.textContent = "Try Submitting Again";
             });
@@ -357,4 +480,3 @@
 </script>
 </body>
 </html>
-

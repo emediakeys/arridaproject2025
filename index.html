@@ -7,9 +7,9 @@
   <title>ACHSTS Home</title>
   <!-- Load Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Load Font Awesome Icons (used in the original file) -->
+  <!-- Load Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <!-- SweetAlert2 CDN (used in the original file) -->
+  <!-- SweetAlert2 CDN -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     /* Custom Configuration for Theme, Font, and Hero */
@@ -32,6 +32,7 @@
 
     /* Hero Section Styling (Background Placeholder) */
     .hero-section {
+      /* Placeholder image URL is used for the image src */
       background-image: url('images/DSC_3652.JPG');
       background-size: cover;
       background-position: center;
@@ -53,8 +54,8 @@
       transform: translateX(100%);
     }
 
-    /* Lightbox for Gallery */
-    .lightbox-modal {
+    /* Lightbox for Gallery and Course Modal Base Style */
+    .modal-base {
       display: none;
       position: fixed;
       z-index: 1000;
@@ -63,11 +64,14 @@
       width: 100%;
       height: 100%;
       overflow: auto;
-      background-color: rgba(0, 0, 0, 0.9);
+      background-color: rgba(0, 0, 0, 0.7);
       justify-content: center;
       align-items: center;
+      /* Ensure modal is centered vertically and horizontally */
+      padding: 1rem;
     }
 
+    /* Specific Gallery Lightbox styles */
     .lightbox-content {
       margin: auto;
       display: block;
@@ -82,7 +86,8 @@
       object-fit: contain;
     }
 
-    .lightbox-close {
+    /* Modal Close Button Style */
+    .modal-close {
       position: absolute;
       top: 15px;
       right: 35px;
@@ -94,11 +99,19 @@
       z-index: 1001;
     }
 
-    .lightbox-close:hover,
-    .lightbox-close:focus {
+    .modal-close:hover,
+    .modal-close:focus {
       color: #bbb;
       text-decoration: none;
       cursor: pointer;
+    }
+    
+    /* Utility to truncate text in card preview */
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
   </style>
 </head>
@@ -118,8 +131,7 @@
 
         <!-- Desktop Menu -->
         <ul class="hidden lg:flex space-x-6 items-center">
-          <li><a href="#"
-              class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Home</a></li>
+          <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Home</a></li>
           <li><a href="#about-section"
               class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">About</a></li>
           <li><a href="#gallery"
@@ -127,7 +139,7 @@
           <li><a href="#admission"
               class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Admission</a></li>
 
-          <!-- D R O P D O W N   L O G I N   F I X -->
+          <!-- D R O P D O W N L O G I N F I X -->
           <li class="relative group">
             <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150 flex items-center">
               Login <i class="fas fa-chevron-down text-xs ml-1 transition-transform group-hover:rotate-180"></i>
@@ -145,11 +157,11 @@
               </a>
             </div>
           </li>
-          <!-- E N D   D R O P D O W N -->
+          <!-- E N D D R O P D O W N -->
 
           <li><a href="#news" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">News</a>
           </li>
-          <li><a href="#team" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Teachers</a>
+          <li><a href="#team" class="text-indigo-600 font-bold">Teachers</a>
           </li>
           <li><a href="#contact-section"
               class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Contact</a></li>
@@ -159,16 +171,10 @@
               Exam Portal
             </a>
           </li>
-          <button id="theme-toggle" class="p-2 rounded-full text-gray-700 hover:bg-gray-100 transition">
-            <i class="fas fa-moon"></i>
-          </button>
         </ul>
 
-        <!-- Mobile Menu Button & Theme Toggle (Visible on small screens) -->
+        <!-- Mobile Menu Button (Theme Toggle removed) -->
         <div class="flex lg:hidden items-center space-x-3">
-          <button id="theme-toggle-mobile" class="p-2 rounded-full text-gray-700 hover:bg-gray-100 transition">
-            <i class="fas fa-moon"></i>
-          </button>
           <button class="text-2xl text-gray-800 hover:text-blue-600" id="menu-open-button">
             <i class="fas fa-bars"></i>
           </button>
@@ -304,49 +310,22 @@
       </div>
     </section>
 
-    <!-- services section (Admission) -->
+    <!-- services section (Admission) - Now dynamically populated by JavaScript -->
     <section class="services-section bg-gray-100 py-16 md:py-24" id="admission">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Courses We Offer</h3>
-        <p class="text-gray-600 mb-12 max-w-2xl mx-auto">Explore our diverse range of health science and technology
-          programs designed for future healthcare leaders.</p>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <!-- Course Card 1 (Placeholder data) -->
-          <div
-            class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1">
-            <i class="fas fa-stethoscope text-4xl text-blue-600 mb-4"></i>
-            <h4 class="text-xl font-semibold text-gray-900 mb-2">Community Health</h4>
-            <p class="text-gray-500 text-sm">A program focusing on public health, disease prevention, and community
-              wellness initiatives.</p>
-          </div>
-          <!-- Course Card 2 -->
-          <div
-            class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1">
-            <i class="fas fa-microscope text-4xl text-emerald-600 mb-4"></i>
-            <h4 class="text-xl font-semibold text-gray-900 mb-2">Medical Laboratory Science</h4>
-            <p class="text-gray-500 text-sm">Training for clinical laboratory testing, diagnostics, and biomedical
-              research techniques.</p>
-          </div>
-          <!-- Course Card 3 -->
-          <div
-            class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1">
-            <i class="fas fa-user-nurse text-4xl text-red-500 mb-4"></i>
-            <h4 class="text-xl font-semibold text-gray-900 mb-2">Environmental Health</h4>
-            <p class="text-gray-500 text-sm">Focusing on environmental factors that affect human health and developing
-              public health policies.</p>
-          </div>
-          <div
-            class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1">
-            <i class="fas fa-people-group text-4xl text-blue-500 mb-4"></i>
-            <h4 class="text-xl font-semibold text-gray-900 mb-2">Public Health</h4>
-            <p class="text-gray-500 text-sm">Focusing on the health of communities and populations through education,
-              policy, and disease prevention programs.</p>
-          </div>
+        <p class="text-gray-600 mb-12 max-w-3xl mx-auto">Click on any course card to view detailed information, duration,
+          certification level, and key features.</p>
+
+        <!-- CONTAINER FOR DYNAMICALLY GENERATED COURSE CARDS -->
+        <div id="courses-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Course cards will be injected here by JavaScript -->
         </div>
+
         <div class="mt-12">
           <a href="form.html"
             class="py-3 px-8 bg-blue-600 text-white font-bold rounded-full shadow-lg hover:bg-blue-700 transition duration-300">
-            View Admission Requirements
+            View All Admission Requirements
           </a>
         </div>
       </div>
@@ -359,8 +338,7 @@
           <!-- Placeholder images used for gallery items -->
           <div
             class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
-            <img src="images/DSC_3654.JPG" alt="Gallery 1"
-              class="gallery-img w-full h-48 object-cover">
+            <img src="images/DSC_3654.JPG" alt="Gallery 1" class="gallery-img w-full h-48 object-cover">
             <div
               class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
               <i class="fas fa-expand text-white text-2xl"></i>
@@ -368,8 +346,7 @@
           </div>
           <div
             class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
-            <img src="images/DSC_3656.JPG" alt="Gallery 2"
-              class="gallery-img w-full h-48 object-cover">
+            <img src="images/DSC_3656.JPG" alt="Gallery 2" class="gallery-img w-full h-48 object-cover">
             <div
               class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
               <i class="fas fa-expand text-white text-2xl"></i>
@@ -377,8 +354,7 @@
           </div>
           <div
             class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
-            <img src="images/DSC_3672.JPG" alt="Gallery 3"
-              class="gallery-img w-full h-48 object-cover">
+            <img src="images/DSC_3672.JPG" alt="Gallery 3" class="gallery-img w-full h-48 object-cover">
             <div
               class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
               <i class="fas fa-expand text-white text-2xl"></i>
@@ -386,8 +362,7 @@
           </div>
           <div
             class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
-            <img src="images/DSC_3720.JPG" alt="Gallery 4"
-              class="gallery-img w-full h-48 object-cover">
+            <img src="images/DSC_3720.JPG" alt="Gallery 4" class="gallery-img w-full h-48 object-cover">
             <div
               class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
               <i class="fas fa-expand text-white text-2xl"></i>
@@ -396,8 +371,7 @@
           <!-- Added a few more for better layout -->
           <div
             class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
-            <img src="images/DSC_3751.JPG" alt="Gallery 5"
-              class="gallery-img w-full h-48 object-cover">
+            <img src="images/DSC_3751.JPG" alt="Gallery 5" class="gallery-img w-full h-48 object-cover">
             <div
               class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
               <i class="fas fa-expand text-white text-2xl"></i>
@@ -405,8 +379,7 @@
           </div>
           <div
             class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
-            <img src="images/DSC_3757.JPG" alt="Gallery 6"
-              class="gallery-img w-full h-48 object-cover">
+            <img src="images/DSC_3757.JPG" alt="Gallery 6" class="gallery-img w-full h-48 object-cover">
             <div
               class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
               <i class="fas fa-expand text-white text-2xl"></i>
@@ -425,8 +398,7 @@
           <!-- News Card 1 -->
           <div
             class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300">
-            <img src="images/DSC_3720.JPG"
-              alt="Admission into Health Programs" class="news-img w-full h-48 object-cover">
+            <img src="images/DSC_3720.JPG" alt="Admission into Health Programs" class="news-img w-full h-48 object-cover">
             <div class="p-6 flex flex-col flex-grow">
               <h4 class="news-title text-xl font-bold text-gray-900 mb-2">Admission into Health Programs</h4>
               <p class="news-date text-sm text-gray-500 mb-4">Posted: <span class="font-semibold">September 30,
@@ -462,8 +434,7 @@
           <!-- News Card 2 -->
           <div
             class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300">
-            <img src="images/Covr1.jpg" alt="New Library Opened"
-              class="news-img w-full h-48 object-cover">
+            <img src="images/Covr1.jpg" alt="New Library Opened" class="news-img w-full h-48 object-cover">
             <div class="p-6 flex flex-col flex-grow">
               <h4 class="news-title text-xl font-bold text-gray-900 mb-2">New Library Opened</h4>
               <p class="news-date text-sm text-gray-500 mb-4">Posted: <span class="font-semibold">September 28,
@@ -499,8 +470,7 @@
           <!-- News Card 3 -->
           <div
             class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300">
-            <img src="images/dev.JPG" alt="New CBT Centre Opened"
-              class="news-img w-full h-48 object-cover">
+            <img src="images/dev.JPG" alt="New CBT Centre Opened" class="news-img w-full h-48 object-cover">
             <div class="p-6 flex flex-col flex-grow">
               <h4 class="news-title text-xl font-bold text-gray-900 mb-2">New CBT Centre Opened</h4>
               <p class="news-date text-sm text-gray-500 mb-4">Posted: <span class="font-semibold">September 25,
@@ -542,48 +512,68 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-12">Our Teachers & Staff</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-          <!-- Team Card 1 -->
+
+          <!-- Team Card 1: Jane Ndubuisi (Updated Contact Links) -->
           <div class="bg-white rounded-xl shadow-lg p-6 text-center transform hover:shadow-xl transition duration-300">
             <img src="https://placehold.co/100x100/3b82f6/ffffff?text=JN" alt="Teacher 1"
               class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-blue-100">
             <h4 class="font-semibold text-gray-900 text-lg">Jane Ndubuisi</h4>
             <p class="text-sm text-blue-600 mb-3">Head of Academics</p>
             <div class="flex justify-center space-x-3">
-              <a href="#" class="text-gray-400 hover:text-blue-500"><i class="fa-brands fa-twitter"></i></a>
-              <a href="#" class="text-gray-400 hover:text-blue-500"><i class="fa-brands fa-linkedin"></i></a>
+              <!-- Replaced Twitter -->
+              <a href="mailto:jane.ndubuisi@arrida.edu" class="text-gray-400 hover:text-indigo-500 transition"
+                aria-label="Email Jane Ndubuisi"><i class="fas fa-envelope text-xl"></i></a>
+              <!-- Replaced LinkedIn -->
+              <a href="https://wa.me/2348011112222" class="text-gray-400 hover:text-green-500 transition" target="_blank"
+                aria-label="WhatsApp Jane Ndubuisi"><i class="fa-brands fa-whatsapp text-xl"></i></a>
             </div>
           </div>
-          <!-- Team Card 2 -->
+
+          <!-- Team Card 2: Musa Aliyu (Updated Contact Links) -->
           <div class="bg-white rounded-xl shadow-lg p-6 text-center transform hover:shadow-xl transition duration-300">
             <img src="https://placehold.co/100x100/10b981/ffffff?text=MA" alt="Teacher 2"
               class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-emerald-100">
             <h4 class="font-semibold text-gray-900 text-lg">Musa Aliyu</h4>
             <p class="text-sm text-emerald-600 mb-3">Lead Science Instructor</p>
             <div class="flex justify-center space-x-3">
-              <a href="#" class="text-gray-400 hover:text-emerald-500"><i class="fa-brands fa-twitter"></i></a>
-              <a href="#" class="text-gray-400 hover:text-emerald-500"><i class="fa-brands fa-linkedin"></i></a>
+              <!-- Replaced Twitter -->
+              <a href="mailto:musa.aliyu@arrida.edu" class="text-gray-400 hover:text-indigo-500 transition"
+                aria-label="Email Musa Aliyu"><i class="fas fa-envelope text-xl"></i></a>
+              <!-- Replaced LinkedIn -->
+              <a href="https://wa.me/2348033334444" class="text-gray-400 hover:text-green-500 transition" target="_blank"
+                aria-label="WhatsApp Musa Aliyu"><i class="fa-brands fa-whatsapp text-xl"></i></a>
             </div>
           </div>
-          <!-- Team Card 3 -->
+
+          <!-- Team Card 3: Fatima Khalid (Updated Contact Links) -->
           <div class="bg-white rounded-xl shadow-lg p-6 text-center transform hover:shadow-xl transition duration-300">
             <img src="https://placehold.co/100x100/f59e0b/ffffff?text=FK" alt="Teacher 3"
               class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-yellow-100">
             <h4 class="font-semibold text-gray-900 text-lg">Fatima Khalid</h4>
             <p class="text-sm text-yellow-600 mb-3">Community Health Coordinator</p>
             <div class="flex justify-center space-x-3">
-              <a href="#" class="text-gray-400 hover:text-yellow-500"><i class="fa-brands fa-twitter"></i></a>
-              <a href="#" class="text-gray-400 hover:text-yellow-500"><i class="fa-brands fa-linkedin"></i></a>
+              <!-- Replaced Twitter -->
+              <a href="mailto:fatima.khalid@arrida.edu" class="text-gray-400 hover:text-indigo-500 transition"
+                aria-label="Email Fatima Khalid"><i class="fas fa-envelope text-xl"></i></a>
+              <!-- Replaced LinkedIn -->
+              <a href="https://wa.me/2348055556666" class="text-gray-400 hover:text-green-500 transition" target="_blank"
+                aria-label="WhatsApp Fatima Khalid"><i class="fa-brands fa-whatsapp text-xl"></i></a>
             </div>
           </div>
-          <!-- Team Card 4 -->
+
+          <!-- Team Card 4: Aisha Umar (Updated Contact Links) -->
           <div class="bg-white rounded-xl shadow-lg p-6 text-center transform hover:shadow-xl transition duration-300">
             <img src="https://placehold.co/100x100/ef4444/ffffff?text=AU" alt="Teacher 4"
               class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-red-100">
             <h4 class="font-semibold text-gray-900 text-lg">Aisha Umar</h4>
             <p class="text-sm text-red-600 mb-3">Student Affairs Officer</p>
             <div class="flex justify-center space-x-3">
-              <a href="#" class="text-gray-400 hover:text-red-500"><i class="fa-brands fa-twitter"></i></a>
-              <a href="#" class="text-gray-400 hover:text-red-500"><i class="fa-brands fa-linkedin"></i></a>
+              <!-- Replaced Twitter -->
+              <a href="mailto:aisha.umar@arrida.edu" class="text-gray-400 hover:text-indigo-500 transition"
+                aria-label="Email Aisha Umar"><i class="fas fa-envelope text-xl"></i></a>
+              <!-- Replaced LinkedIn -->
+              <a href="https://wa.me/2348077778888" class="text-gray-400 hover:text-green-500 transition" target="_blank"
+                aria-label="WhatsApp Aisha Umar"><i class="fa-brands fa-whatsapp text-xl"></i></a>
             </div>
           </div>
         </div>
@@ -644,13 +634,58 @@
     </footer>
   </main>
 
-  <!-- Lightbox Modal (For Gallery) -->
-  <div id="lightbox" class="lightbox-modal">
-    <button class="lightbox-close">&times;</button>
+  <!-- Gallery Lightbox Modal -->
+  <div id="lightbox" class="modal-base">
+    <button class="modal-close">&times;</button>
     <div class="lightbox-content">
       <img id="lightbox-image" class="lightbox-image" src="" alt="Gallery Preview">
     </div>
   </div>
+
+  <!-- Course Details Modal -->
+  <div id="course-modal" class="modal-base">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative p-8 m-4">
+      <button id="course-modal-close" class="modal-close !text-gray-800 !right-4 !top-4 !text-3xl">&times;</button>
+      <div class="text-center mb-6">
+        <i id="modal-icon" class="text-6xl mb-4"></i>
+        <h2 id="modal-title" class="text-3xl font-bold text-gray-900 mb-2">Course Title</h2>
+        <p id="modal-level" class="text-lg font-semibold text-emerald-600"></p>
+      </div>
+
+      <p id="modal-description" class="text-gray-700 mb-6 text-center leading-relaxed border-b pb-4"></p>
+
+      <!-- Key Details Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+        <div class="bg-blue-50 p-4 rounded-lg shadow-inner">
+          <p class="text-sm font-medium uppercase text-blue-600 mb-1 flex items-center">
+            <i class="fas fa-clock mr-2"></i> Course Duration
+          </p>
+          <p id="modal-duration" class="text-xl font-bold text-gray-900"></p>
+        </div>
+        <div class="bg-green-50 p-4 rounded-lg shadow-inner">
+          <p class="text-sm font-medium uppercase text-green-600 mb-1 flex items-center">
+            <i class="fas fa-certificate mr-2"></i> Certification Level
+          </p>
+          <p id="modal-level-full" class="text-xl font-bold text-gray-900"></p>
+        </div>
+      </div>
+
+      <!-- Key Features List -->
+      <div class="mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Key Program Features</h3>
+        <ul id="modal-features" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+          <!-- Features injected here -->
+        </ul>
+      </div>
+
+      <!-- CTA Button -->
+      <a id="modal-cta-link" href="#"
+        class="block w-full text-center py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition duration-150">
+        Enroll Now
+      </a>
+    </div>
+  </div>
+
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -663,6 +698,148 @@
       const lightbox = document.getElementById('lightbox');
       const lightboxImage = document.getElementById('lightbox-image');
       const lightboxClose = document.querySelector('.lightbox-close');
+
+      // Course Modal Elements
+      const courseModal = document.getElementById('course-modal');
+      const modalCloseBtn = document.getElementById('course-modal-close');
+      const modalIcon = document.getElementById('modal-icon');
+      const modalTitle = document.getElementById('modal-title');
+      const modalLevel = document.getElementById('modal-level');
+      const modalDescription = document.getElementById('modal-description');
+      const modalDuration = document.getElementById('modal-duration');
+      const modalLevelFull = document.getElementById('modal-level-full');
+      const modalFeatures = document.getElementById('modal-features');
+      const modalCtaLink = document.getElementById('modal-cta-link');
+
+
+      // --- Course Data (Dynamic Content with New Features) ---
+      const courses = [
+        {
+          icon: 'fas fa-shield-virus',
+          title: 'Community Health',
+          description: 'A comprehensive program focused on primary healthcare delivery and disease control in rural and urban settings. Students will gain practical skills in public health intervention and field work.',
+          color: 'text-blue-600',
+          duration: '2 Years',
+          level: 'National Diploma (ND)',
+          features: ['Primary Healthcare', 'Immunization & Vaccinations', 'Disease Surveillance', 'Health Education'],
+          ctaLink: 'form.html?course=CommunityHealth'
+        },
+        {
+          icon: 'fas fa-vial-circle-check',
+          title: 'Medical Laboratory Science',
+          description: 'Training for clinical laboratory testing, diagnostics, and biomedical research techniques critical for patient care. This rigorous program prepares you for work in various diagnostic settings.',
+          color: 'text-emerald-600',
+          duration: '3 Years',
+          level: 'Higher National Diploma (HND)',
+          features: ['Clinical Chemistry', 'Hematology', 'Microbiology', 'Histopathology Techniques'],
+          ctaLink: 'form.html?course=MedicalLabScience'
+        },
+        {
+          icon: 'fas fa-leaf',
+          title: 'Environmental Health',
+          description: 'Focusing on environmental factors that affect human health and developing effective public health policies and sanitation. Ensure communities are safe and healthy.',
+          color: 'text-red-500',
+          duration: '2 Years',
+          level: 'National Diploma (ND)',
+          features: ['Water Quality & Sanitation', 'Food Safety', 'Vector Control', 'Occupational Health'],
+          ctaLink: 'form.html?course=EnvironmentalHealth'
+        },
+        {
+          icon: 'fas fa-chart-line',
+          title: 'Public Health',
+          description: 'Focusing on the health of communities and populations through education, policy, and large-scale disease prevention programs. This certificate is ideal for professionals seeking to advance.',
+          color: 'text-blue-500',
+          duration: '18 Months',
+          level: 'Professional Certificate',
+          features: ['Epidemiology', 'Health Policy', 'Biostatistics', 'Global Health Issues'],
+          ctaLink: 'form.html?course=PublicHealth'
+        },
+        {
+          icon: 'fas fa-folder-tree',
+          title: 'Health Information Management',
+          description: 'Managing patient health records, ensuring data integrity, compliance with privacy regulations, and effective hospital management. Essential skills for the digital healthcare age.',
+          color: 'text-pink-600',
+          duration: '2 Years',
+          level: 'National Diploma (ND)',
+          features: ['Health Data Analysis', 'Medical Coding', 'IT Systems in Healthcare', 'Record Keeping & Auditing'],
+          ctaLink: 'form.html?course=HIM'
+        }
+      ];
+
+      // --- Function to Render Courses (Updated for Card View) ---
+      function renderCourses() {
+        const container = document.getElementById('courses-container');
+        if (!container) return;
+
+        let html = '';
+        courses.forEach((course, index) => {
+          html += `
+            <div class="course-card bg-white p-6 rounded-xl shadow-lg border-t-4 ${course.color.replace('text', 'border')} flex flex-col hover:shadow-2xl transition duration-300 transform hover:-translate-y-1 cursor-pointer" data-course-index="${index}">
+              <div class="flex-grow">
+                <i class="${course.icon} text-5xl ${course.color} mb-4"></i>
+                <h4 class="text-2xl font-bold text-gray-900 mb-2">${course.title}</h4>
+                <p class="text-gray-500 mb-4 line-clamp-3">${course.description}</p>
+              </div>
+              <p class="text-sm font-semibold text-blue-600 mt-4 flex items-center justify-end">View Details & Apply <i class="fas fa-arrow-right ml-2 text-sm"></i></p>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+        
+        // Attach event listeners after rendering
+        document.querySelectorAll('.course-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const index = card.getAttribute('data-course-index');
+                showCourseDetails(index);
+            });
+        });
+      }
+      
+      // --- Function to Populate and Show Course Modal ---
+      function showCourseDetails(index) {
+          const course = courses[index];
+          if (!course) return;
+
+          // Set Modal Content
+          modalIcon.className = `${course.icon} text-6xl mb-4 ${course.color}`;
+          modalTitle.textContent = course.title;
+          modalLevel.textContent = course.level;
+          modalDescription.textContent = course.description;
+          modalDuration.textContent = course.duration;
+          modalLevelFull.textContent = course.level;
+          modalCtaLink.href = course.ctaLink;
+          modalCtaLink.textContent = `Apply Now for ${course.title}`;
+
+          // Set Features List
+          modalFeatures.innerHTML = course.features.map(feature => 
+            `<li class="flex items-start text-gray-700">
+                <i class="fas fa-check-circle text-emerald-500 mr-2 mt-1 flex-shrink-0"></i> 
+                <span>${feature}</span>
+            </li>`
+          ).join('');
+
+          // Show Modal
+          courseModal.style.display = 'flex';
+      }
+      
+      // --- Modal Close Handlers ---
+      function closeCourseModal() {
+          courseModal.style.display = 'none';
+      }
+      
+      modalCloseBtn.addEventListener('click', closeCourseModal);
+      
+      // Close modal when clicking outside of it
+      courseModal.addEventListener('click', (e) => {
+        // Ensure the click target is the modal backdrop itself, not content inside it
+        if (e.target === courseModal) {
+          closeCourseModal();
+        }
+      });
+
+
+      // Initialize the courses section
+      renderCourses();
 
       // --- Sticky Navbar & Scroll Behavior ---
       window.addEventListener('scroll', () => {
@@ -710,65 +887,28 @@
       });
 
       // --- Gallery Lightbox Logic ---
+      const lightboxModal = document.getElementById('lightbox');
+      const lightboxCloseBtn = document.querySelector('#lightbox .modal-close');
+      
       galleryItems.forEach(item => {
         item.addEventListener('click', () => {
           const imgSrc = item.querySelector('.gallery-img').src;
           const imgAlt = item.querySelector('.gallery-img').alt;
           lightboxImage.src = imgSrc;
           lightboxImage.alt = imgAlt;
-          lightbox.style.display = 'flex';
+          lightboxModal.style.display = 'flex';
         });
       });
 
-      lightboxClose.addEventListener('click', () => {
-        lightbox.style.display = 'none';
+      lightboxCloseBtn.addEventListener('click', () => {
+        lightboxModal.style.display = 'none';
       });
 
-      lightbox.addEventListener('click', (e) => {
-        if (e.target === lightbox) {
-          lightbox.style.display = 'none';
+      lightboxModal.addEventListener('click', (e) => {
+        if (e.target === lightboxModal) {
+          lightboxModal.style.display = 'none';
         }
       });
-
-      // --- Theme Toggle (Simple Dark Mode) ---
-      const themeToggle = document.getElementById('theme-toggle');
-      const themeToggleMobile = document.getElementById('theme-toggle-mobile');
-      const body = document.body;
-
-      const updateThemeIcon = (isDark) => {
-        themeToggle.querySelector('i').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-        themeToggleMobile.querySelector('i').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-      };
-
-      const applyTheme = (isDark) => {
-        if (isDark) {
-          body.classList.add('dark');
-          body.classList.remove('antialiased', 'bg-gray-50', 'text-gray-800'); // Remove light mode classes
-          body.classList.add('bg-gray-900', 'text-gray-200'); // Add dark mode classes
-          // Note: Full dark mode conversion for all elements would require extensive CSS,
-          // but we apply basic body classes and let Tailwind handle the rest (which it can't fully do without configuration).
-        } else {
-          body.classList.remove('dark', 'bg-gray-900', 'text-gray-200');
-          body.classList.add('antialiased', 'bg-gray-50', 'text-gray-800');
-        }
-        updateThemeIcon(isDark);
-      };
-
-      const toggleTheme = () => {
-        const isDark = body.classList.contains('dark');
-        applyTheme(!isDark);
-        localStorage.setItem('theme', !isDark ? 'dark' : 'light');
-      };
-
-      themeToggle.addEventListener('click', toggleTheme);
-      themeToggleMobile.addEventListener('click', toggleTheme);
-
-      // Load saved theme
-      if (localStorage.getItem('theme') === 'dark') {
-        applyTheme(true);
-      } else {
-        applyTheme(false);
-      }
 
       // --- Contact Form Submission (Placeholder) ---
       const contactForm = document.getElementById('contact-form');
@@ -837,9 +977,4 @@
 
 </body>
 
-
 </html>
-
-
-
-

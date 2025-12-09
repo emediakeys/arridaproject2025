@@ -131,7 +131,7 @@
 
         <!-- Desktop Menu -->
         <ul class="hidden lg:flex space-x-6 items-center">
-          <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Home</a></li>
+          <li><a href="#hero" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Home</a></li>
           <li><a href="#about-section"
               class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">About</a></li>
           <li><a href="#gallery"
@@ -141,9 +141,10 @@
 
           <!-- D R O P D O W N L O G I N F I X -->
           <li class="relative group">
-            <a href="#" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150 flex items-center">
-              Login <i class="fas fa-chevron-down text-xs ml-1 transition-transform group-hover:rotate-180"></i>
-            </a>
+            <button
+              class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">
+                <i class="fa-solid fa-share mr-2"></i> <span>Login</span>
+              </button>
             <div
               class="absolute left-1/2 -translate-x-1/2 mt-3 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 z-50 border border-gray-100">
               <a href="student_dashboard.html"
@@ -235,7 +236,7 @@
 
   <main>
     <!-- hero section -->
-    <section class="hero-section flex items-center justify-center text-center">
+    <section class="hero-section flex items-center justify-center text-center" id="hero">
       <div class="overlay w-full h-full flex flex-col items-center justify-center p-6 sm:p-12">
         <h1 class="headline text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white mb-4">
           Welcome to <span class="text-blue-300">ACHSTS</span>
@@ -296,7 +297,7 @@
 
             <!-- Buttons -->
             <div class="flex space-x-4">
-              <a href="https://placehold.co/600x800/2563eb/ffffff?text=Download+Flier" download="Ar-rida Flyer"
+              <a href="images/Covr1.jgp" download="Ar-rida Flyer"
                 class="py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150">
                 Download Flier
               </a>
@@ -325,7 +326,7 @@
         <div class="mt-12">
           <a href="form.html"
             class="py-3 px-8 bg-blue-600 text-white font-bold rounded-full shadow-lg hover:bg-blue-700 transition duration-300">
-            View All Admission Requirements
+            Apply Now!
           </a>
         </div>
       </div>
@@ -418,8 +419,6 @@
                     <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
                       data-platform="facebook"><i class="fa-brands fa-facebook mr-2 text-blue-600"></i> Facebook</a>
                     <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="twitter"><i class="fa-brands fa-x-twitter mr-2 text-gray-800"></i> Twitter</a>
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
                       data-platform="whatsapp"><i class="fa-brands fa-whatsapp mr-2 text-green-500"></i> WhatsApp</a>
                   </div>
                 </div>
@@ -454,8 +453,6 @@
                     <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
                       data-platform="facebook"><i class="fa-brands fa-facebook mr-2 text-blue-600"></i> Facebook</a>
                     <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="twitter"><i class="fa-brands fa-x-twitter mr-2 text-gray-800"></i> Twitter</a>
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
                       data-platform="whatsapp"><i class="fa-brands fa-whatsapp mr-2 text-green-500"></i> WhatsApp</a>
                   </div>
                 </div>
@@ -489,8 +486,6 @@
                     class="share-menu absolute bottom-full mb-2 left-0 w-36 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 z-50 p-2 border border-gray-100">
                     <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
                       data-platform="facebook"><i class="fa-brands fa-facebook mr-2 text-blue-600"></i> Facebook</a>
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="twitter"><i class="fa-brands fa-x-twitter mr-2 text-gray-800"></i> Twitter</a>
                     <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
                       data-platform="whatsapp"><i class="fa-brands fa-whatsapp mr-2 text-green-500"></i> WhatsApp</a>
                   </div>
@@ -545,7 +540,7 @@
             <ul class="space-y-4 text-gray-200">
               <li class="flex items-start">
                 <i class="fa-solid fa-envelope mt-1 mr-3 text-emerald-300"></i>
-                <span>arridainfo2025@gmail.com</span>
+                <span>arridainfo@gmail.com</span>
               </li>
               <li class="flex items-start">
                 <i class="fa-solid fa-phone mt-1 mr-3 text-emerald-300"></i>
@@ -567,7 +562,7 @@
 
     <footer class="site-footer bg-gray-900 text-white py-6">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-400">
-        &copy; 2025 ARRIDA. All rights reserved. | Powered by SCTI ICT Team.
+        &copy; 2025 ARRIDA. | Powered by SCTI ICT Team.
       </div>
     </footer>
   </main>
@@ -693,61 +688,62 @@
           level: 'Professional Certificate',
           features: ['Epidemiology', 'Health Policy', 'Biostatistics', 'Global Health Issues'],
           ctaLink: 'form.html?course=PublicHealth'
-        },
-        {
-          icon: 'fas fa-folder-tree',
-          title: 'Health Information Management',
-          description: 'Managing patient health records, ensuring data integrity, compliance with privacy regulations, and effective hospital management. Essential skills for the digital healthcare age.',
-          color: 'text-pink-600',
-          duration: '2 Years',
-          level: 'National Diploma (ND)',
-          features: ['Health Data Analysis', 'Medical Coding', 'IT Systems in Healthcare', 'Record Keeping & Auditing'],
-          ctaLink: 'form.html?course=HIM'
         }
       ];
 
       // --- Teacher Data (New Dynamic Content) ---
       const teachers = [
           {
-              name: 'Jane Ndubuisi',
-              role: 'Head of Academics',
-              initials: 'JN',
+              name: 'Aminu Ibrahim',
+              role: 'Lecturer',
+              initials: 'AI',
               // Tailwind classes are generated dynamically using these color codes
               bgColor: '3b82f6', // blue-600
               borderColor: 'blue-100',
               roleColor: 'blue-600',
-              email: 'jane.ndubuisi@arrida.edu',
+              email: 'lecaminu.arrida@gmail.com',
               whatsapp: '2348011112222',
           },
           {
-              name: 'Musa Aliyu',
-              role: 'Lead Science Instructor',
-              initials: 'MA',
+              name: 'Suleiman Shaibu',
+              role: 'Registrar',
+              initials: 'SS',
               bgColor: '10b981', // emerald-600
               borderColor: 'emerald-100',
               roleColor: 'emerald-600',
-              email: 'musa.aliyu@arrida.edu',
+              email: 'regsuleiman.arrida@gmail.com',
               whatsapp: '2348033334444',
           },
           {
-              name: 'Fatima Khalid',
-              role: 'Community Health Coordinator',
-              initials: 'FK',
+              name: 'Vivian Odiali',
+              role: 'Provost',
+              initials: 'VO',
               bgColor: 'f59e0b', // yellow-600
               borderColor: 'yellow-100',
               roleColor: 'yellow-600',
-              email: 'fatima.khalid@arrida.edu',
+              email: 'provodiali.arrida@gmail.com',
               whatsapp: '2348055556666',
           },
           {
-              name: 'Aisha Umar',
-              role: 'Student Affairs Officer',
-              initials: 'AU',
+              name: 'Nura Nasiru',
+              role: 'HOD Public Health',
+              initials: 'NN',
               bgColor: 'ef4444', // red-600
               borderColor: 'red-100',
               roleColor: 'red-600',
-              email: 'aisha.umar@arrida.edu',
+              email: 'hodnura.arrida@gmail.com',
               whatsapp: '2348077778888',
+          },
+        {
+              name: 'Demmile Stephanie',
+              role: 'Lecturer',
+              initials: 'AI',
+              // Tailwind classes are generated dynamically using these color codes
+              bgColor: '3b82f6', // blue-600
+              borderColor: 'blue-100',
+              roleColor: 'blue-600',
+              email: 'lecdammile.arrida@gmail.com',
+              whatsapp: '2348011112222',
           }
       ];
 
@@ -996,3 +992,4 @@
 </body>
 
 </html>
+

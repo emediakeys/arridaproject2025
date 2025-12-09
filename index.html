@@ -140,24 +140,30 @@
               class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Admission</a></li>
 
           <!-- D R O P D O W N L O G I N F I X -->
-          <li class="relative group">
-            <button
-              class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">
-                Login
-              </button>
-            <div
-              class="absolute left-1/2 -translate-x-1/2 mt-3 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 z-50 border border-gray-100">
-              <a href="student_dashboard.html"
-                class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-lg transition">
-                <i class="fas fa-user-graduate w-5 mr-2"></i> Student Login
-              </a>
-              <!-- Assuming an Admin Login page exists -->
-              <a href="admin_portal.html"
-                class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-lg transition">
-                <i class="fas fa-user-shield w-5 mr-2"></i> Admin Login
-              </a>
-            </div>
-          </li>
+          <li class="relative">
+  <details class="group">
+    <summary
+      class="cursor-pointer list-none text-gray-700 hover:text-blue-600 font-medium transition duration-150">
+      Login
+    </summary>
+
+    <div
+      class="absolute left-1/2 -translate-x-1/2 mt-3 w-48 bg-white rounded-lg shadow-xl 
+             transition duration-300 z-50 border border-gray-100">
+
+      <a href="student_dashboard.html"
+        class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-lg transition">
+        <i class="fas fa-user-graduate w-5 mr-2"></i> Student Login
+      </a>
+
+      <a href="admin_portal.html"
+        class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-b-lg transition">
+        <i class="fas fa-user-shield w-5 mr-2"></i> Admin Login
+      </a>
+    </div>
+  </details>
+</li>
+
           <!-- E N D D R O P D O W N -->
 
           <li><a href="#news" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">News</a>
@@ -992,5 +998,6 @@
 </body>
 
 </html>
+
 
 

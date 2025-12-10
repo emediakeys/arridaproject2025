@@ -43,6 +43,11 @@
             max-height: 70vh;
             overflow-y: auto;
         }
+        /* Comment Section Animation */
+        .comment-section {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            overflow: hidden;
+        }
     </style>
     <!-- Load Lucide icons for clean interface -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -54,7 +59,6 @@
 
     <script>
         // --- CONFIGURATION ---
-        // CRITICAL: Updated SCRIPT_URL with the user-provided Apps Script URL
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
         
         // --- STATE MANAGEMENT ---
@@ -62,7 +66,7 @@
             isLoggedIn: false,
             username: '',
             assignedCourse: '',
-            activeTab: 'dashboard', // Changed default tab to Dashboard
+            activeTab: 'dashboard', 
             students: [],
             announcements: [],
             assignments: [],
@@ -89,12 +93,9 @@
         function showMessage(msg, isError = false) {
             adminState.message = msg;
             adminState.error = isError;
-            render(adminState.isLoggedIn ? AdminDashboard : AdminLogin); // Re-render the current view to show message
+            render(adminState.isLoggedIn ? AdminDashboard : AdminLogin); 
         }
 
-        /**
-         * Utility function to convert object to URLSearchParams for CORS-safe POST
-         */
         function jsonToUrlParams(data) {
             const params = new URLSearchParams();
             for (const key in data) {
@@ -105,12 +106,12 @@
             return params;
         }
 
-        /**
-         * Main Fetch Function with CORS Fixes
-         */
         async function fetchAppsScript(action, payload = {}) {
-            adminState.loading = true;
-            render(adminState.isLoggedIn ? AdminDashboard : AdminLogin); // Show loading state
+            // Only show full screen loader for non-background tasks
+            if(action !== 'toggleLike' && action !== 'addComment') {
+                adminState.loading = true;
+                render(adminState.isLoggedIn ? AdminDashboard : AdminLogin); 
+            }
 
             const dataToSend = { action, ...payload };
             const formBody = jsonToUrlParams(dataToSend);
@@ -119,7 +120,6 @@
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     // IMPORTANT: No Content-Type header. Body is URLSearchParams.
-                    // This prevents the CORS preflight check failure.
                     body: formBody 
                 });
                 
@@ -127,18 +127,21 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                // Parse text first to handle default GAS text/html responses
                 const responseText = await response.text();
-                // Ensure the response is valid JSON before parsing
                 const result = responseText ? JSON.parse(responseText) : {};
                 
                 adminState.loading = false;
+                // Re-render if it was a blocking load
+                if(action !== 'toggleLike' && action !== 'addComment') {
+                   // Only re-render if we are still on the same tab/state
+                   // This prevents UI jumps during background updates
+                }
                 return result;
 
             } catch (error) {
                 console.error('API Fetch Error:', error);
                 adminState.loading = false;
-                return { result: 'error', message: 'Network error or invalid server response. Check console.' };
+                return { result: 'error', message: 'Network error. Check console.' };
             }
         }
 
@@ -176,7 +179,6 @@
 
             const result = await fetchAppsScript('adminLogin', { username, password });
 
-            // Check for success (App Script returns { result: 'success' ... })
             if (result && result.result === 'success') {
                 adminState.isLoggedIn = true;
                 adminState.username = username;
@@ -186,10 +188,8 @@
                 loadInitialData();
             } else {
                 adminState.isLoggedIn = false;
-                // Handle case where result might be undefined if network failed
                 const errMsg = result ? result.message : 'Unknown login error';
                 showMessage(errMsg || 'Login failed. Check credentials.', true);
-                render(AdminLogin);
             }
         }
 
@@ -199,7 +199,7 @@
                 isLoggedIn: false, 
                 username: '', 
                 assignedCourse: '', 
-                activeTab: 'dashboard', // Reset to dashboard
+                activeTab: 'dashboard', 
                 students: [], announcements: [], assignments: [], attendance: []
             };
             render(AdminLogin);
@@ -216,8 +216,8 @@
 
         async function loadInitialData() {
             if (!adminState.isLoggedIn) return;
-
-            // Only show loading if we don't have data yet to prevent flickering
+            
+            // Initial Load Spinner
             if(adminState.students.length === 0) {
                 adminState.loading = true;
                 render(AdminDashboard);
@@ -229,11 +229,11 @@
                 // Fetch students, announcements, and assignments concurrently
                 const [studentsResult, announcementsResult, assignmentsResult] = await Promise.all([
                     fetchAppsScript('getStudentsByCourse', { course }),
-                    fetchAppsScript('getAnnouncementsByCourse', { course }),
+                    // Send currentUser so backend knows 'likedByMe' status
+                    fetchAppsScript('getAnnouncementsByCourse', { course, currentUser: adminState.username }),
                     fetchAppsScript('getAssignmentsByCourse', { course })
                 ]);
 
-                // The result from Apps Script is expected to be a list of objects (data) or an empty array.
                 adminState.students = studentsResult && studentsResult.result === 'success' ? studentsResult.data : [];
                 adminState.announcements = announcementsResult && announcementsResult.result === 'success' ? announcementsResult.data : [];
                 adminState.assignments = assignmentsResult && assignmentsResult.result === 'success' ? assignmentsResult.data : [];
@@ -247,7 +247,7 @@
 
         function changeTab(tabName) {
             adminState.activeTab = tabName;
-            adminState.message = null; // Clear messages on tab change
+            adminState.message = null; 
             render(AdminDashboard);
         }
 
@@ -266,13 +266,10 @@
 
             if (result.result === 'success') {
                 showMessage('Announcement posted successfully!', false);
-                // Clear form inputs
                 form.reset();
-                // Refresh data from server
                 loadInitialData(); 
             } else {
-                showMessage(result.message || 'Failed to post announcement. Check server implementation.', true);
-                render(AdminDashboard);
+                showMessage(result.message || 'Failed.', true);
             }
         }
 
@@ -290,67 +287,182 @@
 
             if (result.result === 'success') {
                 showMessage('Assignment added successfully!', false);
-                // Clear form inputs
                 form.reset();
-                // Refresh from server
                 loadInitialData(); 
             } else {
-                showMessage(result.message || 'Failed to add assignment. Check server implementation.', true);
-                render(AdminDashboard);
+                showMessage(result.message || 'Failed.', true);
             }
         }
 
         async function handleRemoveStudent(admNo, course) {
-            // Replaced alert/confirm with a simple console log for this example
-            console.log(`Attempting to remove student ${admNo} from ${course}.`);
+            if(!confirm(`Are you sure you want to remove student ${admNo}?`)) return;
             
             showMessage(`Removing student ${admNo}...`);
             
             const result = await fetchAppsScript('removeStudent', { admNo, course });
 
             if (result.result === 'success') {
-                showMessage(`Student ${admNo} removed successfully.`, false);
-                // Remove locally
+                showMessage(`Student ${admNo} removed.`, false);
                 adminState.students = adminState.students.filter(s => s.admNo !== admNo);
-                render(AdminDashboard);
+                render(AdminDashboard); // Re-render to update list
             } else {
-                showMessage(result.message || 'Failed to remove student. Check server implementation.', true);
-                render(AdminDashboard);
+                showMessage(result.message || 'Failed.', true);
             }
         }
 
-        async function handleRecordAttendance(e) {
-            e.preventDefault();
-            const form = e.target;
-            const admNoData = form.admNo.value; 
+        // --- ATTENDANCE LOGIC ---
+
+        function filterAttendanceList(query) {
+            const listContainer = document.getElementById('attendanceListContainer');
+            const lowerQuery = query.toLowerCase();
             
-            // Extract just the ADM NO from the input/datalist value
-            const admNo = admNoData.split(' - ')[0].trim();
-            const status = form.status.value;
-            const date = form.date.value;
-            const course = adminState.assignedCourse; 
+            const filteredStudents = adminState.students.filter(s => 
+                s.firstName.toLowerCase().includes(lowerQuery) || 
+                s.lastName.toLowerCase().includes(lowerQuery) || 
+                String(s.admNo).toLowerCase().includes(lowerQuery)
+            );
 
-            // --- SECURITY ENHANCEMENT: Validate student belongs to the assigned course ---
-            const isStudentInCourse = adminState.students.some(s => s.admNo === admNo);
-
-            if (!isStudentInCourse) {
-                showMessage(`Error: Admission No. "${admNo}" is not enrolled in your assigned course (${course}). Attendance can only be recorded for your own students.`, true);
-                return; // Stop execution if validation fails
+            if (filteredStudents.length === 0) {
+                listContainer.innerHTML = `<div class="p-8 text-center text-gray-500">No students found matching "${query}"</div>`;
+                return;
             }
-            // --- END SECURITY ENHANCEMENT ---
+
+            listContainer.innerHTML = filteredStudents.map(student => `
+                <div class="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 transition">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-indigo-100 text-indigo-700 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs">
+                            ${student.admNo}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">${student.firstName} ${student.lastName}</p>
+                            <p class="text-xs text-gray-500">${student.email}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <select id="status-${student.admNo}" class="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2 border">
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                            <option value="Late">Late</option>
+                            <option value="Excused">Excused</option>
+                        </select>
+                        <button onclick="handleQuickAttendance('${student.admNo}')" 
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-md shadow transition flex items-center">
+                            <span data-lucide="check" class="w-4 h-4"></span>
+                            <span class="ml-2 text-xs font-bold uppercase hidden md:inline">Save</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
             
-            showMessage('Recording Attendance...');
-            
+            lucide.createIcons(); 
+        }
+
+        async function handleQuickAttendance(admNo) {
+            const date = document.getElementById('attendanceDate').value;
+            const statusSelect = document.getElementById(`status-${admNo}`);
+            const status = statusSelect.value;
+            const course = adminState.assignedCourse;
+
+            const btn = statusSelect.nextElementSibling;
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = `<span class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>`;
+            btn.disabled = true;
+
             const result = await fetchAppsScript('recordAttendance', { admNo, status, date, course });
 
             if (result.result === 'success') {
-                showMessage(`Attendance recorded for ${admNo} on ${date}.`, false);
-                form.reset();
-                form.date.value = new Date().toISOString().slice(0, 10); // Reset date to today
+                btn.innerHTML = `<span data-lucide="check-circle" class="w-4 h-4"></span>`;
+                btn.classList.replace('bg-indigo-600', 'bg-green-500');
+                btn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-600');
+                
+                const toast = document.getElementById('toastMsg');
+                toast.innerText = `Recorded: ${admNo} is ${status}`;
+                toast.classList.remove('opacity-0', 'translate-y-4');
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-4');
+                    btn.innerHTML = originalContent;
+                    btn.classList.replace('bg-green-500', 'bg-indigo-600');
+                    btn.classList.replace('hover:bg-green-600', 'hover:bg-indigo-700');
+                    btn.disabled = false;
+                    lucide.createIcons();
+                }, 2000);
             } else {
-                showMessage(result.message || 'Failed to record attendance. Check Admission No. or server implementation.', true);
+                alert("Failed to record attendance: " + result.message);
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+                lucide.createIcons();
             }
-            render(AdminDashboard);
+        }
+
+        // --- SOCIAL INTERACTIONS (REAL TIME) ---
+
+        async function toggleLike(annId, btnElement) {
+            const icon = btnElement.querySelector('.like-icon');
+            const countSpan = btnElement.querySelector('.like-count');
+            let currentCount = parseInt(countSpan.innerText);
+            
+            // Check current state based on visual class
+            const isLiked = icon.classList.contains('fill-current') && icon.classList.contains('text-red-500');
+
+            // Optimistic UI Update
+            if (isLiked) {
+                // Unlike
+                icon.classList.remove('fill-current', 'text-red-500');
+                icon.classList.add('text-gray-500');
+                countSpan.innerText = currentCount - 1;
+            } else {
+                // Like
+                icon.classList.add('fill-current', 'text-red-500');
+                icon.classList.remove('text-gray-500');
+                countSpan.innerText = currentCount + 1;
+            }
+
+            // Silent API call
+            try {
+                await fetchAppsScript('toggleLike', { 
+                    announcementId: annId, 
+                    user: adminState.username 
+                });
+            } catch (e) {
+                console.error("Like failed", e);
+                // Ideally revert UI here, but kept simple
+            }
+        }
+
+        async function postComment(annId) {
+            const input = document.getElementById(`comment-input-${annId}`);
+            const text = input.value.trim();
+            if(!text) return;
+
+            // Optimistic UI Update
+            const list = document.getElementById(`comment-list-${annId}`);
+            
+            // Remove "No comments" text if present
+            const emptyMsg = list.querySelector('.empty-msg');
+            if(emptyMsg) emptyMsg.remove();
+
+            const tempComment = `
+                <div class="bg-white p-2 rounded border border-gray-100 opacity-70">
+                    <div class="flex justify-between items-baseline">
+                        <span class="text-xs font-bold text-gray-700">Me</span>
+                        <span class="text-[10px] text-gray-400">Just now</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-1">${text}</p>
+                </div>
+            `;
+            list.insertAdjacentHTML('beforeend', tempComment);
+            input.value = '';
+
+            try {
+                await fetchAppsScript('addComment', { 
+                    announcementId: annId, 
+                    user: adminState.username, // Post as Admin
+                    comment: text 
+                });
+                // In a real app we might refetch to confirm ID/Time
+            } catch(e) {
+                alert("Failed to post comment");
+            }
         }
 
 
@@ -363,21 +475,18 @@
                     <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
                         <div class="text-center mb-8">
                             <h2 class="text-3xl font-extrabold text-gray-900">Admin Login</h2>
-                            <p class="mt-2 text-sm text-gray-600">Access the School Management Dashboard</p>
+                            <p class="mt-2 text-sm text-gray-600">School Management System</p>
                         </div>
                         <form id="adminLoginForm" class="space-y-6">
                             <div>
-                                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                                <input type="text" id="username" name="username" required 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500" placeholder="Enter username">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                <input type="text" name="username" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
                             </div>
                             <div>
-                                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                                <input type="password" id="password" name="password" required 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500" placeholder="Enter password">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input type="password" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
                             </div>
-                            <button type="submit" 
-                                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150 ease-in-out">
+                            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition">
                                 <span data-lucide="log-in" class="w-5 h-5 mr-2"></span> Log In
                             </button>
                         </form>
@@ -389,7 +498,7 @@
 
         function AdminDashboard() {
             const tabs = [
-                { id: 'dashboard', name: 'Dashboard', icon: 'layout-dashboard' }, // New Dashboard Tab
+                { id: 'dashboard', name: 'Dashboard', icon: 'layout-dashboard' },
                 { id: 'students', name: 'Students', icon: 'users' },
                 { id: 'announcements', name: 'Announcements', icon: 'megaphone' },
                 { id: 'assignments', name: 'Assignments', icon: 'clipboard-list' },
@@ -399,29 +508,25 @@
             return `
                 <div class="min-h-screen flex">
                     <!-- Sidebar -->
-                    <div class="sidebar w-64 bg-gray-800 text-white flex flex-col p-4 shadow-2xl">
+                    <div class="sidebar w-64 bg-gray-800 text-white flex flex-col p-4 shadow-2xl hidden md:flex">
                         <div class="flex-shrink-0 text-xl font-bold py-4 border-b border-gray-700 mb-6">
                             <span data-lucide="graduation-cap" class="inline-block w-6 h-6 mr-2"></span> Admin Panel
                         </div>
                         
-                        <!-- Admin Info -->
                         <div class="text-sm p-3 bg-gray-700 rounded-lg mb-6">
                             <p class="font-semibold">${adminState.username}</p>
                             <p class="text-xs text-gray-300">Course: ${adminState.assignedCourse}</p>
                         </div>
 
-                        <!-- Navigation -->
                         <nav class="flex-grow">
                             ${tabs.map(tab => `
-                                <div class="nav-item ${adminState.activeTab === tab.id ? 'active' : 'text-gray-300'}" 
-                                     data-tab="${tab.id}">
+                                <div class="nav-item ${adminState.activeTab === tab.id ? 'active' : 'text-gray-300'}" data-tab="${tab.id}">
                                     <span data-lucide="${tab.icon}" class="w-5 h-5 mr-3"></span>
                                     ${tab.name}
                                 </div>
                             `).join('')}
                         </nav>
 
-                        <!-- Logout -->
                         <div class="mt-auto pt-4 border-t border-gray-700">
                             <button id="logoutBtn" class="w-full flex items-center justify-center p-3 text-red-400 hover:bg-gray-700 rounded-lg transition duration-150">
                                 <span data-lucide="log-out" class="w-5 h-5 mr-2"></span> Logout
@@ -430,17 +535,33 @@
                     </div>
 
                     <!-- Main Content -->
-                    <main class="flex-grow p-8">
-                        <h1 class="text-3xl font-bold text-gray-800 mb-6">
+                    <main class="flex-grow p-4 md:p-8 overflow-y-auto h-screen relative">
+                        <!-- Mobile Header -->
+                        <div class="md:hidden flex justify-between items-center mb-6">
+                            <h1 class="text-xl font-bold">Admin Panel</h1>
+                            <button onclick="handleLogout()" class="text-red-500"><span data-lucide="log-out"></span></button>
+                        </div>
+
+                        <!-- Mobile Tab Bar (Simplified) -->
+                        <div class="md:hidden flex overflow-x-auto space-x-2 mb-4 pb-2">
+                             ${tabs.map(tab => `
+                                <button class="px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap ${adminState.activeTab === tab.id ? 'bg-emerald-600 text-white' : 'bg-white text-gray-600'}" 
+                                    onclick="changeTab('${tab.id}')">
+                                    ${tab.name}
+                                </button>
+                            `).join('')}
+                        </div>
+
+                        <h1 class="text-3xl font-bold text-gray-800 mb-6 hidden md:block">
                             ${tabs.find(t => t.id === adminState.activeTab).name} Management
                         </h1>
 
-                        <p class="mb-4 text-sm font-medium ${adminState.error ? 'text-red-600 bg-red-100' : 'text-emerald-600 bg-emerald-100'} p-3 rounded-lg"
-                            style="${adminState.message ? 'display: block;' : 'display: none;'}">
-                            ${adminState.message || ''}
-                        </p>
+                        <!-- Toast Notification Container -->
+                        <div id="toastMsg" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 opacity-0 translate-y-4 z-50">
+                            Notification
+                        </div>
 
-                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <div class="bg-white p-6 rounded-xl shadow-lg min-h-[500px]">
                             ${adminState.loading ? LoadingSpinner() : renderActiveTabContent()}
                         </div>
                     </main>
@@ -455,29 +576,23 @@
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <p class="mt-4 text-gray-600">Loading data for ${adminState.assignedCourse}...</p>
+                    <p class="mt-4 text-gray-600">Loading data...</p>
                 </div>
             `;
         }
 
         function renderActiveTabContent() {
             switch (adminState.activeTab) {
-                case 'dashboard':
-                    return DashboardTab();
-                case 'students':
-                    return StudentList();
-                case 'announcements':
-                    return AnnouncementsTab();
-                case 'assignments':
-                    return AssignmentsTab();
-                case 'attendance':
-                    return AttendanceTab();
-                default:
-                    return `<p class="text-gray-500">Select a tab to begin management.</p>`;
+                case 'dashboard': return DashboardTab();
+                case 'students': return StudentList();
+                case 'announcements': return AnnouncementsTab();
+                case 'assignments': return AssignmentsTab();
+                case 'attendance': return AttendanceTab();
+                default: return `<p>Select a tab.</p>`;
             }
         }
 
-        // --- NEW DASHBOARD TAB ---
+        // --- TAB CONTENTS ---
 
         function DashboardTab() {
             const studentCount = adminState.students.length;
@@ -485,258 +600,205 @@
             const announcementCount = adminState.announcements.length;
 
             return `
-                <h2 class="text-2xl font-semibold mb-6 text-gray-700">Course Overview: ${adminState.assignedCourse}</h2>
-                
-                <!-- Stat Cards Grid -->
+                <h2 class="text-2xl font-semibold mb-6 text-gray-700">Course: ${adminState.assignedCourse}</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <!-- Total Students -->
-                    <div class="bg-blue-50 p-6 rounded-xl shadow-md border-b-4 border-blue-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-blue-600">Total Students</p>
-                                <p class="text-4xl font-extrabold text-blue-900 mt-1">${studentCount}</p>
-                            </div>
-                            <span data-lucide="users" class="w-10 h-10 text-blue-400"></span>
-                        </div>
+                    <div class="bg-blue-50 p-6 rounded-xl shadow-md border-b-4 border-blue-500 flex justify-between items-center">
+                        <div><p class="text-sm font-medium text-blue-600">Total Students</p><p class="text-4xl font-extrabold text-blue-900 mt-1">${studentCount}</p></div>
+                        <span data-lucide="users" class="w-10 h-10 text-blue-400"></span>
                     </div>
-                    
-                    <!-- Active Assignments -->
-                    <div class="bg-yellow-50 p-6 rounded-xl shadow-md border-b-4 border-yellow-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-yellow-600">Active Assignments</p>
-                                <p class="text-4xl font-extrabold text-yellow-900 mt-1">${assignmentCount}</p>
-                            </div>
-                            <span data-lucide="clipboard-list" class="w-10 h-10 text-yellow-400"></span>
-                        </div>
+                    <div class="bg-yellow-50 p-6 rounded-xl shadow-md border-b-4 border-yellow-500 flex justify-between items-center">
+                        <div><p class="text-sm font-medium text-yellow-600">Active Assignments</p><p class="text-4xl font-extrabold text-yellow-900 mt-1">${assignmentCount}</p></div>
+                        <span data-lucide="clipboard-list" class="w-10 h-10 text-yellow-400"></span>
                     </div>
-                    
-                    <!-- Total Announcements -->
-                    <div class="bg-green-50 p-6 rounded-xl shadow-md border-b-4 border-green-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-green-600">Total Announcements</p>
-                                <p class="text-4xl font-extrabold text-green-900 mt-1">${announcementCount}</p>
-                            </div>
-                            <span data-lucide="megaphone" class="w-10 h-10 text-green-400"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Latest Activity Section -->
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-                            <span data-lucide="file-text" class="w-5 h-5 mr-2"></span> Latest Assignments
-                        </h3>
-                        ${adminState.assignments.slice(0, 3).length === 0 ? 
-                            `<p class="text-gray-500 p-4 border rounded-lg">No assignments currently active.</p>` :
-                            `<div class="space-y-3">
-                                ${adminState.assignments.slice(0, 3).map(ass => `
-                                    <div class="p-3 border border-gray-200 rounded-lg bg-white shadow-sm">
-                                        <p class="font-bold text-sm text-gray-900">${ass.title}</p>
-                                        <p class="text-xs ${new Date(ass.dueDate) < new Date() ? 'text-red-500' : 'text-emerald-500'} mt-1">Due: ${ass.dueDate}</p>
-                                    </div>
-                                `).join('')}
-                            </div>`
-                        }
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-                            <span data-lucide="bell" class="w-5 h-5 mr-2"></span> Recent Announcements
-                        </h3>
-                        ${adminState.announcements.slice(0, 3).length === 0 ? 
-                            `<p class="text-gray-500 p-4 border rounded-lg">No announcements posted yet.</p>` :
-                            `<div class="space-y-3">
-                                ${adminState.announcements.slice(0, 3).map(ann => `
-                                    <div class="p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
-                                        <p class="font-bold text-sm text-gray-900">${ann.title}</p>
-                                        <p class="text-xs text-gray-400 mt-1">Posted: ${ann.date}</p>
-                                    </div>
-                                `).join('')}
-                            </div>`
-                        }
+                    <div class="bg-green-50 p-6 rounded-xl shadow-md border-b-4 border-green-500 flex justify-between items-center">
+                        <div><p class="text-sm font-medium text-green-600">Total Announcements</p><p class="text-4xl font-extrabold text-green-900 mt-1">${announcementCount}</p></div>
+                        <span data-lucide="megaphone" class="w-10 h-10 text-green-400"></span>
                     </div>
                 </div>
             `;
         }
 
-        // --- TAB CONTENTS ---
-
         function StudentList() {
             return `
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700">All Students in ${adminState.assignedCourse} (${adminState.students.length})</h2>
-                ${adminState.students.length === 0 ? 
-                    `<p class="text-gray-500">No students found for this course.</p>` :
-                    `<div class="data-container">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">All Students (${adminState.students.length})</h2>
+                ${adminState.students.length === 0 ? `<p>No students found.</p>` : `
+                    <div class="data-container">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50 sticky top-0">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adm. No</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Adm. No</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                ${adminState.students.map(student => `
-                                    <tr data-admno="${student.admNo}">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${student.admNo}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${student.firstName} ${student.lastName}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${student.email}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button onclick="handleRemoveStudent('${student.admNo}', '${adminState.assignedCourse}')" 
-                                                class="action-btn bg-red-500 text-white hover:bg-red-600 transition">
-                                                Graduate/Remove
-                                            </button>
+                                ${adminState.students.map(s => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${s.admNo}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${s.firstName} ${s.lastName}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <button onclick="handleRemoveStudent('${s.admNo}', '${adminState.assignedCourse}')" class="text-red-600 hover:text-red-900">Remove</button>
                                         </td>
                                     </tr>
                                 `).join('')}
                             </tbody>
                         </table>
-                    </div>`
-                }
+                    </div>`}
             `;
         }
 
         function AnnouncementsTab() {
             return `
                 <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Post New Announcement Form -->
                     <div>
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Post New Announcement</h2>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Post Announcement</h2>
                         <form id="announcementForm" class="space-y-4 bg-gray-50 p-6 rounded-lg border">
-                            <div>
-                                <label for="announcementTitle" class="block text-sm font-medium text-gray-700">Title</label>
-                                <input type="text" id="announcementTitle" name="title" required
-                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
-                            </div>
-                            <div>
-                                <label for="announcementContent" class="block text-sm font-medium text-gray-700">Content</label>
-                                <textarea id="announcementContent" name="content" rows="4" required
-                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500"></textarea>
-                            </div>
-                            <button type="submit" class="action-btn bg-emerald-600 text-white hover:bg-emerald-700 w-full transition">
-                                <span data-lucide="send" class="w-4 h-4 mr-2 inline-block"></span> Post Announcement
-                            </button>
+                            <input type="text" name="title" required placeholder="Title" class="w-full px-3 py-2 border rounded-lg">
+                            <textarea name="content" rows="4" required placeholder="Message" class="w-full px-3 py-2 border rounded-lg"></textarea>
+                            <button type="submit" class="action-btn bg-emerald-600 text-white w-full">Post</button>
                         </form>
                     </div>
-
-                    <!-- Existing Announcements List -->
                     <div>
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Recent Announcements (${adminState.announcements.length})</h2>
-                        ${adminState.announcements.length === 0 ? 
-                            `<p class="text-gray-500 p-4 border rounded-lg">No announcements posted yet.</p>` :
-                            `<div class="space-y-4 data-container">
-                                ${adminState.announcements.map(ann => `
-                                    <div class="p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
-                                        <p class="font-bold text-gray-900">${ann.title}</p>
-                                        <p class="text-sm text-gray-600">${ann.content.substring(0, 100)}${ann.content.length > 100 ? '...' : ''}</p>
-                                        <p class="text-xs text-gray-400 mt-1">Posted: ${ann.date}</p>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Recent Updates</h2>
+                        <div class="space-y-6 data-container max-h-[600px] overflow-y-auto pb-4">
+                            ${adminState.announcements.length === 0 ? 
+                                `<p class="text-gray-500 p-4">No announcements posted yet.</p>` : 
+                                adminState.announcements.map((a, index) => {
+                                    // Data from server
+                                    const likes = a.likes || 0;
+                                    const comments = a.comments || [];
+                                    const likedByMe = a.likedByMe || false;
+                                    const annId = a.id;
+                                    
+                                    return `
+                                    <div class="border rounded-xl bg-white shadow-sm overflow-hidden">
+                                        <div class="p-5">
+                                            <div class="flex justify-between items-start">
+                                                <h3 class="font-bold text-lg text-gray-900">${a.title}</h3>
+                                                <span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">${a.date}</span>
+                                            </div>
+                                            <p class="text-gray-600 mt-2 text-sm leading-relaxed">${a.content}</p>
+                                        </div>
+                                        
+                                        <!-- Interactive Footer -->
+                                        <div class="bg-gray-50 px-5 py-3 border-t border-gray-100">
+                                            <div class="flex items-center space-x-6">
+                                                <!-- Like Button -->
+                                                <button onclick="toggleLike('${annId}', this)" class="flex items-center space-x-2 group transition focus:outline-none">
+                                                    <span data-lucide="heart" class="like-icon w-5 h-5 ${likedByMe ? 'fill-current text-red-500' : 'text-gray-500'}"></span>
+                                                    <span class="like-count text-sm font-medium group-hover:scale-110 transition-transform">${likes}</span>
+                                                </button>
+                                                
+                                                <!-- Comment Toggle -->
+                                                <button class="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition"
+                                                    onclick="document.getElementById('comments-${index}').classList.toggle('hidden')">
+                                                    <span data-lucide="message-circle" class="w-5 h-5"></span>
+                                                    <span class="text-sm font-medium">${comments.length}</span>
+                                                </button>
+                                            </div>
+
+                                            <!-- Comments Section (Collapsible) -->
+                                            <div id="comments-${index}" class="hidden mt-4 pt-4 border-t border-gray-200">
+                                                <div class="space-y-3 mb-4 max-h-40 overflow-y-auto" id="comment-list-${annId}">
+                                                    ${comments.length === 0 ? 
+                                                        `<p class="empty-msg text-xs text-gray-400 italic">No comments yet.</p>` :
+                                                        comments.map(c => `
+                                                            <div class="bg-white p-2 rounded border border-gray-100">
+                                                                <div class="flex justify-between items-baseline">
+                                                                    <span class="text-xs font-bold text-gray-700">${c.user}</span>
+                                                                    <span class="text-[10px] text-gray-400">${c.time}</span>
+                                                                </div>
+                                                                <p class="text-xs text-gray-600 mt-1">${c.text}</p>
+                                                            </div>
+                                                        `).join('')
+                                                    }
+                                                </div>
+                                                <div class="flex space-x-2">
+                                                    <input type="text" id="comment-input-${annId}" 
+                                                        placeholder="Write a comment..." 
+                                                        class="flex-1 text-sm px-3 py-2 border rounded-full focus:outline-none focus:border-emerald-500"
+                                                        onkeydown="if(event.key === 'Enter') postComment('${annId}')">
+                                                    <button onclick="postComment('${annId}')" 
+                                                        class="bg-emerald-500 text-white p-2 rounded-full hover:bg-emerald-600 transition">
+                                                        <span data-lucide="send" class="w-4 h-4"></span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                `).join('')}
-                            </div>`
-                        }
+                                    `;
+                                }).join('')
+                            }
+                        </div>
                     </div>
                 </div>
             `;
         }
 
         function AssignmentsTab() {
-            const openAssignments = adminState.assignments.filter(a => new Date(a.dueDate) >= new Date()).length;
-
             return `
                 <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Post New Assignment Form -->
                     <div>
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Create New Assignment</h2>
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">New Assignment</h2>
                         <form id="assignmentForm" class="space-y-4 bg-gray-50 p-6 rounded-lg border">
-                            <div>
-                                <label for="assignmentTitle" class="block text-sm font-medium text-gray-700">Title</label>
-                                <input type="text" id="assignmentTitle" name="title" required
-                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
-                            </div>
-                            <div>
-                                <label for="assignmentDescription" class="block text-sm font-medium text-gray-700">Description</label>
-                                <textarea id="assignmentDescription" name="description" rows="4" required
-                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500"></textarea>
-                            </div>
-                            <div>
-                                <label for="assignmentDueDate" class="block text-sm font-medium text-gray-700">Due Date</label>
-                                <input type="date" id="assignmentDueDate" name="dueDate" required
-                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
-                            </div>
-                            <button type="submit" class="action-btn bg-blue-600 text-white hover:bg-blue-700 w-full transition">
-                                <span data-lucide="plus-circle" class="w-4 h-4 mr-2 inline-block"></span> Create Assignment
-                            </button>
+                            <input type="text" name="title" required placeholder="Title" class="w-full px-3 py-2 border rounded-lg">
+                            <textarea name="description" rows="4" required placeholder="Details" class="w-full px-3 py-2 border rounded-lg"></textarea>
+                            <input type="date" name="dueDate" required class="w-full px-3 py-2 border rounded-lg">
+                            <button type="submit" class="action-btn bg-blue-600 text-white w-full">Create</button>
                         </form>
                     </div>
-
-                    <!-- Existing Assignments List -->
                     <div>
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Open Assignments (${openAssignments})</h2>
-                        ${adminState.assignments.length === 0 ? 
-                            `<p class="text-gray-500 p-4 border rounded-lg">No assignments currently active.</p>` :
-                            `<div class="space-y-4 data-container">
-                                ${adminState.assignments.map(ass => `
-                                    <div class="p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
-                                        <p class="font-bold text-gray-900">${ass.title}</p>
-                                        <p class="text-sm text-gray-600">${ass.description.substring(0, 100)}${ass.description.length > 100 ? '...' : ''}</p>
-                                        <p class="text-xs ${new Date(ass.dueDate) < new Date() ? 'text-red-500' : 'text-emerald-500'} mt-1">Due: ${ass.dueDate}</p>
-                                    </div>
-                                `).join('')}
-                            </div>`
-                        }
+                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Active</h2>
+                        <div class="space-y-4 data-container max-h-96 overflow-y-auto">
+                             ${adminState.assignments.map(a => `
+                                <div class="p-4 border rounded-lg bg-white shadow-sm">
+                                    <p class="font-bold">${a.title}</p>
+                                    <p class="text-sm text-gray-600">${a.description}</p>
+                                    <p class="text-xs mt-1">Due: ${a.dueDate}</p>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
             `;
         }
-        
+
         function AttendanceTab() {
+            // Updated Tab with Search capabilities
             return `
-                <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Record Attendance Form -->
-                    <div>
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Record Daily Attendance for ${adminState.assignedCourse}</h2>
-                        <form id="attendanceForm" class="space-y-4 bg-gray-50 p-6 rounded-lg border">
-                            <div>
-                                <label for="admNo" class="block text-sm font-medium text-gray-700">Student Admission No.</label>
-                                <input type="text" id="admNo" name="admNo" required list="studentAdms"
-                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
-                                    placeholder="e.g. ADM-001 - John Doe">
-                                <datalist id="studentAdms">
-                                    ${adminState.students.map(s => `<option value="${s.admNo} - ${s.firstName} ${s.lastName}">`).join('')}
-                                </datalist>
-                                <p class="text-xs text-gray-500 mt-1">Only students in ${adminState.assignedCourse} will be recognized.</p>
-                            </div>
-                            <div>
-                                <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
-                                <input type="date" id="date" name="date" value="${new Date().toISOString().slice(0, 10)}" required
-                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
-                            </div>
-                            <div>
-                                <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                                <select id="status" name="status" required
-                                    class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
-                                    <option value="Present">Present</option>
-                                    <option value="Absent">Absent</option>
-                                    <option value="Late">Late</option>
-                                    <option value="Excused">Excused Absence</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="action-btn bg-indigo-600 text-white hover:bg-indigo-700 w-full transition">
-                                <span data-lucide="check-square" class="w-4 h-4 mr-2 inline-block"></span> Record Attendance
-                            </button>
-                        </form>
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <h2 class="text-2xl font-semibold text-gray-700">Mark Attendance</h2>
+                        <div class="flex items-center space-x-2">
+                            <label class="text-sm font-bold text-gray-600">Date:</label>
+                            <input type="date" id="attendanceDate" value="${new Date().toISOString().slice(0, 10)}" 
+                                class="px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
                     </div>
 
-                    <!-- Attendance History (Simplified View) -->
-                    <div>
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Attendance Focus</h2>
-                        <div class="bg-yellow-50 p-4 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-                            <p class="font-semibold mb-2">Note on History:</p>
-                            <p>For performance, a detailed attendance log is managed in the Apps Script backend. This form will only record attendance for students currently assigned to your course: <strong>${adminState.assignedCourse}</strong>.</p>
-                            <p class="mt-2">Use the Student List tab to verify Admission Numbers for your course.</p>
+                    <!-- Search Bar -->
+                    <div class="relative mb-6">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span data-lucide="search" class="text-gray-400 w-5 h-5"></span>
+                        </div>
+                        <input type="text" id="studentSearchInput" placeholder="Search by Student Name or Admission Number..." 
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg transition"
+                            autocomplete="off">
+                    </div>
+
+                    <!-- Results List -->
+                    <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+                        <div class="bg-gray-50 px-4 py-2 border-b border-gray-200 flex justify-between items-center">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Student Details</span>
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Mark Status</span>
+                        </div>
+                        
+                        <div id="attendanceListContainer" class="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
+                            <!-- List items injected here via JS -->
+                            <div class="p-8 text-center text-gray-500 flex flex-col items-center">
+                                <span data-lucide="search" class="w-12 h-12 text-gray-300 mb-2"></span>
+                                <p>Start typing a name or admission number above to find students.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -752,28 +814,41 @@
             });
 
             // Logout
-            document.getElementById('logoutBtn').onclick = handleLogout;
+            const logoutBtn = document.getElementById('logoutBtn');
+            if(logoutBtn) logoutBtn.onclick = handleLogout;
             
-            // Forms binding (only bind if element exists)
+            // Basic Forms
             const announcementForm = document.getElementById('announcementForm');
-            if(announcementForm) {
-                announcementForm.onsubmit = handleAddAnnouncement;
-            }
+            if(announcementForm) announcementForm.onsubmit = handleAddAnnouncement;
+            
             const assignmentForm = document.getElementById('assignmentForm');
-            if(assignmentForm) {
-                assignmentForm.onsubmit = handleAddAssignment;
-            }
-            const attendanceForm = document.getElementById('attendanceForm');
-            if(attendanceForm) {
-                attendanceForm.onsubmit = handleRecordAttendance;
+            if(assignmentForm) assignmentForm.onsubmit = handleAddAssignment;
+
+            // --- SEARCH EVENT BINDING ---
+            const searchInput = document.getElementById('studentSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const query = e.target.value.trim();
+                    if (query.length > 0) {
+                        filterAttendanceList(query);
+                    } else {
+                        document.getElementById('attendanceListContainer').innerHTML = `
+                             <div class="p-8 text-center text-gray-500 flex flex-col items-center">
+                                <span data-lucide="search" class="w-12 h-12 text-gray-300 mb-2"></span>
+                                <p>Start typing a name or admission number above to find students.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                    }
+                });
+                // Focus the input automatically if we just switched to this tab
+                searchInput.focus();
             }
         }
-
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', checkAuth);
 
     </script>
-
 </body>
 </html>

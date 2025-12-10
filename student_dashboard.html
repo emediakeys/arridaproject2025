@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Portal - Dashboard</title>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styles for better dashboard aesthetics */
@@ -57,17 +56,13 @@
             border-radius: 4px;
         }
     </style>
-    <!-- Icons for Navigation -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
 
-    <!-- Main Container -->
     <div id="app" class="min-h-screen flex flex-col md:flex-row bg-gray-100 relative overflow-hidden">
-        <!-- Content will be fully replaced on login/logout -->
-    </div>
+        </div>
 
-    <!-- Message Modal/Box -->
     <div id="messageModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
             <h3 id="modalTitle" class="text-xl font-semibold text-gray-900 mb-3">Message</h3>
@@ -76,7 +71,6 @@
         </div>
     </div>
     
-    <!-- Loading Indicator Overlay -->
     <div id="apiLoadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
             <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
@@ -275,14 +269,11 @@
 
             // NOTE: Sidebar uses -translate-x-full (hidden) by default on mobile, and translate-x-0 on desktop
             document.getElementById('app').innerHTML = `
-                <!-- Mobile Sidebar Overlay -->
                 <div id="sidebarOverlay" onclick="toggleSidebar()" 
                     class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300 md:hidden">
                 </div>
 
-                <!-- Sidebar -->
                 <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-2xl transform transition-transform duration-300 -translate-x-full md:translate-x-0 md:static md:inset-auto flex flex-col">
-                    <!-- Sidebar Header -->
                     <div class="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-100 bg-blue-50">
                         <div class="flex items-center font-bold text-lg text-gray-800">
                             <i class="fas fa-graduation-cap text-blue-500 mr-2"></i>
@@ -293,13 +284,11 @@
                         </button>
                     </div>
 
-                    <!-- User Info -->
                     <div class="p-4 border-b border-gray-100 bg-white">
                         <p class="font-bold text-gray-800 truncate">${studentData.firstName} ${studentData.lastName}</p>
                         <p class="text-xs text-gray-500 mt-1 truncate">${studentData.admNo}</p>
                     </div>
 
-                    <!-- Navigation -->
                     <nav class="flex-grow p-4 space-y-1 overflow-y-auto">
                         ${tabs.map(tab => `
                             <div class="nav-item ${currentTab === tab.id ? 'active' : 'text-gray-600 hover:bg-gray-50'}" 
@@ -310,7 +299,6 @@
                         `).join('')}
                     </nav>
 
-                    <!-- Logout -->
                     <div class="p-4 border-t border-gray-100">
                         <button id="logoutBtn" class="w-full flex items-center justify-center p-3 text-red-500 hover:bg-red-50 rounded-lg transition duration-150 font-medium">
                             <i class="fas fa-sign-out-alt mr-2"></i> Logout
@@ -318,10 +306,8 @@
                     </div>
                 </div>
 
-                <!-- Main Content -->
                 <main class="flex-grow flex flex-col h-screen overflow-hidden relative bg-gray-50">
                     
-                    <!-- Mobile Header -->
                     <div class="md:hidden bg-white shadow-sm border-b border-gray-200 p-4 flex items-center justify-between flex-shrink-0 z-30">
                         <div class="flex items-center">
                             <button onclick="toggleSidebar()" class="mr-3 text-gray-600 hover:text-blue-600 focus:outline-none">
@@ -336,7 +322,6 @@
                         </div>
                     </div>
 
-                    <!-- Content Scroll Area -->
                     <div class="flex-grow overflow-y-auto p-4 md:p-8" id="contentScrollArea">
                         <h1 class="text-3xl font-bold text-gray-800 mb-6 hidden md:block capitalize">
                             ${tabs.find(t => t.id === currentTab).label}
@@ -474,7 +459,6 @@
 
                         html += `
                             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                                <!-- Post Header -->
                                 <div class="p-4 flex items-center space-x-3">
                                     <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
                                         ${initials}
@@ -489,13 +473,11 @@
                                     </div>
                                 </div>
 
-                                <!-- Post Content -->
                                 <div class="px-4 pb-2">
                                     <h3 class="text-base font-bold text-gray-900 mb-2 leading-tight">${ann.title}</h3>
                                     <div class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">${ann.content}</div>
                                 </div>
 
-                                <!-- Interaction Stats -->
                                 <div class="px-4 py-2 flex items-center justify-between text-xs text-gray-500 border-b border-gray-50">
                                     <div class="flex items-center space-x-1">
                                         <i class="fas fa-heart text-red-500"></i>
@@ -504,7 +486,6 @@
                                     <div>${comments.length} comments</div>
                                 </div>
 
-                                <!-- Actions -->
                                 <div class="px-2 py-1 flex items-center justify-between border-t border-gray-100">
                                     <button onclick="toggleLike('${annId}', this)" 
                                         class="flex-1 flex items-center justify-center py-2 space-x-2 rounded-lg hover:bg-gray-50 transition active:scale-95 group">
@@ -519,7 +500,6 @@
                                     </button>
                                 </div>
 
-                                <!-- Comments Section -->
                                 <div id="comments-${index}" class="hidden bg-gray-50 border-t border-gray-100 p-4">
                                     <div class="space-y-4 mb-4 max-h-60 overflow-y-auto custom-scrollbar" id="comment-list-${annId}">
                                         ${comments.length === 0 ? 
@@ -700,18 +680,22 @@
         function handleDownloadLetter() {
              const admNo = studentData.admNo;
              const data = { action: 'generateLetter', admNo: admNo };
-            setLoading(true, 'Generating Letter...');
-            makeApiCall(data).then(response => {
+             
+             setLoading(true, 'Generating PDF... This may take a few seconds.');
+             
+             makeApiCall(data).then(response => {
                 setLoading(false);
-                showMessage('Success', 'Admission Letter generated.', true);
-                // Mock download
-                const content = `ADMISSION LETTER\nName: ${studentData.firstName}\nCourse: ${studentData.course}`;
-                const blob = new Blob([content], { type: 'text/plain' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `Admission_Letter_${admNo}.txt`;
-                a.click();
-            }).catch(e => setLoading(false));
+                if (response.result === 'success' && response.url) {
+                    // Open the Google Drive PDF link in a new tab
+                    window.open(response.url, '_blank');
+                    showMessage('Success', 'Admission Letter opened in a new tab.');
+                } else {
+                    showMessage('Error', response.message || 'Could not generate letter.', false);
+                }
+             }).catch(e => {
+                setLoading(false);
+                showMessage('Error', 'Network error occurred.', false);
+             });
         }
 
         function renderAdmissionLetter() {

@@ -16,6 +16,12 @@
 
   <!-- SweetAlert2 CDN -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+
   <style>
     /* Custom Configuration for Theme, Font, and Hero */
     :root {
@@ -118,6 +124,25 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+
+    /* Social Feed Styles */
+    .like-anim {
+      animation: pop 0.3s ease-in-out;
+    }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+    .comment-section {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+    }
+    .comment-section.open {
+        max-height: 300px; /* Adjust based on needs or use JS for auto height */
+        overflow-y: auto;
+    }
   </style>
 </head>
 
@@ -154,7 +179,7 @@
 
     <div
       class="absolute left-1/2 -translate-x-1/2 mt-3 w-48 bg-white rounded-lg shadow-xl 
-             transition duration-300 z-50 border border-gray-100">
+              transition duration-300 z-50 border border-gray-100">
 
       <a href="student_dashboard.html"
         class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-lg transition">
@@ -401,115 +426,25 @@
       </div>
     </section>
 
-    <!-- News Section -->
+    <!-- News Section (Social Feed Viewer) -->
     <section class="news-section bg-gray-100 py-16 md:py-24" id="news">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-12">Latest News</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-left news-list">
-
-          <!-- News Card 1 -->
-          <div
-            class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300">
-            <img src="images/DSC_3720.JPG" alt="Admission into Health Programs" class="news-img w-full h-48 object-cover">
-            <div class="p-6 flex flex-col flex-grow">
-              <h4 class="news-title text-xl font-bold text-gray-900 mb-2">Admission into Health Programs</h4>
-              <p class="news-date text-sm text-gray-500 mb-4">Posted: <span class="font-semibold">September 30,
-                  2025</span></p>
-              <p class="news-body text-gray-600 flex-grow mb-4">
-                We are pleased to announce that admissions are now open for our various health science programs. Apply
-                now to kickstart your career in healthcare!
-              </p>
-              <div class="news-actions flex justify-between items-center border-t pt-4">
-                <div class="share-dropdown relative group">
-                  <button
-                    class="share-btn text-blue-600 hover:text-blue-800 transition flex items-center text-sm font-medium">
-                    <i class="fa-solid fa-share mr-2"></i> <span>Share</span>
-                  </button>
-                  <div
-                    class="share-menu absolute bottom-full mb-2 left-0 w-36 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 z-50 p-2 border border-gray-100">
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="facebook"><i class="fa-brands fa-facebook mr-2 text-blue-600"></i> Facebook</a>
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="whatsapp"><i class="fa-brands fa-whatsapp mr-2 text-green-500"></i> WhatsApp</a>
-                  </div>
-                </div>
-                <button
-                  class="like-btn text-gray-500 hover:text-red-500 transition flex items-center text-sm font-medium">
-                  <i class="fa-solid fa-thumbs-up mr-1"></i> <span class="like-count">0</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- News Card 2 -->
-          <div
-            class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300">
-            <img src="images/Covr1.jpg" alt="New Library Opened" class="news-img w-full h-48 object-cover">
-            <div class="p-6 flex flex-col flex-grow">
-              <h4 class="news-title text-xl font-bold text-gray-900 mb-2">New Library Opened</h4>
-              <p class="news-date text-sm text-gray-500 mb-4">Posted: <span class="font-semibold">September 28,
-                  2025</span></p>
-              <p class="news-body text-gray-600 flex-grow mb-4">
-                We are excited to announce the opening of our new library, equipped with the latest resources and study
-                spaces for our students.
-              </p>
-              <div class="news-actions flex justify-between items-center border-t pt-4">
-                <div class="share-dropdown relative group">
-                  <button
-                    class="share-btn text-blue-600 hover:text-blue-800 transition flex items-center text-sm font-medium">
-                    <i class="fa-solid fa-share mr-2"></i> <span>Share</span>
-                  </button>
-                  <div
-                    class="share-menu absolute bottom-full mb-2 left-0 w-36 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 z-50 p-2 border border-gray-100">
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="facebook"><i class="fa-brands fa-facebook mr-2 text-blue-600"></i> Facebook</a>
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="whatsapp"><i class="fa-brands fa-whatsapp mr-2 text-green-500"></i> WhatsApp</a>
-                  </div>
-                </div>
-                <button
-                  class="like-btn text-gray-500 hover:text-red-500 transition flex items-center text-sm font-medium">
-                  <i class="fa-solid fa-thumbs-up mr-1"></i> <span class="like-count">0</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- News Card 3 -->
-          <div
-            class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300">
-            <img src="images/dev.JPG" alt="New CBT Centre Opened" class="news-img w-full h-48 object-cover">
-            <div class="p-6 flex flex-col flex-grow">
-              <h4 class="news-title text-xl font-bold text-gray-900 mb-2">New CBT Centre Opened</h4>
-              <p class="news-date text-sm text-gray-500 mb-4">Posted: <span class="font-semibold">September 25,
-                  2025</span></p>
-              <p class="news-body text-gray-600 flex-grow mb-4">
-                We are thrilled to announce the opening of our new Computer-Based Testing (CBT) Centre, designed to
-                provide students with a modern and efficient testing environment.
-              </p>
-              <div class="news-actions flex justify-between items-center border-t pt-4">
-                <div class="share-dropdown relative group">
-                  <button
-                    class="share-btn text-blue-600 hover:text-blue-800 transition flex items-center text-sm font-medium">
-                    <i class="fa-solid fa-share mr-2"></i> <span>Share</span>
-                  </button>
-                  <div
-                    class="share-menu absolute bottom-full mb-2 left-0 w-36 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 z-50 p-2 border border-gray-100">
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="facebook"><i class="fa-brands fa-facebook mr-2 text-blue-600"></i> Facebook</a>
-                    <a href="#" class="share-link block px-2 py-1.5 text-gray-700 hover:bg-gray-50 rounded-md text-sm"
-                      data-platform="whatsapp"><i class="fa-brands fa-whatsapp mr-2 text-green-500"></i> WhatsApp</a>
-                  </div>
-                </div>
-                <button
-                  class="like-btn text-gray-500 hover:text-red-500 transition flex items-center text-sm font-medium">
-                  <i class="fa-solid fa-thumbs-up mr-1"></i> <span class="like-count">0</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h3 class="text-3xl sm:text-4xl font-bold text-gray-900">Campus News Feed</h3>
+            <p class="text-gray-600 mt-2">Latest updates, announcements, and events from ACHSTS.</p>
         </div>
+
+        <!-- Note: Posting UI removed from homepage as requested. Posting is done via Admin/Student portals. -->
+
+        <!-- Dynamic News Feed Container -->
+        <div id="news-feed" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Loading State -->
+            <div class="col-span-full text-center py-10">
+                <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
+                <p class="text-gray-500 mt-2">Loading news feed...</p>
+            </div>
+        </div>
+
       </div>
     </section>
 
@@ -632,378 +567,412 @@
 
 
   <script>
+    // --- Firebase Initialization ---
+    const firebaseConfig = JSON.parse(__firebase_config);
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+    // Global User State
+    let currentUser = null;
+
     document.addEventListener('DOMContentLoaded', () => {
-      const navbar = document.querySelector('.navbar');
-      const openMenuBtn = document.getElementById('menu-open-button');
-      const closeMenuBtn = document.getElementById('menu-close-button');
-      const mobileMenu = document.getElementById('mobile-menu');
-      const navLinks = document.querySelectorAll('.nav-link, #mobile-menu a');
-      const galleryItems = document.querySelectorAll('.gallery-item');
-      const lightbox = document.getElementById('lightbox');
-      const lightboxImage = document.getElementById('lightbox-image');
-      const lightboxClose = document.querySelector('.lightbox-close');
+      // Initialize existing UI functions
+      initUI();
 
-      // Course Modal Elements
-      const courseModal = document.getElementById('course-modal');
-      const modalCloseBtn = document.getElementById('course-modal-close');
-      const modalIcon = document.getElementById('modal-icon');
-      const modalTitle = document.getElementById('modal-title');
-      const modalLevel = document.getElementById('modal-level');
-      const modalDescription = document.getElementById('modal-description');
-      const modalDuration = document.getElementById('modal-duration');
-      const modalLevelFull = document.getElementById('modal-level-full');
-      const modalFeatures = document.getElementById('modal-features');
-      const modalCtaLink = document.getElementById('modal-cta-link');
-      
-      const teamContainer = document.getElementById('team-container');
+      // Initialize Firebase Auth
+      initAuth();
+    });
 
-
-      // --- Course Data (Dynamic Content with New Features) ---
-      const courses = [
-        {
-          icon: 'fas fa-shield-virus',
-          title: 'Community Health',
-          description: 'A comprehensive program focused on primary healthcare delivery and disease control in rural and urban settings. Students will gain practical skills in public health intervention and field work.',
-          color: 'text-blue-600',
-          duration: '2 Years',
-          level: 'National Diploma (ND)',
-          features: ['Primary Healthcare', 'Immunization & Vaccinations', 'Disease Surveillance', 'Health Education'],
-          ctaLink: 'form.html?course=CommunityHealth'
-        },
-        {
-          icon: 'fas fa-vial-circle-check',
-          title: 'Medical Laboratory Science',
-          description: 'Training for clinical laboratory testing, diagnostics, and biomedical research techniques critical for patient care. This rigorous program prepares you for work in various diagnostic settings.',
-          color: 'text-emerald-600',
-          duration: '3 Years',
-          level: 'Higher National Diploma (HND)',
-          features: ['Clinical Chemistry', 'Hematology', 'Microbiology', 'Histopathology Techniques'],
-          ctaLink: 'form.html?course=MedicalLabScience'
-        },
-        {
-          icon: 'fas fa-leaf',
-          title: 'Environmental Health',
-          description: 'Focusing on environmental factors that affect human health and developing effective public health policies and sanitation. Ensure communities are safe and healthy.',
-          color: 'text-red-500',
-          duration: '2 Years',
-          level: 'National Diploma (ND)',
-          features: ['Water Quality & Sanitation', 'Food Safety', 'Vector Control', 'Occupational Health'],
-          ctaLink: 'form.html?course=EnvironmentalHealth'
-        },
-        {
-          icon: 'fas fa-chart-line',
-          title: 'Public Health',
-          description: 'Focusing on the health of communities and populations through education, policy, and large-scale disease prevention programs. This certificate is ideal for professionals seeking to advance.',
-          color: 'text-blue-500',
-          duration: '18 Months',
-          level: 'Professional Certificate',
-          features: ['Epidemiology', 'Health Policy', 'Biostatistics', 'Global Health Issues'],
-          ctaLink: 'form.html?course=PublicHealth'
-        }
-      ];
-
-      // --- Teacher Data (New Dynamic Content) ---
-      const teachers = [
-          {
-              name: 'Aminu Ibrahim',
-              role: 'Lecturer',
-              initials: 'AI',
-              // Tailwind classes are generated dynamically using these color codes
-              bgColor: '3b82f6', // blue-600
-              borderColor: 'blue-100',
-              roleColor: 'blue-600',
-              email: 'lecaminu.arrida@gmail.com',
-              whatsapp: '2348011112222',
-          },
-          {
-              name: 'Suleiman Shaibu',
-              role: 'Registrar',
-              initials: 'SS',
-              bgColor: '10b981', // emerald-600
-              borderColor: 'emerald-100',
-              roleColor: 'emerald-600',
-              email: 'regsuleiman.arrida@gmail.com',
-              whatsapp: '2348033334444',
-          },
-          {
-              name: 'Vivian Odiali',
-              role: 'Provost',
-              initials: 'VO',
-              bgColor: 'f59e0b', // yellow-600
-              borderColor: 'yellow-100',
-              roleColor: 'yellow-600',
-              email: 'provodiali.arrida@gmail.com',
-              whatsapp: '2348055556666',
-          },
-          {
-              name: 'Nura Nasiru',
-              role: 'HOD Public Health',
-              initials: 'NN',
-              bgColor: 'ef4444', // red-600
-              borderColor: 'red-100',
-              roleColor: 'red-600',
-              email: 'hodnura.arrida@gmail.com',
-              whatsapp: '2348077778888',
-          },
-        {
-              name: 'Demmile Stephanie',
-              role: 'Lecturer',
-              initials: 'DS',
-              // Tailwind classes are generated dynamically using these color codes
-              bgColor: '3b82f6', // blue-600
-              borderColor: 'blue-100',
-              roleColor: 'blue-600',
-              email: 'lecdammile.arrida@gmail.com',
-              whatsapp: '2348011112222',
-          }
-      ];
-
-      // --- Function to Render Courses ---
-      function renderCourses() {
-        const container = document.getElementById('courses-container');
-        if (!container) return;
-
-        let html = '';
-        courses.forEach((course, index) => {
-          html += `
-            <div class="course-card bg-white p-6 rounded-xl shadow-lg border-t-4 ${course.color.replace('text', 'border')} flex flex-col hover:shadow-2xl transition duration-300 transform hover:-translate-y-1 cursor-pointer" data-course-index="${index}">
-              <div class="flex-grow">
-                <i class="${course.icon} text-5xl ${course.color} mb-4"></i>
-                <h4 class="text-2xl font-bold text-gray-900 mb-2">${course.title}</h4>
-                <p class="text-gray-500 mb-4 line-clamp-3">${course.description}</p>
-              </div>
-              <p class="text-sm font-semibold text-blue-600 mt-4 flex items-center justify-end">View Details & Apply <i class="fas fa-arrow-right ml-2 text-sm"></i></p>
-            </div>
-          `;
-        });
-        container.innerHTML = html;
+    // --- Authentication Logic ---
+    async function initAuth() {
+        // Since this is a public homepage, we sign in anonymously for READ/WRITE access (for comments/likes)
+        // Real users (Admins/Students) would likely already have a token or be handled 
+        // via the login pages. For this demo, we check if a user is already authenticated.
         
-        // Attach event listeners after rendering
-        document.querySelectorAll('.course-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const index = card.getAttribute('data-course-index');
-                showCourseDetails(index);
+        auth.onAuthStateChanged(async (user) => {
+            if (user && !user.isAnonymous) {
+                // User is logged in as Admin or Student
+                currentUser = user;
+            } else {
+                // Guest or Anonymous
+                currentUser = user; // keep track of anonymous user
+                // Ensure anonymous auth for reading/writing database if not already signed in
+                if (!user) {
+                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await auth.signInWithCustomToken(__initial_auth_token);
+                    } else {
+                        await auth.signInAnonymously();
+                    }
+                }
+            }
+            // Load News Feed regardless of auth state
+            loadNewsFeed();
+        });
+    }
+
+    // --- News Feed Logic (Firestore) ---
+    function loadNewsFeed() {
+        const feedContainer = document.getElementById('news-feed');
+        
+        // Listen to 'news_posts' collection (Public Data)
+        db.collection('artifacts').doc(appId).collection('public').doc('data').collection('news_posts')
+          .orderBy('timestamp', 'desc')
+          .limit(20)
+          .onSnapshot((snapshot) => {
+            if(snapshot.empty) {
+                feedContainer.innerHTML = '<div class="col-span-full text-center text-gray-500">No news yet. Check back later!</div>';
+                return;
+            }
+
+            let html = '';
+            snapshot.forEach(doc => {
+                const post = doc.data();
+                const postId = doc.id;
+                const timeString = post.timestamp ? new Date(post.timestamp.toDate()).toLocaleDateString() : 'Just now';
+                
+                // Comments HTML Generation
+                let commentsHtml = '';
+                if(post.comments && post.comments.length > 0) {
+                    post.comments.forEach(comment => {
+                        commentsHtml += `
+                            <div class="bg-gray-50 p-2 rounded-lg mb-2 text-sm">
+                                <span class="font-bold text-gray-800">${comment.user}:</span>
+                                <span class="text-gray-600">${comment.text}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    commentsHtml = '<p class="text-xs text-gray-400 italic">No comments yet. Be the first!</p>';
+                }
+
+                // Check if current user liked this
+                // Note: currentUser might be anonymous, but they still have a UID
+                const isLiked = post.likedBy && currentUser && post.likedBy.includes(currentUser.uid);
+                const likeColor = isLiked ? 'text-red-500' : 'text-gray-500';
+
+                html += `
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300">
+                    ${post.imageUrl ? `<img src="${post.imageUrl}" alt="News Image" class="news-img w-full h-48 object-cover">` : ''}
+                    <div class="p-6 flex flex-col flex-grow">
+                        <!-- Header -->
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs mr-2">
+                                ${post.authorInitials || 'A'}
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-900">${post.authorName || 'Admin'}</h4>
+                                <p class="text-xs text-gray-500">${timeString}</p>
+                            </div>
+                        </div>
+
+                        ${post.title ? `<h4 class="news-title text-xl font-bold text-gray-900 mb-2">${post.title}</h4>` : ''}
+                        
+                        <p class="news-body text-gray-600 flex-grow mb-4 whitespace-pre-line">
+                            ${post.content}
+                        </p>
+
+                        <!-- Actions -->
+                        <div class="news-actions flex justify-between items-center border-t border-gray-100 pt-4 mt-auto">
+                             <div class="flex space-x-4">
+                                <button onclick="handleLike('${postId}')" class="like-btn ${likeColor} hover:text-red-500 transition flex items-center text-sm font-medium">
+                                    <i class="fa-solid fa-heart mr-1 ${isLiked ? 'like-anim' : ''}"></i> <span>${post.likes || 0}</span>
+                                </button>
+                                <button onclick="toggleComments('${postId}')" class="text-gray-500 hover:text-blue-600 transition flex items-center text-sm font-medium">
+                                    <i class="fa-solid fa-comment mr-1"></i> <span>${post.comments ? post.comments.length : 0}</span>
+                                </button>
+                             </div>
+                             
+                             <button onclick="handleShare('${post.title || 'ACHSTS News'}', '${post.content}')" class="text-gray-500 hover:text-blue-800 transition flex items-center text-sm font-medium">
+                                <i class="fa-solid fa-share"></i>
+                             </button>
+                        </div>
+
+                        <!-- Comment Section (Hidden by default) -->
+                        <div id="comments-${postId}" class="comment-section mt-4 pt-4 border-t border-gray-100 hidden">
+                             <div class="comments-list mb-3 max-h-32 overflow-y-auto">
+                                ${commentsHtml}
+                             </div>
+                             <div class="flex">
+                                <input type="text" id="input-${postId}" placeholder="Write a comment..." class="flex-1 text-sm border border-gray-300 rounded-l-lg px-3 py-1 focus:outline-none">
+                                <button onclick="postComment('${postId}')" class="bg-blue-600 text-white px-3 py-1 rounded-r-lg text-sm hover:bg-blue-700">Send</button>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            feedContainer.innerHTML = html;
+          }, (error) => {
+              console.error("Error getting news:", error);
+              feedContainer.innerHTML = '<div class="col-span-full text-center text-red-500">Error loading news.</div>';
+          });
+    }
+
+    // --- Interaction Functions ---
+
+    // 1. Like Logic (Updated: Allows Guest/Anonymous Likes)
+    window.handleLike = async (postId) => {
+        // Ensure user is at least anonymously signed in (should be handled by initAuth, but safe check)
+        if(!currentUser) {
+             // If completely null, try to wait or sign in
+             await auth.signInAnonymously();
+             // Current user state updates in onAuthStateChanged
+        }
+
+        const postRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('news_posts').doc(postId);
+        
+        try {
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(postRef);
+                if (!doc.exists) throw "Document does not exist!";
+
+                const data = doc.data();
+                const likedBy = data.likedBy || [];
+                // Use current user UID (whether anonymous or logged in)
+                const uid = auth.currentUser.uid;
+
+                if (likedBy.includes(uid)) {
+                    // Unlike
+                    const newLikes = (data.likes || 1) - 1;
+                    const newLikedBy = likedBy.filter(id => id !== uid);
+                    transaction.update(postRef, { likes: newLikes, likedBy: newLikedBy });
+                } else {
+                    // Like
+                    const newLikes = (data.likes || 0) + 1;
+                    likedBy.push(uid);
+                    transaction.update(postRef, { likes: newLikes, likedBy: likedBy });
+                }
+            });
+        } catch (e) {
+            console.error("Transaction failed: ", e);
+        }
+    };
+
+    // 2. Toggle Comments
+    window.toggleComments = (postId) => {
+        const el = document.getElementById(`comments-${postId}`);
+        if(el.classList.contains('hidden')) {
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('open'), 10);
+        } else {
+            el.classList.remove('open');
+            setTimeout(() => el.classList.add('hidden'), 300);
+        }
+    };
+
+    // 3. Post Comment (Updated: Allows Guest/Anonymous Comments)
+    window.postComment = async (postId) => {
+        // Ensure user is at least anonymously signed in
+        if(!currentUser) {
+            await auth.signInAnonymously();
+        }
+
+        const input = document.getElementById(`input-${postId}`);
+        const text = input.value.trim();
+        if(!text) return;
+
+        const postRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('news_posts').doc(postId);
+
+        // Determine Name: Use real name if logged in, otherwise "Guest Visitor"
+        const displayName = (currentUser && !currentUser.isAnonymous) ? currentUser.displayName : 'Guest Visitor';
+
+        const newComment = {
+            user: displayName || 'Student',
+            userId: auth.currentUser.uid,
+            text: text,
+            timestamp: new Date().toISOString()
+        };
+
+        try {
+            await postRef.update({
+                comments: firebase.firestore.FieldValue.arrayUnion(newComment)
+            });
+            input.value = ''; // Clear input
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Error', 'Could not post comment', 'error');
+        }
+    };
+
+    // 4. Share Logic
+    window.handleShare = async (title, text) => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: title,
+                    text: text.substring(0, 100) + '...',
+                    url: window.location.href
+                });
+            } catch (err) {
+                console.log('Share canceled');
+            }
+        } else {
+            // Fallback
+            Swal.fire({
+                title: 'Share',
+                text: 'Link copied to clipboard!',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    };
+
+    // --- Existing UI Logic (Courses, Navbar, etc) ---
+    function initUI() {
+        const navbar = document.querySelector('.navbar');
+        const openMenuBtn = document.getElementById('menu-open-button');
+        const closeMenuBtn = document.getElementById('menu-close-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const navLinks = document.querySelectorAll('.nav-link, #mobile-menu a');
+        const galleryItems = document.querySelectorAll('.gallery-item');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImage = document.getElementById('lightbox-image');
+        const lightboxCloseBtn = document.querySelector('#lightbox .modal-close');
+        
+        // Course Modal Elements
+        const courseModal = document.getElementById('course-modal');
+        const modalCloseBtn = document.getElementById('course-modal-close');
+        const modalIcon = document.getElementById('modal-icon');
+        const modalTitle = document.getElementById('modal-title');
+        const modalLevel = document.getElementById('modal-level');
+        const modalDescription = document.getElementById('modal-description');
+        const modalDuration = document.getElementById('modal-duration');
+        const modalLevelFull = document.getElementById('modal-level-full');
+        const modalFeatures = document.getElementById('modal-features');
+        const modalCtaLink = document.getElementById('modal-cta-link');
+        
+        const teamContainer = document.getElementById('team-container');
+
+        // Data Arrays (Courses & Teachers)
+        const courses = [
+            { icon: 'fas fa-shield-virus', title: 'Community Health', description: 'A comprehensive program focused on primary healthcare delivery and disease control in rural and urban settings.', color: 'text-blue-600', duration: '2 Years', level: 'National Diploma (ND)', features: ['Primary Healthcare', 'Immunization & Vaccinations', 'Disease Surveillance', 'Health Education'], ctaLink: 'form.html?course=CommunityHealth' },
+            { icon: 'fas fa-vial-circle-check', title: 'Medical Laboratory Science', description: 'Training for clinical laboratory testing, diagnostics, and biomedical research techniques critical for patient care.', color: 'text-emerald-600', duration: '3 Years', level: 'Higher National Diploma (HND)', features: ['Clinical Chemistry', 'Hematology', 'Microbiology', 'Histopathology Techniques'], ctaLink: 'form.html?course=MedicalLabScience' },
+            { icon: 'fas fa-leaf', title: 'Environmental Health', description: 'Focusing on environmental factors that affect human health and developing effective public health policies and sanitation.', color: 'text-red-500', duration: '2 Years', level: 'National Diploma (ND)', features: ['Water Quality & Sanitation', 'Food Safety', 'Vector Control', 'Occupational Health'], ctaLink: 'form.html?course=EnvironmentalHealth' },
+            { icon: 'fas fa-chart-line', title: 'Public Health', description: 'Focusing on the health of communities and populations through education, policy, and large-scale disease prevention programs.', color: 'text-blue-500', duration: '18 Months', level: 'Professional Certificate', features: ['Epidemiology', 'Health Policy', 'Biostatistics', 'Global Health Issues'], ctaLink: 'form.html?course=PublicHealth' }
+        ];
+
+        const teachers = [
+            { name: 'Aminu Ibrahim', role: 'Lecturer', initials: 'AI', bgColor: '3b82f6', borderColor: 'blue-100', roleColor: 'blue-600', email: 'lecaminu.arrida@gmail.com', whatsapp: '2348011112222' },
+            { name: 'Suleiman Shaibu', role: 'Registrar', initials: 'SS', bgColor: '10b981', borderColor: 'emerald-100', roleColor: 'emerald-600', email: 'regsuleiman.arrida@gmail.com', whatsapp: '2348033334444' },
+            { name: 'Vivian Odiali', role: 'Provost', initials: 'VO', bgColor: 'f59e0b', borderColor: 'yellow-100', roleColor: 'yellow-600', email: 'provodiali.arrida@gmail.com', whatsapp: '2348055556666' },
+            { name: 'Nura Nasiru', role: 'HOD Public Health', initials: 'NN', bgColor: 'ef4444', borderColor: 'red-100', roleColor: 'red-600', email: 'hodnura.arrida@gmail.com', whatsapp: '2348077778888' },
+            { name: 'Demmile Stephanie', role: 'Lecturer', initials: 'DS', bgColor: '3b82f6', borderColor: 'blue-100', roleColor: 'blue-600', email: 'lecdammile.arrida@gmail.com', whatsapp: '2348011112222' }
+        ];
+
+        // Render Functions
+        function renderCourses() {
+            const container = document.getElementById('courses-container');
+            if (!container) return;
+            let html = '';
+            courses.forEach((course, index) => {
+            html += `
+                <div class="course-card bg-white p-6 rounded-xl shadow-lg border-t-4 ${course.color.replace('text', 'border')} flex flex-col hover:shadow-2xl transition duration-300 transform hover:-translate-y-1 cursor-pointer" data-course-index="${index}">
+                <div class="flex-grow">
+                    <i class="${course.icon} text-5xl ${course.color} mb-4"></i>
+                    <h4 class="text-2xl font-bold text-gray-900 mb-2">${course.title}</h4>
+                    <p class="text-gray-500 mb-4 line-clamp-3">${course.description}</p>
+                </div>
+                <p class="text-sm font-semibold text-blue-600 mt-4 flex items-center justify-end">View Details & Apply <i class="fas fa-arrow-right ml-2 text-sm"></i></p>
+                </div>
+            `;
+            });
+            container.innerHTML = html;
+            document.querySelectorAll('.course-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const index = card.getAttribute('data-course-index');
+                    showCourseDetails(index);
+                });
+            });
+        }
+
+        function renderTeachers() {
+            if (!teamContainer) return;
+            let html = '';
+            teachers.forEach(teacher => {
+                html += `
+                    <div class="bg-white rounded-xl shadow-lg p-6 text-center transform hover:shadow-xl transition duration-300">
+                        <img src="https://placehold.co/100x100/${teacher.bgColor}/ffffff?text=${teacher.initials}" 
+                            alt="${teacher.name}"
+                            class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-${teacher.borderColor} transition duration-300 hover:scale-105"
+                            onerror="this.onerror=null; this.src='https://placehold.co/100x100/${teacher.bgColor}/ffffff?text=${teacher.initials}';">
+                        <h4 class="font-semibold text-gray-900 text-lg">${teacher.name}</h4>
+                        <p class="text-sm text-${teacher.roleColor} mb-3">${teacher.role}</p>
+                        <div class="flex justify-center space-x-3">
+                            <a href="mailto:${teacher.email}" class="text-gray-400 hover:text-indigo-500 transition"><i class="fas fa-envelope text-xl"></i></a>
+                            <a href="https://wa.me/${teacher.whatsapp}" class="text-gray-400 hover:text-green-500 transition" target="_blank"><i class="fa-brands fa-whatsapp text-xl"></i></a>
+                        </div>
+                    </div>
+                `;
+            });
+            teamContainer.innerHTML = html;
+        }
+
+        function showCourseDetails(index) {
+            const course = courses[index];
+            if (!course) return;
+            modalIcon.className = `${course.icon} text-6xl mb-4 ${course.color}`;
+            modalTitle.textContent = course.title;
+            modalLevel.textContent = course.level;
+            modalDescription.textContent = course.description;
+            modalDuration.textContent = course.duration;
+            modalLevelFull.textContent = course.level;
+            modalCtaLink.href = course.ctaLink;
+            modalCtaLink.textContent = `Apply Now for ${course.title}`;
+            modalFeatures.innerHTML = course.features.map(feature => 
+            `<li class="flex items-start text-gray-700"><i class="fas fa-check-circle text-emerald-500 mr-2 mt-1 flex-shrink-0"></i> <span>${feature}</span></li>`
+            ).join('');
+            courseModal.style.display = 'flex';
+        }
+
+        // Init Renders
+        renderCourses();
+        renderTeachers();
+
+        // UI Event Listeners
+        modalCloseBtn.addEventListener('click', () => courseModal.style.display = 'none');
+        courseModal.addEventListener('click', (e) => { if (e.target === courseModal) courseModal.style.display = 'none'; });
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) navbar.classList.add('shadow-xl', 'bg-opacity-95');
+            else navbar.classList.remove('shadow-xl', 'bg-opacity-95');
+        });
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', function (e) {
+            const href = this.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                    if (mobileMenu.classList.contains('active')) toggleMobileMenu();
+                }
+            }
             });
         });
-      }
-      
-      // --- Function to Render Teachers ---
-      function renderTeachers() {
-          if (!teamContainer) return;
 
-          let html = '';
-          teachers.forEach(teacher => {
-              // Note: Using inline styles for background/border colors since complex dynamic Tailwind class generation in production is problematic.
-              // We'll use the hex codes defined in the data, ensuring the general Tailwind classes for structure/hover effects are maintained.
-              html += `
-                  <div class="bg-white rounded-xl shadow-lg p-6 text-center transform hover:shadow-xl transition duration-300">
-                      <img src="https://placehold.co/100x100/${teacher.bgColor}/ffffff?text=${teacher.initials}" 
-                          alt="${teacher.name}"
-                          class="w-24 h-24 rounded-full mx-auto object-cover mb-4 border-4 border-${teacher.borderColor} transition duration-300 hover:scale-105"
-                          onerror="this.onerror=null; this.src='https://placehold.co/100x100/${teacher.bgColor}/ffffff?text=${teacher.initials}';">
-                      <h4 class="font-semibold text-gray-900 text-lg">${teacher.name}</h4>
-                      <p class="text-sm text-${teacher.roleColor} mb-3">${teacher.role}</p>
-                      <div class="flex justify-center space-x-3">
-                          <a href="mailto:${teacher.email}" class="text-gray-400 hover:text-indigo-500 transition"
-                              aria-label="Email ${teacher.name}">
-                              <i class="fas fa-envelope text-xl"></i>
-                          </a>
-                          <a href="https://wa.me/${teacher.whatsapp}" class="text-gray-400 hover:text-green-500 transition" target="_blank"
-                              aria-label="WhatsApp ${teacher.name}">
-                              <i class="fa-brands fa-whatsapp text-xl"></i>
-                          </a>
-                      </div>
-                  </div>
-              `;
-          });
-          teamContainer.innerHTML = html;
-      }
-      
-      // --- Function to Populate and Show Course Modal ---
-      function showCourseDetails(index) {
-          const course = courses[index];
-          if (!course) return;
-
-          // Set Modal Content
-          modalIcon.className = `${course.icon} text-6xl mb-4 ${course.color}`;
-          modalTitle.textContent = course.title;
-          modalLevel.textContent = course.level;
-          modalDescription.textContent = course.description;
-          modalDuration.textContent = course.duration;
-          modalLevelFull.textContent = course.level;
-          modalCtaLink.href = course.ctaLink;
-          modalCtaLink.textContent = `Apply Now for ${course.title}`;
-
-          // Set Features List
-          modalFeatures.innerHTML = course.features.map(feature => 
-            `<li class="flex items-start text-gray-700">
-                <i class="fas fa-check-circle text-emerald-500 mr-2 mt-1 flex-shrink-0"></i> 
-                <span>${feature}</span>
-            </li>`
-          ).join('');
-
-          // Show Modal
-          courseModal.style.display = 'flex';
-      }
-      
-      // --- Modal Close Handlers ---
-      function closeCourseModal() {
-          courseModal.style.display = 'none';
-      }
-      
-      modalCloseBtn.addEventListener('click', closeCourseModal);
-      
-      // Close modal when clicking outside of it
-      courseModal.addEventListener('click', (e) => {
-        // Ensure the click target is the modal backdrop itself, not content inside it
-        if (e.target === courseModal) {
-          closeCourseModal();
+        function toggleMobileMenu() {
+            mobileMenu.classList.toggle('hidden-on-mobile');
+            mobileMenu.classList.toggle('active');
         }
-      });
+        openMenuBtn.addEventListener('click', toggleMobileMenu);
+        closeMenuBtn.addEventListener('click', toggleMobileMenu);
 
-
-      // Initialize sections
-      renderCourses();
-      renderTeachers(); // Call the new function
-
-      // --- Sticky Navbar & Scroll Behavior ---
-      window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-          navbar.classList.add('shadow-xl', 'bg-opacity-95');
-        } else {
-          navbar.classList.remove('shadow-xl', 'bg-opacity-95');
-        }
-      });
-
-      // Smooth scrolling for all nav links
-      navLinks.forEach(link => {
-        link.addEventListener('click', function (e) {
-          const href = this.getAttribute('href');
-          if (href && href.startsWith('#')) {
-            e.preventDefault();
-            const target = document.querySelector(href);
-            if (target) {
-              target.scrollIntoView({ behavior: 'smooth' });
-              // Close mobile menu after clicking a link
-              if (mobileMenu.classList.contains('active')) {
-                toggleMobileMenu();
-              }
-            }
-          }
+        galleryItems.forEach(item => {
+            item.addEventListener('click', () => {
+            lightboxImage.src = item.querySelector('.gallery-img').src;
+            lightboxImage.alt = item.querySelector('.gallery-img').alt;
+            lightbox.style.display = 'flex';
+            });
         });
-      });
-
-      // --- Mobile Menu Toggle ---
-      function toggleMobileMenu() {
-        mobileMenu.classList.toggle('hidden-on-mobile');
-        mobileMenu.classList.toggle('active');
-      }
-
-      openMenuBtn.addEventListener('click', toggleMobileMenu);
-      closeMenuBtn.addEventListener('click', toggleMobileMenu);
-
-      // Close mobile menu when a link inside it is clicked
-      mobileMenu.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-          if (mobileMenu.classList.contains('active')) {
-            setTimeout(toggleMobileMenu, 100); // Give time for smooth scroll to start
-          }
-        });
-      });
-
-      // --- Gallery Lightbox Logic ---
-      const lightboxModal = document.getElementById('lightbox');
-      const lightboxCloseBtn = document.querySelector('#lightbox .modal-close');
-      
-      galleryItems.forEach(item => {
-        item.addEventListener('click', () => {
-          const imgSrc = item.querySelector('.gallery-img').src;
-          const imgAlt = item.querySelector('.gallery-img').alt;
-          lightboxImage.src = imgSrc;
-          lightboxImage.alt = imgAlt;
-          lightboxModal.style.display = 'flex';
-        });
-      });
-
-      lightboxCloseBtn.addEventListener('click', () => {
-        lightboxModal.style.display = 'none';
-      });
-
-      lightboxModal.addEventListener('click', (e) => {
-        if (e.target === lightboxModal) {
-          lightboxModal.style.display = 'none';
-        }
-      });
-
-      // --- Contact Form Submission (Placeholder) ---
-      const contactForm = document.getElementById('contact-form');
-      contactForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        // In a real application, you would send this data to a backend (like your Google Apps Script)
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Message Sent!',
-          text: 'Thank photo for contacting us. We will get back to you shortly.',
-          confirmButtonColor: '#3b82f6'
-        });
-        contactForm.reset();
-      });
-
-      // --- Share Dropdown Logic ---
-      document.querySelectorAll('.share-dropdown').forEach(dropdown => {
-        const shareBtn = dropdown.querySelector('.share-btn');
-        const shareMenu = dropdown.querySelector('.share-menu');
-
-        // Toggle visibility on click for mobile/touch
-        shareBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          // On desktop, the group-hover should handle it, but for compatibility/touch:
-          shareMenu.classList.toggle('opacity-0');
-          shareMenu.classList.toggle('invisible');
-          shareMenu.classList.toggle('opacity-100');
-          shareMenu.classList.toggle('visible');
-        });
-
-        // Close menu if clicking outside
-        document.addEventListener('click', (e) => {
-          if (!dropdown.contains(e.target) && shareMenu.classList.contains('opacity-100')) {
-            shareMenu.classList.remove('opacity-100', 'visible');
-            shareMenu.classList.add('opacity-0', 'invisible');
-          }
-        });
-      });
-
-      // --- Like Button Logic ---
-      document.querySelectorAll('.like-btn').forEach(button => {
-        let liked = false;
-        button.addEventListener('click', () => {
-          const countSpan = button.querySelector('.like-count');
-          let count = parseInt(countSpan.textContent);
-
-          if (liked) {
-            count--;
-            button.classList.remove('text-red-500');
-            button.classList.add('text-gray-500');
-          } else {
-            count++;
-            button.classList.remove('text-gray-500');
-            button.classList.add('text-red-500');
-          }
-          liked = !liked;
-          countSpan.textContent = count;
-
-          // This state should ideally be persisted via a backend/database
-        });
-      });
-
-    });
+        lightboxCloseBtn.addEventListener('click', () => lightbox.style.display = 'none');
+        lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.style.display = 'none'; });
+    }
   </script>
 
 </body>
 
 </html>
-
-
-
-

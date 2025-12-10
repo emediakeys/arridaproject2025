@@ -521,16 +521,17 @@
 
         // --- SOCIAL INTERACTIONS (For viewing own posts in feed) ---
 
+       // --- SOCIAL INTERACTIONS (Improved with Error Handling) ---
+
         async function toggleLike(annId, btnElement) {
-            if (!isFirebaseAvailable) return;
             const icon = btnElement.querySelector('.like-icon');
             const countSpan = btnElement.querySelector('.like-count');
             
             let text = countSpan.innerText;
             let currentCount = (text === 'Like') ? 0 : parseInt(text);
-            
             const isLiked = icon.classList.contains('fill-current') && icon.classList.contains('text-red-500');
 
+            // 1. Optimistic UI Update (Instant feedback)
             if (isLiked) {
                 icon.classList.remove('fill-current', 'text-red-500');
                 icon.classList.add('text-gray-500');
@@ -542,13 +543,26 @@
                 countSpan.innerText = currentCount + 1;
             }
 
-            try {
-                await fetchAppsScript('toggleLike', { 
-                    announcementId: annId, 
-                    user: adminState.username 
-                });
-            } catch (e) {
-                console.error("Like failed", e);
+            // 2. Send to Backend
+            const result = await fetchAppsScript('toggleLike', { 
+                announcementId: annId, 
+                user: adminState.username 
+            });
+
+            // 3. Revert if failed
+            if (!result || result.result !== 'success') {
+                console.error("Like failed on server:", result);
+                // Revert UI changes
+                if (isLiked) {
+                    icon.classList.add('fill-current', 'text-red-500');
+                    icon.classList.remove('text-gray-500');
+                    countSpan.innerText = currentCount; 
+                } else {
+                    icon.classList.remove('fill-current', 'text-red-500');
+                    icon.classList.add('text-gray-500');
+                    countSpan.innerText = currentCount === 0 ? 'Like' : currentCount;
+                }
+                alert("Could not save like. Ensure 'Likes' sheet exists.");
             }
         }
 
@@ -561,8 +575,11 @@
             const emptyMsg = list.querySelector('.empty-msg');
             if(emptyMsg) emptyMsg.remove();
 
+            // 1. Create Temporary ID for the comment to remove it if failed
+            const tempId = 'temp-' + Date.now();
+
             const tempComment = `
-                <div class="flex space-x-3 group animate-pulse">
+                <div id="${tempId}" class="flex space-x-3 group animate-pulse opacity-70">
                     <div class="w-8 h-8 rounded-full bg-emerald-100 flex-shrink-0 flex items-center justify-center text-emerald-600 text-xs font-bold">
                         ME
                     </div>
@@ -570,7 +587,7 @@
                         <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm inline-block min-w-[150px] border border-gray-100">
                             <div class="flex justify-between items-baseline mb-1">
                                 <span class="text-xs font-bold text-gray-900">Me</span>
-                                <span class="text-[10px] text-gray-400 ml-2">Just now</span>
+                                <span class="text-[10px] text-gray-400 ml-2">Saving...</span>
                             </div>
                             <p class="text-sm text-gray-700">${text}</p>
                         </div>
@@ -580,14 +597,27 @@
             list.insertAdjacentHTML('beforeend', tempComment);
             input.value = '';
 
-            try {
-                await fetchAppsScript('addComment', { 
-                    announcementId: annId, 
-                    user: adminState.username, 
-                    comment: text 
-                });
-            } catch(e) {
-                alert("Failed to post comment");
+            // 2. Send to Backend
+            const result = await fetchAppsScript('addComment', { 
+                announcementId: annId, 
+                user: adminState.username, 
+                comment: text 
+            });
+
+            const tempEl = document.getElementById(tempId);
+
+            // 3. Handle Result
+            if (result && result.result === 'success') {
+                // Success: Remove pulse animation and 'Saving...' text
+                if(tempEl) {
+                    tempEl.classList.remove('animate-pulse', 'opacity-70');
+                    tempEl.querySelector('span.text-gray-400').innerText = 'Just now';
+                }
+            } else {
+                // Failure: Remove the comment and alert
+                if(tempEl) tempEl.remove();
+                input.value = text; // Put text back in box
+                alert("Failed to post comment. Ensure 'Comments' sheet exists.");
             }
         }
 

@@ -434,8 +434,6 @@
             <p class="text-gray-600 mt-2">Latest updates, announcements, and events from ACHSTS.</p>
         </div>
 
-        <!-- Note: Posting UI removed from homepage as requested. Posting is done via Admin/Student portals. -->
-
         <!-- Dynamic News Feed Container -->
         <div id="news-feed" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <!-- Loading State -->
@@ -567,38 +565,44 @@
 
 
   <script>
-    // --- Firebase Initialization ---
-    const firebaseConfig = JSON.parse(__firebase_config);
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Initialize UI (Courses, Navbar, etc.) IMMEDIATELY
+      // This ensures your content shows up even if Firebase/Database fails
+      initUI();
+
+      // 2. Try to Initialize Firebase separately
+      // We wrap this in a try-catch so it doesn't break the whole page if config is missing
+      try {
+        if (typeof __firebase_config !== 'undefined') {
+            const firebaseConfig = JSON.parse(__firebase_config);
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            // Start Auth Flow
+            initAuth(); 
+        } else {
+            console.warn("Firebase config missing. News Feed will be unavailable.");
+            document.getElementById('news-feed').innerHTML = 
+                '<div class="col-span-full text-center text-gray-500 bg-gray-50 p-6 rounded-lg">News Feed Unavailable (Database Connection Issue)</div>';
+        }
+      } catch (e) {
+        console.error("Firebase Init Error:", e);
+      }
+    });
 
     // Global User State
     let currentUser = null;
-
-    document.addEventListener('DOMContentLoaded', () => {
-      // Initialize existing UI functions
-      initUI();
-
-      // Initialize Firebase Auth
-      initAuth();
-    });
+    let appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
     // --- Authentication Logic ---
     async function initAuth() {
-        // Since this is a public homepage, we sign in anonymously for READ/WRITE access (for comments/likes)
-        // Real users (Admins/Students) would likely already have a token or be handled 
-        // via the login pages. For this demo, we check if a user is already authenticated.
+        const auth = firebase.auth();
         
         auth.onAuthStateChanged(async (user) => {
             if (user && !user.isAnonymous) {
-                // User is logged in as Admin or Student
                 currentUser = user;
             } else {
-                // Guest or Anonymous
                 currentUser = user; // keep track of anonymous user
-                // Ensure anonymous auth for reading/writing database if not already signed in
                 if (!user) {
                      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await auth.signInWithCustomToken(__initial_auth_token);
@@ -607,16 +611,15 @@
                     }
                 }
             }
-            // Load News Feed regardless of auth state
             loadNewsFeed();
         });
     }
 
     // --- News Feed Logic (Firestore) ---
     function loadNewsFeed() {
+        const db = firebase.firestore();
         const feedContainer = document.getElementById('news-feed');
         
-        // Listen to 'news_posts' collection (Public Data)
         db.collection('artifacts').doc(appId).collection('public').doc('data').collection('news_posts')
           .orderBy('timestamp', 'desc')
           .limit(20)
@@ -630,9 +633,9 @@
             snapshot.forEach(doc => {
                 const post = doc.data();
                 const postId = doc.id;
+                // Safety check for timestamp
                 const timeString = post.timestamp ? new Date(post.timestamp.toDate()).toLocaleDateString() : 'Just now';
                 
-                // Comments HTML Generation
                 let commentsHtml = '';
                 if(post.comments && post.comments.length > 0) {
                     post.comments.forEach(comment => {
@@ -647,16 +650,14 @@
                     commentsHtml = '<p class="text-xs text-gray-400 italic">No comments yet. Be the first!</p>';
                 }
 
-                // Check if current user liked this
-                // Note: currentUser might be anonymous, but they still have a UID
-                const isLiked = post.likedBy && currentUser && post.likedBy.includes(currentUser.uid);
+                const uid = firebase.auth().currentUser ? firebase.auth().currentUser.uid : null;
+                const isLiked = post.likedBy && uid && post.likedBy.includes(uid);
                 const likeColor = isLiked ? 'text-red-500' : 'text-gray-500';
 
                 html += `
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300">
                     ${post.imageUrl ? `<img src="${post.imageUrl}" alt="News Image" class="news-img w-full h-48 object-cover">` : ''}
                     <div class="p-6 flex flex-col flex-grow">
-                        <!-- Header -->
                         <div class="flex items-center mb-3">
                             <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs mr-2">
                                 ${post.authorInitials || 'A'}
@@ -669,11 +670,8 @@
 
                         ${post.title ? `<h4 class="news-title text-xl font-bold text-gray-900 mb-2">${post.title}</h4>` : ''}
                         
-                        <p class="news-body text-gray-600 flex-grow mb-4 whitespace-pre-line">
-                            ${post.content}
-                        </p>
+                        <p class="news-body text-gray-600 flex-grow mb-4 whitespace-pre-line">${post.content}</p>
 
-                        <!-- Actions -->
                         <div class="news-actions flex justify-between items-center border-t border-gray-100 pt-4 mt-auto">
                              <div class="flex space-x-4">
                                 <button onclick="handleLike('${postId}')" class="like-btn ${likeColor} hover:text-red-500 transition flex items-center text-sm font-medium">
@@ -689,7 +687,6 @@
                              </button>
                         </div>
 
-                        <!-- Comment Section (Hidden by default) -->
                         <div id="comments-${postId}" class="comment-section mt-4 pt-4 border-t border-gray-100 hidden">
                              <div class="comments-list mb-3 max-h-32 overflow-y-auto">
                                 ${commentsHtml}
@@ -711,15 +708,10 @@
     }
 
     // --- Interaction Functions ---
-
-    // 1. Like Logic (Updated: Allows Guest/Anonymous Likes)
     window.handleLike = async (postId) => {
-        // Ensure user is at least anonymously signed in (should be handled by initAuth, but safe check)
-        if(!currentUser) {
-             // If completely null, try to wait or sign in
-             await auth.signInAnonymously();
-             // Current user state updates in onAuthStateChanged
-        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        if(!auth.currentUser) await auth.signInAnonymously();
 
         const postRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('news_posts').doc(postId);
         
@@ -727,19 +719,15 @@
             await db.runTransaction(async (transaction) => {
                 const doc = await transaction.get(postRef);
                 if (!doc.exists) throw "Document does not exist!";
-
                 const data = doc.data();
                 const likedBy = data.likedBy || [];
-                // Use current user UID (whether anonymous or logged in)
                 const uid = auth.currentUser.uid;
 
                 if (likedBy.includes(uid)) {
-                    // Unlike
                     const newLikes = (data.likes || 1) - 1;
                     const newLikedBy = likedBy.filter(id => id !== uid);
                     transaction.update(postRef, { likes: newLikes, likedBy: newLikedBy });
                 } else {
-                    // Like
                     const newLikes = (data.likes || 0) + 1;
                     likedBy.push(uid);
                     transaction.update(postRef, { likes: newLikes, likedBy: likedBy });
@@ -750,7 +738,6 @@
         }
     };
 
-    // 2. Toggle Comments
     window.toggleComments = (postId) => {
         const el = document.getElementById(`comments-${postId}`);
         if(el.classList.contains('hidden')) {
@@ -762,20 +749,17 @@
         }
     };
 
-    // 3. Post Comment (Updated: Allows Guest/Anonymous Comments)
     window.postComment = async (postId) => {
-        // Ensure user is at least anonymously signed in
-        if(!currentUser) {
-            await auth.signInAnonymously();
-        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        if(!auth.currentUser) await auth.signInAnonymously();
 
         const input = document.getElementById(`input-${postId}`);
         const text = input.value.trim();
         if(!text) return;
 
         const postRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('news_posts').doc(postId);
-
-        // Determine Name: Use real name if logged in, otherwise "Guest Visitor"
+        // Use guest if not logged in formally
         const displayName = (currentUser && !currentUser.isAnonymous) ? currentUser.displayName : 'Guest Visitor';
 
         const newComment = {
@@ -789,38 +773,24 @@
             await postRef.update({
                 comments: firebase.firestore.FieldValue.arrayUnion(newComment)
             });
-            input.value = ''; // Clear input
+            input.value = '';
         } catch (e) {
             console.error(e);
             Swal.fire('Error', 'Could not post comment', 'error');
         }
     };
 
-    // 4. Share Logic
     window.handleShare = async (title, text) => {
         if (navigator.share) {
             try {
-                await navigator.share({
-                    title: title,
-                    text: text.substring(0, 100) + '...',
-                    url: window.location.href
-                });
-            } catch (err) {
-                console.log('Share canceled');
-            }
+                await navigator.share({ title: title, text: text.substring(0, 100) + '...', url: window.location.href });
+            } catch (err) { console.log('Share canceled'); }
         } else {
-            // Fallback
-            Swal.fire({
-                title: 'Share',
-                text: 'Link copied to clipboard!',
-                icon: 'success',
-                timer: 1500,
-                showConfirmButton: false
-            });
+            Swal.fire({ title: 'Share', text: 'Link copied to clipboard!', icon: 'success', timer: 1500, showConfirmButton: false });
         }
     };
 
-    // --- Existing UI Logic (Courses, Navbar, etc) ---
+    // --- UI Logic (Courses, Teachers, Navbar) ---
     function initUI() {
         const navbar = document.querySelector('.navbar');
         const openMenuBtn = document.getElementById('menu-open-button');
@@ -846,12 +816,12 @@
         
         const teamContainer = document.getElementById('team-container');
 
-        // Data Arrays (Courses & Teachers)
+        // Data Arrays
         const courses = [
-            { icon: 'fas fa-shield-virus', title: 'Community Health', description: 'A comprehensive program focused on primary healthcare delivery and disease control in rural and urban settings.', color: 'text-blue-600', duration: '2 Years', level: 'National Diploma (ND)', features: ['Primary Healthcare', 'Immunization & Vaccinations', 'Disease Surveillance', 'Health Education'], ctaLink: 'form.html?course=CommunityHealth' },
-            { icon: 'fas fa-vial-circle-check', title: 'Medical Laboratory Science', description: 'Training for clinical laboratory testing, diagnostics, and biomedical research techniques critical for patient care.', color: 'text-emerald-600', duration: '3 Years', level: 'Higher National Diploma (HND)', features: ['Clinical Chemistry', 'Hematology', 'Microbiology', 'Histopathology Techniques'], ctaLink: 'form.html?course=MedicalLabScience' },
-            { icon: 'fas fa-leaf', title: 'Environmental Health', description: 'Focusing on environmental factors that affect human health and developing effective public health policies and sanitation.', color: 'text-red-500', duration: '2 Years', level: 'National Diploma (ND)', features: ['Water Quality & Sanitation', 'Food Safety', 'Vector Control', 'Occupational Health'], ctaLink: 'form.html?course=EnvironmentalHealth' },
-            { icon: 'fas fa-chart-line', title: 'Public Health', description: 'Focusing on the health of communities and populations through education, policy, and large-scale disease prevention programs.', color: 'text-blue-500', duration: '18 Months', level: 'Professional Certificate', features: ['Epidemiology', 'Health Policy', 'Biostatistics', 'Global Health Issues'], ctaLink: 'form.html?course=PublicHealth' }
+            { icon: 'fas fa-shield-virus', title: 'Community Health', description: 'A comprehensive program focused on primary healthcare delivery and disease control.', color: 'text-blue-600', duration: '2 Years', level: 'National Diploma (ND)', features: ['Primary Healthcare', 'Immunization', 'Disease Surveillance', 'Health Education'], ctaLink: 'form.html?course=CommunityHealth' },
+            { icon: 'fas fa-vial-circle-check', title: 'Medical Laboratory Science', description: 'Training for clinical laboratory testing, diagnostics, and biomedical research techniques.', color: 'text-emerald-600', duration: '3 Years', level: 'Higher National Diploma (HND)', features: ['Clinical Chemistry', 'Hematology', 'Microbiology', 'Histopathology'], ctaLink: 'form.html?course=MedicalLabScience' },
+            { icon: 'fas fa-leaf', title: 'Environmental Health', description: 'Focusing on environmental factors that affect human health and developing public health policies.', color: 'text-red-500', duration: '2 Years', level: 'National Diploma (ND)', features: ['Water Quality', 'Food Safety', 'Vector Control', 'Occupational Health'], ctaLink: 'form.html?course=EnvironmentalHealth' },
+            { icon: 'fas fa-chart-line', title: 'Public Health', description: 'Focusing on the health of communities and populations through education and policy.', color: 'text-blue-500', duration: '18 Months', level: 'Professional Certificate', features: ['Epidemiology', 'Health Policy', 'Biostatistics', 'Global Health'], ctaLink: 'form.html?course=PublicHealth' }
         ];
 
         const teachers = [
@@ -862,7 +832,6 @@
             { name: 'Demmile Stephanie', role: 'Lecturer', initials: 'DS', bgColor: '3b82f6', borderColor: 'blue-100', roleColor: 'blue-600', email: 'lecdammile.arrida@gmail.com', whatsapp: '2348011112222' }
         ];
 
-        // Render Functions
         function renderCourses() {
             const container = document.getElementById('courses-container');
             if (!container) return;
@@ -927,11 +896,9 @@
             courseModal.style.display = 'flex';
         }
 
-        // Init Renders
         renderCourses();
         renderTeachers();
 
-        // UI Event Listeners
         modalCloseBtn.addEventListener('click', () => courseModal.style.display = 'none');
         courseModal.addEventListener('click', (e) => { if (e.target === courseModal) courseModal.style.display = 'none'; });
 

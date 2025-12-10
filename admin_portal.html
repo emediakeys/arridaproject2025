@@ -15,16 +15,14 @@
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
         }
-        .sidebar {
-            transition: width 0.3s ease;
-        }
         .nav-item {
             display: flex;
             align-items: center;
-            padding: 1rem 1.5rem;
+            padding: 0.75rem 1rem;
             cursor: pointer;
             border-radius: 0.5rem;
             margin-bottom: 0.5rem;
+            transition: all 0.2s;
         }
         .nav-item:hover, .nav-item.active {
             background-color: var(--primary-color);
@@ -47,6 +45,25 @@
         .comment-section {
             transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
             overflow: hidden;
+        }
+        /* Hide scrollbar for clean look in comments but allow scroll */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #e5e7eb;
+            border-radius: 4px;
+        }
+        
+        /* Mobile Sidebar Transitions */
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        .sidebar-closed-mobile {
+            transform: translateX(-100%);
+        }
+        .sidebar-open {
+            transform: translateX(0);
         }
     </style>
     <!-- Load Lucide icons for clean interface -->
@@ -73,7 +90,8 @@
             attendance: [],
             loading: false,
             message: null,
-            error: false
+            error: false,
+            isSidebarOpen: false // New state for mobile sidebar
         };
 
         // --- UTILITY FUNCTIONS ---
@@ -119,7 +137,6 @@
             try {
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    // IMPORTANT: No Content-Type header. Body is URLSearchParams.
                     body: formBody 
                 });
                 
@@ -131,11 +148,6 @@
                 const result = responseText ? JSON.parse(responseText) : {};
                 
                 adminState.loading = false;
-                // Re-render if it was a blocking load
-                if(action !== 'toggleLike' && action !== 'addComment') {
-                   // Only re-render if we are still on the same tab/state
-                   // This prevents UI jumps during background updates
-                }
                 return result;
 
             } catch (error) {
@@ -200,7 +212,8 @@
                 username: '', 
                 assignedCourse: '', 
                 activeTab: 'dashboard', 
-                students: [], announcements: [], assignments: [], attendance: []
+                students: [], announcements: [], assignments: [], attendance: [],
+                isSidebarOpen: false
             };
             render(AdminLogin);
         }
@@ -229,7 +242,6 @@
                 // Fetch students, announcements, and assignments concurrently
                 const [studentsResult, announcementsResult, assignmentsResult] = await Promise.all([
                     fetchAppsScript('getStudentsByCourse', { course }),
-                    // Send currentUser so backend knows 'likedByMe' status
                     fetchAppsScript('getAnnouncementsByCourse', { course, currentUser: adminState.username }),
                     fetchAppsScript('getAssignmentsByCourse', { course })
                 ]);
@@ -248,7 +260,27 @@
         function changeTab(tabName) {
             adminState.activeTab = tabName;
             adminState.message = null; 
+            // Close sidebar on mobile when tab changes
+            if(window.innerWidth < 768) {
+                adminState.isSidebarOpen = false;
+            }
             render(AdminDashboard);
+        }
+
+        function toggleSidebar() {
+            adminState.isSidebarOpen = !adminState.isSidebarOpen;
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (adminState.isSidebarOpen) {
+                sidebar.classList.remove('sidebar-closed-mobile');
+                sidebar.classList.add('sidebar-open');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('sidebar-closed-mobile');
+                sidebar.classList.remove('sidebar-open');
+                overlay.classList.add('hidden');
+            }
         }
 
         // --- CRUD OPERATIONS ---
@@ -394,30 +426,28 @@
             }
         }
 
-        // --- SOCIAL INTERACTIONS (REAL TIME) ---
+        // --- SOCIAL INTERACTIONS ---
 
         async function toggleLike(annId, btnElement) {
             const icon = btnElement.querySelector('.like-icon');
             const countSpan = btnElement.querySelector('.like-count');
-            let currentCount = parseInt(countSpan.innerText);
             
-            // Check current state based on visual class
+            let text = countSpan.innerText;
+            let currentCount = (text === 'Like') ? 0 : parseInt(text);
+            
             const isLiked = icon.classList.contains('fill-current') && icon.classList.contains('text-red-500');
 
-            // Optimistic UI Update
             if (isLiked) {
-                // Unlike
                 icon.classList.remove('fill-current', 'text-red-500');
                 icon.classList.add('text-gray-500');
-                countSpan.innerText = currentCount - 1;
+                const newCount = currentCount - 1;
+                countSpan.innerText = newCount > 0 ? newCount : 'Like';
             } else {
-                // Like
                 icon.classList.add('fill-current', 'text-red-500');
                 icon.classList.remove('text-gray-500');
                 countSpan.innerText = currentCount + 1;
             }
 
-            // Silent API call
             try {
                 await fetchAppsScript('toggleLike', { 
                     announcementId: annId, 
@@ -425,7 +455,6 @@
                 });
             } catch (e) {
                 console.error("Like failed", e);
-                // Ideally revert UI here, but kept simple
             }
         }
 
@@ -434,20 +463,24 @@
             const text = input.value.trim();
             if(!text) return;
 
-            // Optimistic UI Update
             const list = document.getElementById(`comment-list-${annId}`);
-            
-            // Remove "No comments" text if present
             const emptyMsg = list.querySelector('.empty-msg');
             if(emptyMsg) emptyMsg.remove();
 
             const tempComment = `
-                <div class="bg-white p-2 rounded border border-gray-100 opacity-70">
-                    <div class="flex justify-between items-baseline">
-                        <span class="text-xs font-bold text-gray-700">Me</span>
-                        <span class="text-[10px] text-gray-400">Just now</span>
+                <div class="flex space-x-3 group animate-pulse">
+                    <div class="w-8 h-8 rounded-full bg-emerald-100 flex-shrink-0 flex items-center justify-center text-emerald-600 text-xs font-bold">
+                        ME
                     </div>
-                    <p class="text-xs text-gray-600 mt-1">${text}</p>
+                    <div class="flex-1">
+                        <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm inline-block min-w-[150px] border border-gray-100">
+                            <div class="flex justify-between items-baseline mb-1">
+                                <span class="text-xs font-bold text-gray-900">Me</span>
+                                <span class="text-[10px] text-gray-400 ml-2">Just now</span>
+                            </div>
+                            <p class="text-sm text-gray-700">${text}</p>
+                        </div>
+                    </div>
                 </div>
             `;
             list.insertAdjacentHTML('beforeend', tempComment);
@@ -456,10 +489,9 @@
             try {
                 await fetchAppsScript('addComment', { 
                     announcementId: annId, 
-                    user: adminState.username, // Post as Admin
+                    user: adminState.username, 
                     comment: text 
                 });
-                // In a real app we might refetch to confirm ID/Time
             } catch(e) {
                 alert("Failed to post comment");
             }
@@ -506,63 +538,87 @@
             ];
 
             return `
-                <div class="min-h-screen flex">
-                    <!-- Sidebar -->
-                    <div class="sidebar w-64 bg-gray-800 text-white flex flex-col p-4 shadow-2xl hidden md:flex">
-                        <div class="flex-shrink-0 text-xl font-bold py-4 border-b border-gray-700 mb-6">
-                            <span data-lucide="graduation-cap" class="inline-block w-6 h-6 mr-2"></span> Admin Panel
+                <div class="min-h-screen flex relative overflow-hidden bg-gray-50">
+                    
+                    <!-- Mobile Sidebar Overlay -->
+                    <div id="sidebarOverlay" onclick="toggleSidebar()" 
+                        class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300 md:hidden">
+                    </div>
+
+                    <!-- Sidebar (Mobile Off-canvas + Desktop Static) -->
+                    <div id="sidebar" class="sidebar fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 text-white flex flex-col shadow-2xl transform sidebar-closed-mobile md:translate-x-0 md:static md:inset-auto">
+                        
+                        <!-- Sidebar Header -->
+                        <div class="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-700">
+                            <div class="flex items-center font-bold text-lg">
+                                <span data-lucide="graduation-cap" class="w-6 h-6 mr-2 text-emerald-400"></span>
+                                <span>Admin Panel</span>
+                            </div>
+                            <!-- Mobile Close Button -->
+                            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white">
+                                <span data-lucide="x" class="w-6 h-6"></span>
+                            </button>
                         </div>
                         
-                        <div class="text-sm p-3 bg-gray-700 rounded-lg mb-6">
-                            <p class="font-semibold">${adminState.username}</p>
-                            <p class="text-xs text-gray-300">Course: ${adminState.assignedCourse}</p>
+                        <!-- User Info -->
+                        <div class="p-4 border-b border-gray-700 bg-gray-900/30">
+                            <p class="font-semibold text-sm truncate">${adminState.username}</p>
+                            <p class="text-xs text-gray-400 mt-1 truncate">Course: ${adminState.assignedCourse}</p>
                         </div>
 
-                        <nav class="flex-grow">
+                        <!-- Navigation -->
+                        <nav class="flex-grow p-4 space-y-1 overflow-y-auto">
                             ${tabs.map(tab => `
-                                <div class="nav-item ${adminState.activeTab === tab.id ? 'active' : 'text-gray-300'}" data-tab="${tab.id}">
+                                <div class="nav-item ${adminState.activeTab === tab.id ? 'active' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}" 
+                                     data-tab="${tab.id}">
                                     <span data-lucide="${tab.icon}" class="w-5 h-5 mr-3"></span>
                                     ${tab.name}
                                 </div>
                             `).join('')}
                         </nav>
 
-                        <div class="mt-auto pt-4 border-t border-gray-700">
-                            <button id="logoutBtn" class="w-full flex items-center justify-center p-3 text-red-400 hover:bg-gray-700 rounded-lg transition duration-150">
-                                <span data-lucide="log-out" class="w-5 h-5 mr-2"></span> Logout
+                        <!-- Logout -->
+                        <div class="p-4 border-t border-gray-700">
+                            <button id="logoutBtn" class="w-full flex items-center justify-center p-3 text-red-400 hover:bg-gray-700 rounded-lg transition duration-150 group">
+                                <span data-lucide="log-out" class="w-5 h-5 mr-2 group-hover:text-red-300"></span> Logout
                             </button>
                         </div>
                     </div>
 
                     <!-- Main Content -->
-                    <main class="flex-grow p-4 md:p-8 overflow-y-auto h-screen relative">
-                        <!-- Mobile Header -->
-                        <div class="md:hidden flex justify-between items-center mb-6">
-                            <h1 class="text-xl font-bold">Admin Panel</h1>
-                            <button onclick="handleLogout()" class="text-red-500"><span data-lucide="log-out"></span></button>
-                        </div>
-
-                        <!-- Mobile Tab Bar (Simplified) -->
-                        <div class="md:hidden flex overflow-x-auto space-x-2 mb-4 pb-2">
-                             ${tabs.map(tab => `
-                                <button class="px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap ${adminState.activeTab === tab.id ? 'bg-emerald-600 text-white' : 'bg-white text-gray-600'}" 
-                                    onclick="changeTab('${tab.id}')">
-                                    ${tab.name}
+                    <main class="flex-grow flex flex-col h-screen overflow-hidden relative">
+                        
+                        <!-- Mobile Header (Visible only on mobile) -->
+                        <div class="md:hidden bg-white shadow-sm border-b border-gray-200 p-4 flex items-center justify-between flex-shrink-0 z-30">
+                            <div class="flex items-center">
+                                <button onclick="toggleSidebar()" class="mr-3 text-gray-600 hover:text-emerald-600 focus:outline-none">
+                                    <span data-lucide="menu" class="w-6 h-6"></span>
                                 </button>
-                            `).join('')}
+                                <h1 class="text-lg font-bold text-gray-800">
+                                    ${tabs.find(t => t.id === adminState.activeTab).name}
+                                </h1>
+                            </div>
+                            <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-bold text-xs">
+                                AD
+                            </div>
                         </div>
 
-                        <h1 class="text-3xl font-bold text-gray-800 mb-6 hidden md:block">
-                            ${tabs.find(t => t.id === adminState.activeTab).name} Management
-                        </h1>
+                        <!-- Content Scroll Area -->
+                        <div class="flex-grow overflow-y-auto p-4 md:p-8">
+                            <!-- Desktop Title -->
+                            <h1 class="text-3xl font-bold text-gray-800 mb-6 hidden md:block">
+                                ${tabs.find(t => t.id === adminState.activeTab).name} Management
+                            </h1>
 
-                        <!-- Toast Notification Container -->
-                        <div id="toastMsg" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 opacity-0 translate-y-4 z-50">
-                            Notification
-                        </div>
+                            <!-- Toast Notification Container -->
+                            <div id="toastMsg" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 opacity-0 translate-y-4 z-50 flex items-center">
+                                <span data-lucide="info" class="w-4 h-4 mr-2"></span>
+                                <span>Notification</span>
+                            </div>
 
-                        <div class="bg-white p-6 rounded-xl shadow-lg min-h-[500px]">
-                            ${adminState.loading ? LoadingSpinner() : renderActiveTabContent()}
+                            <div class="min-h-[500px]">
+                                ${adminState.loading ? LoadingSpinner() : renderActiveTabContent()}
+                            </div>
                         </div>
                     </main>
                 </div>
@@ -600,19 +656,19 @@
             const announcementCount = adminState.announcements.length;
 
             return `
-                <h2 class="text-2xl font-semibold mb-6 text-gray-700">Course: ${adminState.assignedCourse}</h2>
+                <h2 class="text-2xl font-semibold mb-6 text-gray-700 hidden md:block">Course: ${adminState.assignedCourse}</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-blue-50 p-6 rounded-xl shadow-md border-b-4 border-blue-500 flex justify-between items-center">
-                        <div><p class="text-sm font-medium text-blue-600">Total Students</p><p class="text-4xl font-extrabold text-blue-900 mt-1">${studentCount}</p></div>
-                        <span data-lucide="users" class="w-10 h-10 text-blue-400"></span>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500 flex justify-between items-center">
+                        <div><p class="text-sm font-medium text-gray-500">Total Students</p><p class="text-3xl font-extrabold text-gray-800 mt-1">${studentCount}</p></div>
+                        <div class="p-3 bg-blue-50 rounded-lg text-blue-500"><span data-lucide="users" class="w-6 h-6"></span></div>
                     </div>
-                    <div class="bg-yellow-50 p-6 rounded-xl shadow-md border-b-4 border-yellow-500 flex justify-between items-center">
-                        <div><p class="text-sm font-medium text-yellow-600">Active Assignments</p><p class="text-4xl font-extrabold text-yellow-900 mt-1">${assignmentCount}</p></div>
-                        <span data-lucide="clipboard-list" class="w-10 h-10 text-yellow-400"></span>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500 flex justify-between items-center">
+                        <div><p class="text-sm font-medium text-gray-500">Active Assignments</p><p class="text-3xl font-extrabold text-gray-800 mt-1">${assignmentCount}</p></div>
+                        <div class="p-3 bg-yellow-50 rounded-lg text-yellow-500"><span data-lucide="clipboard-list" class="w-6 h-6"></span></div>
                     </div>
-                    <div class="bg-green-50 p-6 rounded-xl shadow-md border-b-4 border-green-500 flex justify-between items-center">
-                        <div><p class="text-sm font-medium text-green-600">Total Announcements</p><p class="text-4xl font-extrabold text-green-900 mt-1">${announcementCount}</p></div>
-                        <span data-lucide="megaphone" class="w-10 h-10 text-green-400"></span>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500 flex justify-between items-center">
+                        <div><p class="text-sm font-medium text-gray-500">Total Announcements</p><p class="text-3xl font-extrabold text-gray-800 mt-1">${announcementCount}</p></div>
+                        <div class="p-3 bg-emerald-50 rounded-lg text-emerald-500"><span data-lucide="megaphone" class="w-6 h-6"></span></div>
                     </div>
                 </div>
             `;
@@ -620,115 +676,202 @@
 
         function StudentList() {
             return `
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700">All Students (${adminState.students.length})</h2>
-                ${adminState.students.length === 0 ? `<p>No students found.</p>` : `
-                    <div class="data-container">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50 sticky top-0">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Adm. No</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                ${adminState.students.map(s => `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                        <h2 class="text-lg font-bold text-gray-800">Student Directory</h2>
+                        <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full font-bold">${adminState.students.length}</span>
+                    </div>
+                    ${adminState.students.length === 0 ? `<p class="p-8 text-center text-gray-500">No students found.</p>` : `
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${s.admNo}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${s.firstName} ${s.lastName}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <button onclick="handleRemoveStudent('${s.admNo}', '${adminState.assignedCourse}')" class="text-red-600 hover:text-red-900">Remove</button>
-                                        </td>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adm. No</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>`}
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${adminState.students.map(s => `
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${s.admNo}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${s.firstName} ${s.lastName}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                <button onclick="handleRemoveStudent('${s.admNo}', '${adminState.assignedCourse}')" class="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md font-medium text-xs transition">Remove</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>`}
+                </div>
             `;
         }
 
         function AnnouncementsTab() {
             return `
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div>
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Post Announcement</h2>
-                        <form id="announcementForm" class="space-y-4 bg-gray-50 p-6 rounded-lg border">
-                            <input type="text" name="title" required placeholder="Title" class="w-full px-3 py-2 border rounded-lg">
-                            <textarea name="content" rows="4" required placeholder="Message" class="w-full px-3 py-2 border rounded-lg"></textarea>
-                            <button type="submit" class="action-btn bg-emerald-600 text-white w-full">Post</button>
-                        </form>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Recent Updates</h2>
-                        <div class="space-y-6 data-container max-h-[600px] overflow-y-auto pb-4">
-                            ${adminState.announcements.length === 0 ? 
-                                `<p class="text-gray-500 p-4">No announcements posted yet.</p>` : 
-                                adminState.announcements.map((a, index) => {
-                                    // Data from server
-                                    const likes = a.likes || 0;
-                                    const comments = a.comments || [];
-                                    const likedByMe = a.likedByMe || false;
-                                    const annId = a.id;
-                                    
-                                    return `
-                                    <div class="border rounded-xl bg-white shadow-sm overflow-hidden">
-                                        <div class="p-5">
-                                            <div class="flex justify-between items-start">
-                                                <h3 class="font-bold text-lg text-gray-900">${a.title}</h3>
-                                                <span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">${a.date}</span>
-                                            </div>
-                                            <p class="text-gray-600 mt-2 text-sm leading-relaxed">${a.content}</p>
+                <div class="max-w-5xl mx-auto">
+                    <div class="flex flex-col lg:flex-row gap-6">
+                        <!-- Post Creator -->
+                        <div class="lg:w-1/3 order-1">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:sticky lg:top-4">
+                                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                    <span data-lucide="pen-tool" class="w-5 h-5 mr-2 text-emerald-600"></span>
+                                    Create Post
+                                </h2>
+                                <form id="announcementForm" class="space-y-4">
+                                    <div>
+                                        <input type="text" name="title" required placeholder="Post Title" 
+                                            class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none text-sm font-semibold text-gray-800">
+                                    </div>
+                                    <div>
+                                        <textarea name="content" rows="4" required placeholder="What's happening in ${adminState.assignedCourse}?" 
+                                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none text-sm resize-none"></textarea>
+                                    </div>
+                                    <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center transform active:scale-95">
+                                        <span data-lucide="send" class="w-4 h-4 mr-2"></span>
+                                        Post Update
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- News Feed -->
+                        <div class="lg:w-2/3 order-2">
+                            <div class="flex items-center justify-between mb-4 px-1">
+                                <h2 class="text-xl font-bold text-gray-800">News Feed</h2>
+                                <span class="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded-full border shadow-sm">
+                                    ${adminState.announcements.length} Posts
+                                </span>
+                            </div>
+                            
+                            <div class="space-y-5 pb-20">
+                                ${adminState.announcements.length === 0 ? 
+                                    `<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+                                        <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                            <span data-lucide="coffee" class="w-8 h-8 text-gray-400"></span>
                                         </div>
+                                        <h3 class="text-lg font-medium text-gray-900">No posts yet</h3>
+                                        <p class="text-gray-500 mt-1">Be the first to post an update for your students.</p>
+                                    </div>` : 
+                                    adminState.announcements.map((a, index) => {
+                                        const likes = a.likes || 0;
+                                        const comments = a.comments || [];
+                                        const likedByMe = a.likedByMe || false;
+                                        const annId = a.id;
+                                        const initials = "AD"; 
                                         
-                                        <!-- Interactive Footer -->
-                                        <div class="bg-gray-50 px-5 py-3 border-t border-gray-100">
-                                            <div class="flex items-center space-x-6">
-                                                <!-- Like Button -->
-                                                <button onclick="toggleLike('${annId}', this)" class="flex items-center space-x-2 group transition focus:outline-none">
-                                                    <span data-lucide="heart" class="like-icon w-5 h-5 ${likedByMe ? 'fill-current text-red-500' : 'text-gray-500'}"></span>
-                                                    <span class="like-count text-sm font-medium group-hover:scale-110 transition-transform">${likes}</span>
-                                                </button>
-                                                
-                                                <!-- Comment Toggle -->
-                                                <button class="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition"
-                                                    onclick="document.getElementById('comments-${index}').classList.toggle('hidden')">
-                                                    <span data-lucide="message-circle" class="w-5 h-5"></span>
-                                                    <span class="text-sm font-medium">${comments.length}</span>
+                                        return `
+                                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-shadow hover:shadow-md">
+                                            <!-- Post Header -->
+                                            <div class="p-4 flex items-center space-x-3">
+                                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                                                    ${initials}
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-bold text-gray-900 truncate">
+                                                        ${adminState.username || 'Administrator'}
+                                                    </p>
+                                                    <p class="text-xs text-gray-500 flex items-center">
+                                                        <span>${a.date}</span>
+                                                        <span class="mx-1">•</span>
+                                                        <span class="text-emerald-600 font-medium bg-emerald-50 px-1.5 rounded text-[10px]">Admin</span>
+                                                    </p>
+                                                </div>
+                                                <button class="text-gray-400 hover:text-gray-600">
+                                                    <span data-lucide="more-horizontal" class="w-5 h-5"></span>
                                                 </button>
                                             </div>
 
-                                            <!-- Comments Section (Collapsible) -->
-                                            <div id="comments-${index}" class="hidden mt-4 pt-4 border-t border-gray-200">
-                                                <div class="space-y-3 mb-4 max-h-40 overflow-y-auto" id="comment-list-${annId}">
+                                            <!-- Post Content -->
+                                            <div class="px-4 pb-2">
+                                                <h3 class="text-base font-bold text-gray-900 mb-2 leading-tight">${a.title}</h3>
+                                                <div class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">${a.content}</div>
+                                            </div>
+
+                                            <!-- Interaction Stats (if any) -->
+                                            ${(likes > 0 || comments.length > 0) ? `
+                                            <div class="px-4 py-2 flex items-center justify-between text-xs text-gray-500 border-b border-gray-50">
+                                                <div class="flex items-center">
+                                                    ${likes > 0 ? `<div class="flex -space-x-1 mr-2">
+                                                        <div class="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center border border-white">
+                                                            <span data-lucide="heart" class="w-2 h-2 text-white fill-current"></span>
+                                                        </div>
+                                                    </div>
+                                                    <span>${likes}</span>` : ''}
+                                                </div>
+                                                <div>
+                                                    ${comments.length > 0 ? `<span>${comments.length} comments</span>` : ''}
+                                                </div>
+                                            </div>` : ''}
+
+                                            <!-- Action Buttons -->
+                                            <div class="px-2 py-1 flex items-center justify-between border-t border-gray-100">
+                                                <button onclick="toggleLike('${annId}', this)" 
+                                                    class="flex-1 flex items-center justify-center py-2 space-x-2 rounded-lg hover:bg-gray-50 transition active:scale-95 group">
+                                                    <span data-lucide="heart" class="like-icon w-5 h-5 ${likedByMe ? 'fill-current text-red-500' : 'text-gray-500 group-hover:text-gray-600'} transition-colors"></span>
+                                                    <span class="text-sm font-medium ${likedByMe ? 'text-red-500' : 'text-gray-600'} like-count">${likes > 0 ? likes : 'Like'}</span>
+                                                </button>
+                                                
+                                                <button onclick="document.getElementById('comments-${index}').classList.toggle('hidden')" 
+                                                    class="flex-1 flex items-center justify-center py-2 space-x-2 rounded-lg hover:bg-gray-50 transition active:scale-95 text-gray-600">
+                                                    <span data-lucide="message-circle" class="w-5 h-5"></span>
+                                                    <span class="text-sm font-medium">Comment</span>
+                                                </button>
+                                                
+                                                <button class="flex-1 flex items-center justify-center py-2 space-x-2 rounded-lg hover:bg-gray-50 transition active:scale-95 text-gray-600">
+                                                    <span data-lucide="share-2" class="w-5 h-5"></span>
+                                                    <span class="text-sm font-medium">Share</span>
+                                                </button>
+                                            </div>
+
+                                            <!-- Comments Section -->
+                                            <div id="comments-${index}" class="hidden bg-gray-50 border-t border-gray-100 p-4">
+                                                <!-- Comment List -->
+                                                <div class="space-y-4 mb-4 max-h-60 overflow-y-auto custom-scrollbar" id="comment-list-${annId}">
                                                     ${comments.length === 0 ? 
-                                                        `<p class="empty-msg text-xs text-gray-400 italic">No comments yet.</p>` :
+                                                        `<div class="empty-msg text-center py-4">
+                                                            <p class="text-xs text-gray-400 italic">No comments yet. Start the conversation!</p>
+                                                        </div>` :
                                                         comments.map(c => `
-                                                            <div class="bg-white p-2 rounded border border-gray-100">
-                                                                <div class="flex justify-between items-baseline">
-                                                                    <span class="text-xs font-bold text-gray-700">${c.user}</span>
-                                                                    <span class="text-[10px] text-gray-400">${c.time}</span>
+                                                            <div class="flex space-x-3 group">
+                                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-600 text-xs font-bold">
+                                                                    ${c.user.charAt(0)}
                                                                 </div>
-                                                                <p class="text-xs text-gray-600 mt-1">${c.text}</p>
+                                                                <div class="flex-1">
+                                                                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm inline-block min-w-[150px]">
+                                                                        <div class="flex justify-between items-baseline mb-1">
+                                                                            <span class="text-xs font-bold text-gray-900">${c.user}</span>
+                                                                            <span class="text-[10px] text-gray-400 ml-2">${c.time}</span>
+                                                                        </div>
+                                                                        <p class="text-sm text-gray-700">${c.text}</p>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         `).join('')
                                                     }
                                                 </div>
-                                                <div class="flex space-x-2">
+                                                
+                                                <!-- Input Area -->
+                                                <div class="flex items-center space-x-2 bg-white p-1.5 rounded-full border border-gray-300 shadow-sm focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 transition-all">
+                                                    <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xs font-bold ml-1">
+                                                        AD
+                                                    </div>
                                                     <input type="text" id="comment-input-${annId}" 
                                                         placeholder="Write a comment..." 
-                                                        class="flex-1 text-sm px-3 py-2 border rounded-full focus:outline-none focus:border-emerald-500"
+                                                        class="flex-1 bg-transparent border-none focus:ring-0 text-sm px-2 py-1"
                                                         onkeydown="if(event.key === 'Enter') postComment('${annId}')">
                                                     <button onclick="postComment('${annId}')" 
-                                                        class="bg-emerald-500 text-white p-2 rounded-full hover:bg-emerald-600 transition">
-                                                        <span data-lucide="send" class="w-4 h-4"></span>
+                                                        class="w-8 h-8 bg-emerald-600 text-white rounded-full flex items-center justify-center hover:bg-emerald-700 transition shadow-sm">
+                                                        <span data-lucide="send" class="w-4 h-4 ml-0.5"></span>
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    `;
-                                }).join('')
-                            }
+                                        `;
+                                    }).join('')
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -740,21 +883,21 @@
                 <div class="grid md:grid-cols-2 gap-8">
                     <div>
                         <h2 class="text-2xl font-semibold mb-4 text-gray-700">New Assignment</h2>
-                        <form id="assignmentForm" class="space-y-4 bg-gray-50 p-6 rounded-lg border">
-                            <input type="text" name="title" required placeholder="Title" class="w-full px-3 py-2 border rounded-lg">
-                            <textarea name="description" rows="4" required placeholder="Details" class="w-full px-3 py-2 border rounded-lg"></textarea>
-                            <input type="date" name="dueDate" required class="w-full px-3 py-2 border rounded-lg">
-                            <button type="submit" class="action-btn bg-blue-600 text-white w-full">Create</button>
+                        <form id="assignmentForm" class="space-y-4 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <input type="text" name="title" required placeholder="Title" class="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white transition">
+                            <textarea name="description" rows="4" required placeholder="Details" class="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white transition"></textarea>
+                            <input type="date" name="dueDate" required class="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white transition">
+                            <button type="submit" class="action-btn bg-blue-600 text-white w-full hover:bg-blue-700 transition shadow-md">Create</button>
                         </form>
                     </div>
                     <div>
                         <h2 class="text-2xl font-semibold mb-4 text-gray-700">Active</h2>
                         <div class="space-y-4 data-container max-h-96 overflow-y-auto">
                              ${adminState.assignments.map(a => `
-                                <div class="p-4 border rounded-lg bg-white shadow-sm">
-                                    <p class="font-bold">${a.title}</p>
-                                    <p class="text-sm text-gray-600">${a.description}</p>
-                                    <p class="text-xs mt-1">Due: ${a.dueDate}</p>
+                                <div class="p-4 border rounded-lg bg-white shadow-sm border-l-4 border-blue-500">
+                                    <p class="font-bold text-gray-900">${a.title}</p>
+                                    <p class="text-sm text-gray-600 mt-1">${a.description}</p>
+                                    <p class="text-xs mt-2 font-medium text-blue-600 bg-blue-50 inline-block px-2 py-1 rounded">Due: ${a.dueDate}</p>
                                 </div>
                             `).join('')}
                         </div>
@@ -769,10 +912,10 @@
                 <div class="max-w-4xl mx-auto">
                     <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                         <h2 class="text-2xl font-semibold text-gray-700">Mark Attendance</h2>
-                        <div class="flex items-center space-x-2">
-                            <label class="text-sm font-bold text-gray-600">Date:</label>
+                        <div class="flex items-center space-x-2 bg-white p-2 rounded-lg shadow-sm border border-gray-200">
+                            <label class="text-sm font-bold text-gray-600 pl-2">Date:</label>
                             <input type="date" id="attendanceDate" value="${new Date().toISOString().slice(0, 10)}" 
-                                class="px-3 py-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                                class="px-2 py-1 border-none focus:ring-0 text-gray-700 font-medium">
                         </div>
                     </div>
 
@@ -782,12 +925,12 @@
                             <span data-lucide="search" class="text-gray-400 w-5 h-5"></span>
                         </div>
                         <input type="text" id="studentSearchInput" placeholder="Search by Student Name or Admission Number..." 
-                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg transition"
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg transition bg-white"
                             autocomplete="off">
                     </div>
 
                     <!-- Results List -->
-                    <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="bg-gray-50 px-4 py-2 border-b border-gray-200 flex justify-between items-center">
                             <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Student Details</span>
                             <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Mark Status</span>

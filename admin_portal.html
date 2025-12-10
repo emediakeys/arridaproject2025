@@ -337,11 +337,25 @@
             
             showMessage('Adding Announcement...');
             
-            // 1. Always add to Internal System (Apps Script)
-            const result = await fetchAppsScript('addAnnouncement', { course, title, content, visibility });
+            // INDEPENDENT OPERATIONS: Try both Apps Script AND Firebase separately
+            let scriptSuccess = false;
+            let firebaseSuccess = false;
+            let scriptMsg = '';
 
-            // 2. If Public, and Firebase is available, also add to Firestore
-            if (result.result === 'success' && visibility === 'public') {
+            // 1. Internal System (Apps Script)
+            try {
+                const result = await fetchAppsScript('addAnnouncement', { course, title, content, visibility });
+                if (result.result === 'success') {
+                    scriptSuccess = true;
+                } else {
+                    scriptMsg = result.message || 'Script error';
+                }
+            } catch (err) {
+                scriptMsg = 'Connection error';
+            }
+
+            // 2. Public Feed (Firebase) - Only if visibility is public
+            if (visibility === 'public') {
                 if (isFirebaseAvailable && db) {
                     try {
                         if (!auth.currentUser) await initFirebaseAuth();
@@ -357,6 +371,7 @@
                             comments: [],
                             type: 'public'
                         });
+                        firebaseSuccess = true;
                         console.log("Posted to public feed successfully.");
                     } catch (err) {
                         console.error("Failed to post to public feed:", err);
@@ -364,14 +379,22 @@
                 } else {
                     console.warn("Public post skipped for website feed: Database not connected.");
                 }
+            } else {
+                // If private, we assume success on firebase side (as we don't need it)
+                firebaseSuccess = true; 
             }
 
-            if (result.result === 'success') {
-                showMessage(`Announcement posted (${visibility}) successfully!`, false);
+            // Reporting
+            if (scriptSuccess && (visibility === 'private' || firebaseSuccess)) {
+                showMessage(`Announcement posted successfully!`, false);
                 form.reset();
-                loadInitialData(); 
+                loadInitialData();
+            } else if (firebaseSuccess && !scriptSuccess) {
+                showMessage(`Posted to Website Feed ONLY. Database update failed: ${scriptMsg}`, true);
+                form.reset();
+                loadInitialData(); // Reload to see if partial data exists
             } else {
-                showMessage(result.message || 'Failed.', true);
+                showMessage(`Failed to post announcement. ${scriptMsg}`, true);
             }
         }
 

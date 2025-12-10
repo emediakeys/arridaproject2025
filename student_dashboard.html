@@ -27,7 +27,7 @@
             margin-bottom: 0.5rem;
         }
         .nav-item:hover, .nav-item.active {
-            background-color: var--primary-color);
+            background-color: var(--primary-color);
             color: white;
             box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3), 0 2px 4px -2px rgba(59, 130, 246, 0.2);
         }
@@ -45,7 +45,7 @@
             transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
         .form-input:focus {
-            border-color: var--primary-color);
+            border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
             outline: none;
         }
@@ -122,11 +122,6 @@
             document.getElementById('messageModal').classList.add('hidden');
         }
 
-        /**
-         * Shows/hides the loading overlay.
-         * @param {boolean} isLoading 
-         * @param {string} message 
-         */
         function setLoading(isLoading, message = 'Processing request...') {
             const overlay = document.getElementById('apiLoadingOverlay');
             const msgEl = document.getElementById('loadingMessage');
@@ -143,22 +138,12 @@
         
         // --- CORE API HANDLER with Exponential Backoff ---
 
-        /**
-         * Generic API call function with exponential backoff for robustness.
-         * @param {Object} data - The payload to send (including 'action').
-         * @param {number} maxRetries - Maximum number of retries.
-         * @returns {Promise<Object>} The parsed JSON response.
-         */
         async function makeApiCall(data, maxRetries = 3) {
             const url = ENDPOINT_URL;
             let attempt = 0;
             
-            // We rely on handleStudentLogin to call setLoading(true) first.
-            // Removed specific check for 'portalContent' class here for robustness during initial login.
-
             while (attempt < maxRetries) {
                 try {
-                    // Apps Script expects URL-encoded data for simple POST
                     const response = await fetch(url, {
                         method: 'POST',
                         mode: 'cors',
@@ -167,16 +152,13 @@
                         body: new URLSearchParams(data)
                     });
 
-                    // Check for network/HTTP errors
                     if (!response.ok) {
-                        const errorBody = await response.text();
-                        console.error(`Attempt ${attempt + 1}: HTTP Error ${response.status}: ${errorBody}`);
                         throw new Error(`HTTP Error ${response.status}`);
                     }
 
                     const result = await response.json();
                     setLoading(false);
-                    return result; // Success
+                    return result; 
 
                 } catch (error) {
                     attempt++;
@@ -184,11 +166,9 @@
                     
                     if (attempt >= maxRetries) {
                         setLoading(false);
-                        showMessage('Connection Error', `Operation failed after ${maxRetries} attempts. Please check the network connection and the Apps Script URL. Error: ${error.message}`, false);
+                        showMessage('Connection Error', `Operation failed after ${maxRetries} attempts. Please check network.`, false);
                         throw error;
                     }
-
-                    // Exponential backoff delay (1s, 2s, 4s, ...)
                     const delay = Math.pow(2, attempt) * 1000;
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
@@ -215,12 +195,7 @@
         }
 
         async function handleStudentLogin(event) {
-            console.log("--- handleStudentLogin started ---"); // DEBUG LOG 1
-            
-            // Prevent the default form submission (page reload)
             event.preventDefault(); 
-            console.log("Default event prevented."); // DEBUG LOG 2
-
             const admNo = document.getElementById('admNo').value;
             const password = document.getElementById('password').value;
             
@@ -241,8 +216,6 @@
                 const response = await makeApiCall(data);
 
                 if (response.result === 'success') {
-                    // Save authenticated data
-                    // Ensure the keys match the spreadsheet columns (e.g., 'First Name' -> 'firstName', 'Course_Applied' -> 'course')
                     studentData = {
                         admNo: response.data.Admission_No,
                         firstName: response.data['First Name'],
@@ -254,13 +227,10 @@
                     showMessage('Login Successful', `Welcome back, ${studentData.firstName}!`, true);
                     renderDashboard();
                 } else {
-                    // Handle functional failure (e.g., wrong credentials)
                     showMessage('Login Failed', response.message || 'Invalid Admission Number or Password.', false);
                 }
             } catch (e) {
-                // Error already handled and displayed by makeApiCall
-            } finally {
-                setLoading(false);
+                // Error handled by makeApiCall
             }
         }
 
@@ -284,18 +254,13 @@
                                 <i class="fas fa-sign-in-alt mr-2"></i> Log In
                             </button>
                         </form>
-                        <p class="mt-4 text-center text-sm text-gray-500">
-                            (Use your Admission No. and Password from the student sheet)
-                        </p>
                     </div>
                 </div>
             `;
             document.getElementById('loginForm').onsubmit = handleStudentLogin;
-            console.log("Login form event listener attached to 'loginForm'."); // DEBUG LOG 3
         }
 
         function renderDashboard() {
-            // Restore the main structure
             document.getElementById('app').innerHTML = `
                 <!-- Sidebar / Navigation -->
                 <div class="sidebar w-full md:w-64 bg-white p-4 shadow-xl md:shadow-2xl flex flex-row md:flex-col justify-between md:justify-start items-center md:items-stretch">
@@ -323,7 +288,6 @@
                 </main>
             `;
 
-            // Populate navigation
             const navItems = [
                 { tab: 'profile', icon: 'fas fa-user-circle', label: 'My Profile' },
                 { tab: 'announcements', icon: 'fas fa-bullhorn', label: 'Announcements' },
@@ -342,42 +306,32 @@
                 </a>
             `).join('');
 
-            // Bind events and load the current tab content
             bindDashboardEvents();
             loadTabContent(currentTab);
         }
 
         function bindDashboardEvents() {
-            // Tab switching
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.onclick = () => {
                     const newTab = item.getAttribute('data-tab');
                     changeTab(newTab);
                 };
             });
-
-            // Logout
             document.getElementById('logoutBtn').onclick = handleLogout;
         }
 
         function changeTab(tabName) {
             currentTab = tabName;
-            // Update active class in sidebar
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
             });
             const newActiveItem = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
-            if (newActiveItem) {
-                newActiveItem.classList.add('active'); 
-            }
-            // Load content
+            if (newActiveItem) newActiveItem.classList.add('active'); 
             loadTabContent(tabName);
         }
 
         function loadTabContent(tabName) {
             const contentDiv = document.getElementById('portalContent');
-            
-            // Clear previous content and show an inline loader if fetching
             contentDiv.innerHTML = `
                 <div class="text-center py-20" id="inlineLoader">
                     <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
@@ -406,7 +360,6 @@
                     break;
                 default:
                     document.getElementById('inlineLoader').remove();
-                    contentDiv.innerHTML = `<h2 class="text-xl font-bold">Welcome, ${studentData.firstName}!</h2><p class="mt-2 text-gray-600">Please select a section from the left navigation.</p>`;
             }
         }
 
@@ -429,7 +382,6 @@
                         ${renderDetail('Full Name', `${data.firstName} ${data.lastName}`)}
                         ${renderDetail('Email', data.email)}
                         ${renderDetail('Course', data.course, 'text-green-700 font-bold')}
-
                     </div>
 
                     <div class="card mt-6">
@@ -449,49 +401,187 @@
             `;
         }
 
-        // --- ANNOUNCEMENTS ---
+        // --- UPDATED ANNOUNCEMENTS (With Likes & Comments) ---
 
         async function fetchAndRenderAnnouncements() {
             const course = studentData.course;
+            // Send currentUser (admNo) so backend knows if I liked a post
             const data = {
                 action: 'getAnnouncementsByCourse',
-                course: course
+                course: course,
+                currentUser: studentData.admNo 
             };
             const contentDiv = document.getElementById('portalContent');
 
             try {
                 const response = await makeApiCall(data);
                 
-                let html = `<h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-blue-600">Course Announcements (${course})</h2>`;
+                let html = `<h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-blue-600">Social Feed (${course})</h2>`;
 
                 if (response.result === 'success' && response.data && response.data.length > 0) {
-                    html += `<div class="space-y-4">`;
-                    // FIX: Changed ann.Title, ann.Content, ann.Date to standard camelCase/lowercase (ann.title, ann.content, ann.date) 
-                    // to match typical Apps Script JSON output.
-                    response.data.forEach(ann => {
-                        // Use a safer check that handles both cases if possible, but prioritize camelCase/lowercase
-                        const title = ann.title || ann.Title;
-                        const content = ann.content || ann.Content;
-                        const date = ann.date || ann.Date;
+                    html += `<div class="space-y-6 max-w-2xl mx-auto">`;
+                    
+                    response.data.forEach((ann, index) => {
+                        const isLiked = ann.likedByMe;
+                        const likeClass = isLiked ? 'fas text-red-500' : 'far text-gray-500';
+                        const likeCount = ann.likes || 0;
+                        const comments = ann.comments || [];
+                        const annId = ann.id; // IMPORTANT: Backend provides unique ID
 
                         html += `
-                            <div class="card border-l-4 border-blue-500 hover:shadow-lg transition duration-150">
-                                <p class="text-sm text-gray-500 mb-1">${date || 'N/A'}</p>
-                                <h3 class="text-xl font-semibold text-gray-900 mb-2">${title || 'No Title'}</h3>
-                                <p class="text-gray-700">${content || 'No content provided.'}</p>
+                            <div class="card border border-gray-100 shadow-sm" id="post-${annId}">
+                                <!-- Header -->
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <span class="text-xs text-blue-500 font-bold uppercase tracking-wide">Announcement</span>
+                                        <h3 class="text-xl font-bold text-gray-900 mt-1">${ann.title}</h3>
+                                        <p class="text-xs text-gray-400">${ann.date}</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Content -->
+                                <div class="text-gray-700 leading-relaxed mb-4 whitespace-pre-line">
+                                    ${ann.content}
+                                </div>
+
+                                <!-- Actions Bar -->
+                                <div class="border-t pt-3 flex items-center space-x-6">
+                                    <button onclick="toggleLike('${annId}', this)" class="flex items-center space-x-2 group focus:outline-none">
+                                        <i class="${likeClass} fa-heart text-xl transition-transform group-hover:scale-110"></i>
+                                        <span class="font-medium text-gray-600 count">${likeCount}</span>
+                                    </button>
+                                    
+                                    <button onclick="document.getElementById('comments-${annId}').classList.toggle('hidden')" class="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition">
+                                        <i class="far fa-comment text-xl"></i>
+                                        <span class="font-medium">${comments.length}</span>
+                                    </button>
+                                </div>
+
+                                <!-- Comments Section -->
+                                <div id="comments-${annId}" class="hidden mt-4 pt-4 border-t border-gray-100 bg-gray-50 -mx-6 -mb-6 px-6 py-4">
+                                    <div class="space-y-3 mb-4 max-h-60 overflow-y-auto" id="comment-list-${annId}">
+                                        ${comments.length === 0 
+                                            ? `<p class="text-sm text-gray-400 italic text-center py-2">No comments yet.</p>`
+                                            : comments.map(c => `
+                                                <div class="bg-white p-3 rounded shadow-sm">
+                                                    <div class="flex justify-between items-baseline mb-1">
+                                                        <span class="text-xs font-bold text-gray-800">${c.user}</span>
+                                                        <span class="text-[10px] text-gray-400">${c.time || ''}</span>
+                                                    </div>
+                                                    <p class="text-sm text-gray-600">${c.text}</p>
+                                                </div>
+                                            `).join('')
+                                        }
+                                    </div>
+                                    
+                                    <!-- Add Comment Input -->
+                                    <div class="flex space-x-2">
+                                        <input type="text" id="input-${annId}" 
+                                            placeholder="Write a comment..." 
+                                            class="flex-1 text-sm px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:border-blue-500"
+                                            onkeydown="if(event.key === 'Enter') postComment('${annId}')">
+                                        <button onclick="postComment('${annId}')" 
+                                            class="bg-blue-500 text-white w-10 h-10 rounded-full hover:bg-blue-600 transition flex items-center justify-center shadow">
+                                            <i class="fas fa-paper-plane text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         `;
                     });
                     html += `</div>`;
-                } else if (response.result === 'success') {
-                    html += `<div class="card"><p class="text-gray-600">No announcements posted for your course yet.</p></div>`;
                 } else {
-                    html += `<div class="card bg-red-50"><p class="text-red-700">Error retrieving announcements: ${response.message || 'Unknown server error.'}</p></div>`;
+                    html += `<div class="card"><p class="text-gray-600">No announcements posted for your course yet.</p></div>`;
                 }
                 contentDiv.innerHTML = html;
 
             } catch (e) {
-                // Error already handled and displayed by makeApiCall
+                // Error handled by makeApiCall
+            }
+        }
+
+        // --- SOCIAL ACTIONS (Functions) ---
+
+        async function toggleLike(annId, btnElement) {
+            const icon = btnElement.querySelector('i');
+            const countSpan = btnElement.querySelector('.count');
+            let currentCount = parseInt(countSpan.textContent);
+            
+            // Optimistic UI Update
+            const isLiked = icon.classList.contains('fas'); // Solid heart = liked
+            
+            if (isLiked) {
+                // Unlike
+                icon.classList.remove('fas', 'text-red-500');
+                icon.classList.add('far', 'text-gray-500');
+                countSpan.textContent = currentCount - 1;
+            } else {
+                // Like
+                icon.classList.remove('far', 'text-gray-500');
+                icon.classList.add('fas', 'text-red-500');
+                countSpan.textContent = currentCount + 1;
+            }
+
+            // Silent API Call
+            try {
+                await fetch(ENDPOINT_URL, {
+                    method: 'POST',
+                    mode: 'cors', 
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        action: 'toggleLike',
+                        announcementId: annId,
+                        user: studentData.admNo // Use AdmNo for unique identification
+                    })
+                });
+            } catch (e) {
+                console.error("Like failed", e);
+                // Revert UI on error could go here
+            }
+        }
+
+        async function postComment(annId) {
+            const input = document.getElementById(`input-${annId}`);
+            const text = input.value.trim();
+            if(!text) return;
+
+            // Optimistic UI Update
+            const list = document.getElementById(`comment-list-${annId}`);
+            
+            // Remove "No comments" text if it exists
+            if (list.querySelector('p.italic')) {
+                list.innerHTML = '';
+            }
+
+            const tempComment = `
+                <div class="bg-white p-3 rounded shadow-sm border-l-2 border-blue-400 opacity-75">
+                    <div class="flex justify-between items-baseline mb-1">
+                        <span class="text-xs font-bold text-gray-800">Me</span>
+                        <span class="text-[10px] text-gray-400">Just now</span>
+                    </div>
+                    <p class="text-sm text-gray-600">${text}</p>
+                </div>
+            `;
+            list.insertAdjacentHTML('beforeend', tempComment);
+            input.value = ''; // Clear input
+
+            // API Call
+            try {
+                await fetch(ENDPOINT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        action: 'addComment',
+                        announcementId: annId,
+                        user: `${studentData.firstName} ${studentData.lastName}`, // Display Name
+                        comment: text
+                    })
+                });
+                // In a real app, you might want to re-fetch comments to get the accurate server time/ID
+            } catch (e) {
+                console.error("Comment failed", e);
+                alert("Failed to post comment. Please check connection.");
             }
         }
 
@@ -512,14 +602,10 @@
 
                 if (response.result === 'success' && response.data && response.data.length > 0) {
                     html += `<div class="space-y-4">`;
-                    // FIX: Changed ass.Title, ass.Description, ass.DueDate to standard camelCase/lowercase (ass.title, ass.description, ass.dueDate) 
-                    // to match typical Apps Script JSON output.
                     response.data.forEach(ass => {
                         const title = ass.title || ass.Title;
                         const description = ass.description || ass.Description;
                         const dueDateString = ass.dueDate || ass.DueDate;
-
-                        // Simple date comparison - assumes YYYY-MM-DD or similar format
                         const isPastDue = new Date(dueDateString) < new Date();
                         const statusClass = isPastDue ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800';
 
@@ -532,7 +618,7 @@
                                     </span>
                                 </div>
                                 <p class="text-gray-600 mb-3">${description || 'No description provided.'}</p>
-                                <button onclick="showMessage('Submission Mock', 'This is a mock functionality. In a real app, this would open a file upload interface.', true)" class="text-sm font-medium text-blue-500 hover:text-blue-700">
+                                <button onclick="showMessage('Submission Mock', 'File upload interface mock.', true)" class="text-sm font-medium text-blue-500 hover:text-blue-700">
                                     <i class="fas fa-upload mr-1"></i> Submit Assignment (Mock)
                                 </button>
                             </div>
@@ -542,162 +628,96 @@
                 } else if (response.result === 'success') {
                     html += `<div class="card"><p class="text-gray-600">No assignments posted for your course yet.</p></div>`;
                 } else {
-                    html += `<div class="card bg-red-50"><p class="text-red-700">Error retrieving assignments: ${response.message || 'Unknown server error.'}</p></div>`;
+                    html += `<div class="card bg-red-50"><p class="text-red-700">Error: ${response.message}</p></div>`;
                 }
                 contentDiv.innerHTML = html;
-
-            } catch (e) {
-                // Error already handled and displayed by makeApiCall
-            }
+            } catch (e) {}
         }
-
 
         // --- ADMISSION LETTER ---
 
         function handleDownloadLetter() {
              const admNo = studentData.admNo;
-             const course = studentData.course;
-
-            // Mock the API call for letter generation (We use a mock download in the frontend)
-            const data = {
-                action: 'generateLetter',
-                admNo: admNo
-            };
-
+             const data = { action: 'generateLetter', admNo: admNo };
             setLoading(true, 'Preparing Admission Letter...');
-
             makeApiCall(data).then(response => {
                 setLoading(false);
-                if (response.result === 'success' || response.result === 'error') {
-                    // Mock file content generation
-                    showMessage('Letter Ready', 'The Admission Letter has been generated. Starting mock download...', true);
-                    
-                    const content = `
-                        OFFICIAL ADMISSION LETTER\n
-                        \n
-                        Date: ${new Date().toLocaleDateString()}\n
-                        \n
-                        Dear ${studentData.firstName} ${studentData.lastName},\n
-                        \n
-                        We are pleased to inform you of your provisional admission into the ${course} program.\n
-                        \n
-                        Admission Number: ${admNo}\n
-                        \n
-                        Please proceed to the payment section to settle all fees.\n
-                        \n
-                        Sincerely,\n
-                        The Admissions Office
-                    `;
-                    
-                    // Create a blob and trigger download
-                    const blob = new Blob([content], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `Admission_Letter_${admNo}.txt`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-
-
-                } else if (response.result !== 'error') {
-                     // If it was a functional error from the backend (not network error)
-                     showMessage('Letter Generation Failed', response.message || 'The server could not generate your letter at this time. Please check back later.', false);
-                }
-            }).catch(e => {
-                // Error already handled and displayed by makeApiCall
-                setLoading(false);
-            });
+                showMessage('Letter Ready', 'The Admission Letter has been generated. Starting mock download...', true);
+                
+                const content = `OFFICIAL ADMISSION LETTER\n\nDate: ${new Date().toLocaleDateString()}\n\nDear ${studentData.firstName},\n\nAdmission Number: ${admNo}\nCourse: ${studentData.course}\n\nWe are pleased to inform you of your provisional admission.`;
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Admission_Letter_${admNo}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }).catch(e => setLoading(false));
         }
-
 
         function renderAdmissionLetter() {
             const contentDiv = document.getElementById('portalContent');
-            const data = studentData;
-
             contentDiv.innerHTML = `
                 <div class="max-w-4xl mx-auto">
                     <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-blue-600">Admission Letter</h2>
-                    
                     <div class="card">
-                        <p class="text-gray-700 mb-4">
-                            You can generate and download your official admission letter for the 
-                            <span class="font-bold text-blue-600">${data.course}</span> program here.
-                        </p>
-                        <ul class="list-disc list-inside space-y-2 text-gray-600 mb-6 p-4 bg-blue-50 rounded-lg">
-                            <li><i class="fas fa-exclamation-circle text-yellow-500 mr-2"></i> This letter is provisional pending full fee payment and document verification.</li>
-                            <li><i class="fas fa-file-pdf text-red-500 mr-2"></i> The downloaded file will be a mock text document in this application.</li>
-                        </ul>
-
+                        <p class="text-gray-700 mb-4">Download your official admission letter for <span class="font-bold text-blue-600">${studentData.course}</span>.</p>
                         <button id="downloadLetterBtn" class="w-full md:w-auto py-3 px-6 bg-blue-500 text-white font-bold rounded-lg shadow-lg hover:bg-blue-600 transition duration-200">
                             <i class="fas fa-download mr-2"></i> Download Admission Letter
                         </button>
-
-                        <div id="letterStatus" class="mt-4 text-sm text-gray-500">
-                            <i class="fas fa-clock mr-1"></i> Click the button above to initiate the download.
-                        </div>
                     </div>
                 </div>
             `;
             document.getElementById('downloadLetterBtn').onclick = handleDownloadLetter;
         }
 
-        // --- PAYMENTS (Mocked as per previous requirements) ---
+        // --- PAYMENTS ---
 
         function renderPayments() {
             const contentDiv = document.getElementById('portalContent');
-            const data = studentData;
-
             contentDiv.innerHTML = `
                 <div class="max-w-4xl mx-auto">
                     <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2 text-blue-600">Fee Payment Section (Mock)</h2>
-                    
                     <div class="card mb-6">
-                        <h3 class="text-xl font-semibold mb-3 text-gray-700"><i class="fas fa-money-check-alt mr-2"></i> Pending Balances</h3>
+                        <h3 class="text-xl font-semibold mb-3 text-gray-700">Pending Balances</h3>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                              ${renderFeeDetail('Tuition Fee', '₦50,000', 'text-blue-500')}
                              ${renderFeeDetail('Exam Fee', '₦5,000', 'text-yellow-500')}
                              ${renderFeeDetail('Acceptance Fee', '₦10,000', 'text-green-500')}
                         </div>
                         <p class="mt-6 text-xl font-bold text-gray-800">Total Outstanding: ₦65,000</p>
-                        <div class="mt-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-800">
-                            <i class="fas fa-info-circle mr-2"></i> Note: This is a temporary section. All payments are mock transactions and will not be recorded in the live sheet.
-                        </div>
                     </div>
-
                     <div class="card">
-                        <h3 class="text-xl font-semibold mb-3 text-gray-700"><i class="fas fa-credit-card mr-2"></i> Record Payment</h3>
+                        <h3 class="text-xl font-semibold mb-3 text-gray-700">Record Payment</h3>
                         <form id="paymentForm">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="mb-4">
-                                    <label for="paymentType" class="block text-gray-700 font-medium mb-2">Fee Type</label>
-                                    <select id="paymentType" name="paymentType" class="form-input" required>
+                                    <label class="block text-gray-700 font-medium mb-2">Fee Type</label>
+                                    <select name="paymentType" class="form-input" required>
                                         <option value="">Select Fee Type</option>
                                         <option value="tuition">Tuition Fee</option>
-                                        <option value="exam">Exam Fee</option>
-                                        <option value="acceptance">Acceptance Fee</option>
-                                        <option value="other">Other</option>
                                     </select>
                                 </div>
                                 <div class="mb-4">
-                                    <label for="amount" class="block text-gray-700 font-medium mb-2">Amount Paid (₦)</label>
-                                    <input type="number" id="amount" name="amount" class="form-input" required placeholder="e.g., 50000" min="100">
+                                    <label class="block text-gray-700 font-medium mb-2">Amount (₦)</label>
+                                    <input type="number" name="amount" class="form-input" required>
                                 </div>
                             </div>
-                             <div class="mb-6">
-                                <label for="paymentRef" class="block text-gray-700 font-medium mb-2">Transaction Reference / Receipt No.</label>
-                                <input type="text" id="paymentRef" name="paymentRef" class="form-input" required placeholder="e.g., BANKREF123456">
+                            <div class="mb-6">
+                                <label class="block text-gray-700 font-medium mb-2">Transaction Ref</label>
+                                <input type="text" name="paymentRef" class="form-input" required>
                             </div>
-
-                            <button type="submit" class="w-full py-3 bg-green-500 text-white font-bold rounded-lg shadow-lg hover:bg-green-600 transition duration-200">
-                                <i class="fas fa-check-circle mr-2"></i> Submit Mock Payment
-                            </button>
+                            <button type="submit" class="w-full py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition">Submit Mock Payment</button>
                         </form>
                     </div>
                 </div>
             `;
-            document.getElementById('paymentForm').onsubmit = handleMockPaymentSubmission;
+            document.getElementById('paymentForm').onsubmit = (e) => {
+                e.preventDefault();
+                showMessage('Mock Payment', 'Payment submitted for review.', true);
+                e.target.reset();
+            };
         }
 
         function renderFeeDetail(label, value, colorClass) {
@@ -709,34 +729,9 @@
             `;
         }
 
-        function handleMockPaymentSubmission(event) {
-            event.preventDefault();
-            const form = event.target;
-            const type = form.paymentType.value;
-            const amount = form.amount.value;
-            const ref = form.paymentRef.value;
-
-            // Simple client-side validation check
-            if (amount <= 0 || !ref) {
-                showMessage('Error', 'Please enter a valid amount and transaction reference.', false);
-                return;
-            }
-
-            // Mock success message
-            showMessage(
-                'Mock Payment Recorded', 
-                `Thank you, ${studentData.firstName}. Your mock payment of ₦${amount} for '${type}' fee, with reference '${ref}', has been submitted for administrative review.`, 
-                true
-            );
-            form.reset();
-        }
-
-
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', checkAuth);
 
     </script>
-
 </body>
 </html>
-

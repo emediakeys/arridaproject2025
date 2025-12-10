@@ -616,20 +616,33 @@
     function loadNewsFeed() {
         const db = firebase.firestore();
         const feedContainer = document.getElementById('news-feed');
+        let firebaseHasResponded = false;
+
+        // 1. Set a timeout to force fallback if Firebase hangs (e.g., offline/firewall)
+        const fallbackTimer = setTimeout(() => {
+            if (!firebaseHasResponded) {
+                console.warn("Firebase connection timed out. Switching to Google Sheets source.");
+                loadNewsFromAppsScript();
+            }
+        }, 5000); // 5 seconds wait time
         
-        // Try Firebase First
+        // 2. Try Firebase
         db.collection('artifacts').doc(appId).collection('public').doc('data').collection('news_posts')
           .orderBy('timestamp', 'desc')
           .limit(20)
           .onSnapshot((snapshot) => {
+            firebaseHasResponded = true;
+            clearTimeout(fallbackTimer); // Clear timeout if successful
+
             if(snapshot.empty) {
-                // If Firebase is empty, try Apps Script fallback
                 loadNewsFromAppsScript(); 
                 return;
             }
-            // If data exists, render it (Code reuse below)
+            // If data exists, render it
             renderNews(snapshot.docs.map(d => ({...d.data(), id: d.id})), true);
           }, (error) => {
+              firebaseHasResponded = true;
+              clearTimeout(fallbackTimer);
               console.warn("Firebase error, falling back to Apps Script", error);
               loadNewsFromAppsScript();
           });
@@ -664,12 +677,29 @@
                 }));
                 renderNews(posts, false);
             } else {
-                feedContainer.innerHTML = '<div class="col-span-full text-center text-gray-500 bg-gray-50 p-6 rounded-lg">No news available.</div>';
+                renderDefaultNews();
             }
         } catch(e) {
-            console.error(e);
-            feedContainer.innerHTML = '<div class="col-span-full text-center text-gray-500 bg-gray-50 p-6 rounded-lg">News Feed Unavailable (Connection Issue)</div>';
+            console.error("Apps Script Fetch Error:", e);
+            renderDefaultNews();
         }
+    }
+
+    function renderDefaultNews() {
+        const feedContainer = document.getElementById('news-feed');
+        feedContainer.innerHTML = `
+            <div class="col-span-full bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+                <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-newspaper text-3xl text-blue-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900">Welcome to ACHSTS</h3>
+                <p class="text-gray-600 mt-2">Check back soon for the latest news and announcements.</p>
+                <div class="mt-6 p-4 bg-yellow-50 border border-yellow-100 rounded-lg text-sm text-yellow-700">
+                    <i class="fas fa-info-circle mr-2"></i> Note: Real-time news feed is currently offline. 
+                    Please ensure you are connected to the internet.
+                </div>
+            </div>
+        `;
     }
 
     function renderNews(posts, isInteractive) {

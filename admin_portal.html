@@ -6,6 +6,12 @@
     <title>Admin Portal - School Management</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDKs (Required to post to Public Home Page) -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+
     <style>
         /* Custom styles for better dashboard aesthetics */
         :root {
@@ -54,17 +60,6 @@
             background-color: #e5e7eb;
             border-radius: 4px;
         }
-        
-        /* Mobile Sidebar Transitions */
-        .sidebar {
-            transition: transform 0.3s ease-in-out;
-        }
-        .sidebar-closed-mobile {
-            transform: translateX(-100%);
-        }
-        .sidebar-open {
-            transform: translateX(0);
-        }
     </style>
     <!-- Load Lucide icons for clean interface -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -75,7 +70,36 @@
     <div id="app"></div>
 
     <script>
-        // --- CONFIGURATION ---
+        // --- FIREBASE CONFIGURATION (For Public Posts) ---
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const fbApp = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // --- ROBUST AUTH INITIALIZATION ---
+        async function initFirebaseAuth() {
+            return new Promise((resolve, reject) => {
+                const unsubscribe = auth.onAuthStateChanged(user => {
+                    if (user) {
+                        unsubscribe();
+                        resolve(user);
+                    }
+                });
+
+                if (!auth.currentUser) {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        auth.signInWithCustomToken(__initial_auth_token).catch(reject);
+                    } else {
+                        auth.signInAnonymously().catch(reject);
+                    }
+                }
+            });
+        }
+
+        initFirebaseAuth().catch(console.error);
+
+        // --- APP CONFIGURATION ---
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
         
         // --- STATE MANAGEMENT ---
@@ -91,16 +115,14 @@
             loading: false,
             message: null,
             error: false,
-            isSidebarOpen: false // New state for mobile sidebar
+            isSidebarOpen: false 
         };
 
         // --- UTILITY FUNCTIONS ---
         function render(component) {
             const app = document.getElementById('app');
             app.innerHTML = component();
-            // Re-render icons after adding HTML
             lucide.createIcons();
-            // Bind events after render
             if (adminState.isLoggedIn) {
                 bindDashboardEvents();
             } else {
@@ -125,7 +147,6 @@
         }
 
         async function fetchAppsScript(action, payload = {}) {
-            // Only show full screen loader for non-background tasks
             if(action !== 'toggleLike' && action !== 'addComment') {
                 adminState.loading = true;
                 render(adminState.isLoggedIn ? AdminDashboard : AdminLogin); 
@@ -230,7 +251,6 @@
         async function loadInitialData() {
             if (!adminState.isLoggedIn) return;
             
-            // Initial Load Spinner
             if(adminState.students.length === 0) {
                 adminState.loading = true;
                 render(AdminDashboard);
@@ -239,7 +259,6 @@
             const course = adminState.assignedCourse;
 
             try {
-                // Fetch students, announcements, and assignments concurrently
                 const [studentsResult, announcementsResult, assignmentsResult] = await Promise.all([
                     fetchAppsScript('getStudentsByCourse', { course }),
                     fetchAppsScript('getAnnouncementsByCourse', { course, currentUser: adminState.username }),
@@ -260,25 +279,25 @@
         function changeTab(tabName) {
             adminState.activeTab = tabName;
             adminState.message = null; 
-            // Close sidebar on mobile when tab changes
             if(window.innerWidth < 768) {
                 adminState.isSidebarOpen = false;
             }
             render(AdminDashboard);
         }
 
+        // Fixed toggleSidebar logic
         function toggleSidebar() {
             adminState.isSidebarOpen = !adminState.isSidebarOpen;
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
             
             if (adminState.isSidebarOpen) {
-                sidebar.classList.remove('sidebar-closed-mobile');
-                sidebar.classList.add('sidebar-open');
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
                 overlay.classList.remove('hidden');
             } else {
-                sidebar.classList.add('sidebar-closed-mobile');
-                sidebar.classList.remove('sidebar-open');
+                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.remove('translate-x-0');
                 overlay.classList.add('hidden');
             }
         }
@@ -290,14 +309,36 @@
             const form = e.target;
             const title = form.title.value;
             const content = form.content.value;
+            const visibility = form.visibility.value; 
             const course = adminState.assignedCourse;
             
             showMessage('Adding Announcement...');
             
-            const result = await fetchAppsScript('addAnnouncement', { course, title, content });
+            const result = await fetchAppsScript('addAnnouncement', { course, title, content, visibility });
+
+            if (result.result === 'success' && visibility === 'public') {
+                try {
+                    if (!auth.currentUser) await initFirebaseAuth();
+
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('news_posts').add({
+                        title: title,
+                        content: content,
+                        authorName: adminState.username || 'Admin Staff',
+                        authorInitials: (adminState.username || 'A').charAt(0).toUpperCase(),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        likes: 0,
+                        likedBy: [],
+                        comments: [],
+                        type: 'public'
+                    });
+                    console.log("Posted to public feed successfully.");
+                } catch (err) {
+                    console.error("Failed to post to public feed:", err);
+                }
+            }
 
             if (result.result === 'success') {
-                showMessage('Announcement posted successfully!', false);
+                showMessage(`Announcement posted (${visibility}) successfully!`, false);
                 form.reset();
                 loadInitialData(); 
             } else {
@@ -336,7 +377,7 @@
             if (result.result === 'success') {
                 showMessage(`Student ${admNo} removed.`, false);
                 adminState.students = adminState.students.filter(s => s.admNo !== admNo);
-                render(AdminDashboard); // Re-render to update list
+                render(AdminDashboard); 
             } else {
                 showMessage(result.message || 'Failed.', true);
             }
@@ -537,16 +578,20 @@
                 { id: 'attendance', name: 'Attendance', icon: 'calendar-check' },
             ];
 
+            // Determine Sidebar Classes based on State
+            const sidebarClasses = adminState.isSidebarOpen ? 'translate-x-0' : '-translate-x-full';
+            const overlayClasses = adminState.isSidebarOpen ? '' : 'hidden';
+
             return `
                 <div class="min-h-screen flex relative overflow-hidden bg-gray-50">
                     
                     <!-- Mobile Sidebar Overlay -->
                     <div id="sidebarOverlay" onclick="toggleSidebar()" 
-                        class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300 md:hidden">
+                        class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden ${overlayClasses}">
                     </div>
 
                     <!-- Sidebar (Mobile Off-canvas + Desktop Static) -->
-                    <div id="sidebar" class="sidebar fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 text-white flex flex-col shadow-2xl transform sidebar-closed-mobile md:translate-x-0 md:static md:inset-auto">
+                    <div id="sidebar" class="sidebar fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 text-white flex flex-col shadow-2xl transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:inset-auto ${sidebarClasses}">
                         
                         <!-- Sidebar Header -->
                         <div class="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-700">
@@ -555,7 +600,7 @@
                                 <span>Admin Panel</span>
                             </div>
                             <!-- Mobile Close Button -->
-                            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white">
+                            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white cursor-pointer">
                                 <span data-lucide="x" class="w-6 h-6"></span>
                             </button>
                         </div>
@@ -591,7 +636,7 @@
                         <!-- Mobile Header (Visible only on mobile) -->
                         <div class="md:hidden bg-white shadow-sm border-b border-gray-200 p-4 flex items-center justify-between flex-shrink-0 z-30">
                             <div class="flex items-center">
-                                <button onclick="toggleSidebar()" class="mr-3 text-gray-600 hover:text-emerald-600 focus:outline-none">
+                                <button onclick="toggleSidebar()" class="mr-3 text-gray-600 hover:text-emerald-600 focus:outline-none cursor-pointer">
                                     <span data-lucide="menu" class="w-6 h-6"></span>
                                 </button>
                                 <h1 class="text-lg font-bold text-gray-800">
@@ -728,6 +773,16 @@
                                         <textarea name="content" rows="4" required placeholder="What's happening in ${adminState.assignedCourse}?" 
                                             class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none text-sm resize-none"></textarea>
                                     </div>
+                                    
+                                    <!-- Visibility Toggle -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Visibility</label>
+                                        <select name="visibility" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none text-sm text-gray-800">
+                                            <option value="private">🔒 Private (Course Students Only)</option>
+                                            <option value="public">🌍 Public (Home Page & Students)</option>
+                                        </select>
+                                    </div>
+
                                     <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center transform active:scale-95">
                                         <span data-lucide="send" class="w-4 h-4 mr-2"></span>
                                         Post Update
@@ -760,6 +815,7 @@
                                         const likedByMe = a.likedByMe || false;
                                         const annId = a.id;
                                         const initials = "AD"; 
+                                        const isPublic = a.visibility === 'public' || a.type === 'public';
                                         
                                         return `
                                         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-shadow hover:shadow-md">
@@ -771,6 +827,7 @@
                                                 <div class="flex-1 min-w-0">
                                                     <p class="text-sm font-bold text-gray-900 truncate">
                                                         ${adminState.username || 'Administrator'}
+                                                        ${isPublic ? '<span class="ml-2 text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Public</span>' : '<span class="ml-2 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Private</span>'}
                                                     </p>
                                                     <p class="text-xs text-gray-500 flex items-center">
                                                         <span>${a.date}</span>

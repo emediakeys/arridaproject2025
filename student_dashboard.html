@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Portal - Dashboard</title>
+    
+    <link rel="icon" type="image/png" sizes="32x32" href="icon.jpg">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon.jpg">
+    <link rel="apple-touch-icon" href="icon.jpg">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styles for better dashboard aesthetics */
@@ -81,6 +86,7 @@
 
     <script>
         // Global State
+        // REPLACE WITH YOUR CURRENT DEPLOYED URL
         const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec';
         
         let studentData = {};
@@ -128,7 +134,6 @@
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
             
-            // Use standard Tailwind classes to handle visibility
             if (isSidebarOpen) {
                 sidebar.classList.remove('-translate-x-full');
                 sidebar.classList.add('translate-x-0');
@@ -139,6 +144,20 @@
                 overlay.classList.add('hidden');
             }
         }
+
+        // --- HELPER: CALCULATE CURRENT ACADEMIC SESSION ---
+        function getAcademicSession() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth(); // 0 = Jan, 11 = Dec
+            
+            // Assuming Academic Session starts in September (Month 8)
+            if (month >= 8) { 
+                return `${year}/${year + 1}`;
+            } else {
+                return `${year - 1}/${year}`;
+            }
+        }
         
         // --- CORE API HANDLER ---
 
@@ -146,11 +165,6 @@
             const url = ENDPOINT_URL;
             let attempt = 0;
             
-            // Only show full loader if it's not a background action
-            if(data.action !== 'toggleLike' && data.action !== 'addComment') {
-                // setLoading(true) is usually called before this function in specific handlers
-            }
-
             while (attempt < maxRetries) {
                 try {
                     const response = await fetch(url, {
@@ -267,7 +281,6 @@
                 { id: 'payments', icon: 'fas fa-wallet', label: 'Payments' },
             ];
 
-            // NOTE: Sidebar uses -translate-x-full (hidden) by default on mobile, and translate-x-0 on desktop
             document.getElementById('app').innerHTML = `
                 <div id="sidebarOverlay" onclick="toggleSidebar()" 
                     class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300 md:hidden">
@@ -307,7 +320,6 @@
                 </div>
 
                 <main class="flex-grow flex flex-col h-screen overflow-hidden relative bg-gray-50">
-                    
                     <div class="md:hidden bg-white shadow-sm border-b border-gray-200 p-4 flex items-center justify-between flex-shrink-0 z-30">
                         <div class="flex items-center">
                             <button onclick="toggleSidebar()" class="mr-3 text-gray-600 hover:text-blue-600 focus:outline-none">
@@ -347,8 +359,6 @@
 
         function changeTab(tabName) {
             currentTab = tabName;
-            
-            // Update Sidebar UI
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
                 item.classList.add('text-gray-600');
@@ -358,21 +368,14 @@
                 newActiveItem.classList.add('active');
                 newActiveItem.classList.remove('text-gray-600');
             }
-
-            // Close sidebar on mobile if it is open
             if(window.innerWidth < 768 && isSidebarOpen) {
                 toggleSidebar();
             }
-
-            // Update Header Title (Mobile)
             const mobileTitle = document.querySelector('main h1');
             const tabLabel = document.querySelector(`.nav-item[data-tab="${tabName}"] span`).textContent;
             if(mobileTitle) mobileTitle.textContent = tabLabel;
-
-            // Update Desktop Title
             const desktopTitle = document.querySelector('#contentScrollArea > h1');
             if(desktopTitle) desktopTitle.textContent = tabLabel;
-
             loadTabContent(tabName);
         }
 
@@ -417,8 +420,7 @@
                         ${renderDetail('Admission No', data.admNo, 'font-mono bg-blue-50 text-blue-800')}
                         ${renderDetail('Email', data.email)}
                         ${renderDetail('Course', data.course, 'text-green-700 font-bold')}
-                        ${renderDetail('Academic Year', '2023/2024', '')}
-                    </div>
+                        ${renderDetail('Academic Year', getAcademicSession(), '')} </div>
                 </div>
             `;
         }
@@ -686,7 +688,6 @@
              makeApiCall(data).then(response => {
                 setLoading(false);
                 if (response.result === 'success' && response.url) {
-                    // Open the Google Drive PDF link in a new tab
                     window.open(response.url, '_blank');
                     showMessage('Success', 'Admission Letter opened in a new tab.');
                 } else {

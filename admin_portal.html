@@ -71,9 +71,55 @@
 
     <div id="app"></div>
 
+    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100">
+            <div class="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                <svg class="animate-spin h-8 w-8 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">Please Wait</h3>
+            <p class="mt-2 text-gray-500 font-medium" id="loadingText">Processing request...</p>
+        </div>
+    </div>
+
+    <div id="messageModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
+            <h3 id="modalTitle" class="text-xl font-semibold text-gray-900 mb-2">Message</h3>
+            <p id="modalMessage" class="text-gray-600 mb-6"></p>
+            <button onclick="closeModal()" class="w-full py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition shadow-md">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 transform transition-all scale-100">
+            <div class="mb-4">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h3 id="confirmTitle" class="text-lg leading-6 font-medium text-gray-900 text-center">Delete Item</h3>
+                <div class="mt-2">
+                    <p id="confirmMessage" class="text-sm text-gray-500 text-center">Are you sure you want to delete this? This action cannot be undone.</p>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeConfirm()" class="flex-1 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none transition">
+                    Cancel
+                </button>
+                <button onclick="executeConfirm()" class="flex-1 py-2.5 px-4 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 focus:outline-none transition shadow-md">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- APP CONFIGURATION ---
-        // REPLACE THIS WITH YOUR DEPLOYED WEB APP URL IF DIFFERENT
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
         
         // --- STATE MANAGEMENT ---
@@ -86,13 +132,76 @@
             announcements: [],
             assignments: [],
             attendance: [],
-            loading: false,
-            message: null,
-            error: false,
             isSidebarOpen: false 
         };
 
-        // --- UTILITY FUNCTIONS ---
+        // Holds the function to run if user clicks "Delete"
+        let confirmCallback = null;
+
+        // --- UI UTILITIES ---
+
+        function setLoading(active, text = 'Processing...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const txt = document.getElementById('loadingText');
+            if (active) {
+                txt.innerText = text;
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            } else {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            }
+        }
+
+        function showModal(title, message, isError = false) {
+            setLoading(false);
+            const modal = document.getElementById('messageModal');
+            const titleEl = document.getElementById('modalTitle');
+            const msgEl = document.getElementById('modalMessage');
+
+            titleEl.innerText = title;
+            titleEl.className = isError ? "text-xl font-bold text-red-600 mb-2" : "text-xl font-bold text-emerald-600 mb-2";
+            msgEl.innerText = message;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('messageModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // --- NEW CONFIRMATION LOGIC ---
+
+        function showConfirm(title, message, callback) {
+            const modal = document.getElementById('confirmModal');
+            document.getElementById('confirmTitle').innerText = title;
+            document.getElementById('confirmMessage').innerText = message;
+            
+            confirmCallback = callback; // Store the action to run later
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeConfirm() {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            confirmCallback = null; // Clear callback
+        }
+
+        function executeConfirm() {
+            if (confirmCallback) {
+                confirmCallback(); // Run the stored function
+            }
+            closeConfirm();
+        }
+
+        // --- CORE FUNCTIONS ---
+
         function render(component) {
             const app = document.getElementById('app');
             app.innerHTML = component();
@@ -102,12 +211,6 @@
             } else {
                 bindLoginEvents();
             }
-        }
-
-        function showMessage(msg, isError = false) {
-            adminState.message = msg;
-            adminState.error = isError;
-            render(adminState.isLoggedIn ? AdminDashboard : AdminLogin); 
         }
 
         function jsonToUrlParams(data) {
@@ -122,8 +225,9 @@
 
         async function fetchAppsScript(action, payload = {}) {
             if(action !== 'toggleLike' && action !== 'addComment') {
-                adminState.loading = true;
-                render(adminState.isLoggedIn ? AdminDashboard : AdminLogin); 
+                if(action !== 'adminLogin') {
+                     setLoading(true, 'Loading data...'); 
+                }
             }
 
             const dataToSend = { action, ...payload };
@@ -142,12 +246,12 @@
                 const responseText = await response.text();
                 const result = responseText ? JSON.parse(responseText) : {};
                 
-                adminState.loading = false;
+                setLoading(false);
                 return result;
 
             } catch (error) {
                 console.error('API Fetch Error:', error);
-                adminState.loading = false;
+                setLoading(false);
                 return { result: 'error', message: 'Network error. Check console.' };
             }
         }
@@ -182,7 +286,7 @@
             const username = form.username.value.trim();
             const password = form.password.value;
 
-            showMessage('Logging in...');
+            setLoading(true, 'Authenticating credentials...');
 
             const result = await fetchAppsScript('adminLogin', { username, password });
 
@@ -191,12 +295,16 @@
                 adminState.username = username;
                 adminState.assignedCourse = result.assignedCourse;
                 saveAdminState();
-                showMessage('Login successful! Welcome.', false);
-                loadInitialData();
+                
+                setLoading(true, 'Login successful! Setting up dashboard...');
+                setTimeout(() => {
+                    setLoading(false);
+                    loadInitialData();
+                }, 800); 
             } else {
-                adminState.isLoggedIn = false;
+                setLoading(false);
                 const errMsg = result ? result.message : 'Unknown login error';
-                showMessage(errMsg || 'Login failed. Check credentials.', true);
+                showModal('Login Failed', errMsg, true);
             }
         }
 
@@ -225,15 +333,17 @@
         async function loadInitialData() {
             if (!adminState.isLoggedIn) return;
             
-            if(adminState.students.length === 0) {
-                adminState.loading = true;
+            if(!document.getElementById('sidebar')) {
                 render(AdminDashboard);
+            }
+
+            if(adminState.students.length === 0) {
+                setLoading(true, 'Fetching dashboard data...');
             }
 
             const course = adminState.assignedCourse;
 
             try {
-                // Pass currentUser so we know if they liked posts
                 const [studentsResult, announcementsResult, assignmentsResult] = await Promise.all([
                     fetchAppsScript('getStudentsByCourse', { course }),
                     fetchAppsScript('getAnnouncementsByCourse', { course, currentUser: adminState.username }),
@@ -247,13 +357,12 @@
                 console.error("Error loading dashboard data", err);
             }
             
-            adminState.loading = false;
+            setLoading(false);
             render(AdminDashboard);
         }
 
         function changeTab(tabName) {
             adminState.activeTab = tabName;
-            adminState.message = null; 
             if(window.innerWidth < 768) {
                 adminState.isSidebarOpen = false;
             }
@@ -283,21 +392,37 @@
             const form = e.target;
             const title = form.title.value;
             const content = form.content.value;
-            // Capture the visibility selection
             const visibility = form.visibility.value; 
             const course = adminState.assignedCourse;
-            
-            showMessage('Adding Announcement...');
             
             const result = await fetchAppsScript('addAnnouncement', { course, title, content, visibility });
 
             if (result.result === 'success') {
-                showMessage('Announcement posted successfully!', false);
+                showModal('Success', 'Announcement posted successfully!');
                 form.reset();
                 loadInitialData(); 
             } else {
-                showMessage(result.message || 'Failed to post.', true);
+                showModal('Error', result.message || 'Failed to post.', true);
             }
+        }
+
+        function handleDeleteAnnouncement(id) {
+            // Updated to use custom modal
+            showConfirm(
+                "Delete Post?", 
+                "Are you sure you want to delete this announcement? This cannot be undone.", 
+                async () => {
+                    setLoading(true, "Deleting Post...");
+                    const result = await fetchAppsScript('deleteAnnouncement', { id });
+                    
+                    if (result.result === 'success') {
+                        showModal('Deleted', 'Post deleted successfully.');
+                        loadInitialData();
+                    } else {
+                        showModal('Error', result.message || 'Failed to delete.', true);
+                    }
+                }
+            );
         }
 
         async function handleAddAssignment(e) {
@@ -308,33 +433,53 @@
             const dueDate = form.dueDate.value;
             const course = adminState.assignedCourse;
 
-            showMessage('Adding Assignment...');
-            
             const result = await fetchAppsScript('addAssignment', { course, title, description, dueDate });
 
             if (result.result === 'success') {
-                showMessage('Assignment added successfully!', false);
+                showModal('Success', 'Assignment added successfully!');
                 form.reset();
                 loadInitialData(); 
             } else {
-                showMessage(result.message || 'Failed.', true);
+                showModal('Error', result.message || 'Failed.', true);
             }
         }
 
-        async function handleRemoveStudent(admNo, course) {
-            if(!confirm(`Are you sure you want to remove student ${admNo}?`)) return;
-            
-            showMessage(`Removing student ${admNo}...`);
-            
-            const result = await fetchAppsScript('removeStudent', { admNo, course });
+        function handleDeleteAssignment(id) {
+            // Updated to use custom modal
+            showConfirm(
+                "Delete Assignment?", 
+                "Are you sure you want to remove this assignment? Students will no longer see it.", 
+                async () => {
+                    setLoading(true, "Deleting Assignment...");
+                    const result = await fetchAppsScript('deleteAssignment', { id });
+                    
+                    if (result.result === 'success') {
+                        showModal('Deleted', 'Assignment deleted successfully.');
+                        loadInitialData();
+                    } else {
+                        showModal('Error', result.message || 'Failed to delete.', true);
+                    }
+                }
+            );
+        }
 
-            if (result.result === 'success') {
-                showMessage(`Student ${admNo} removed.`, false);
-                adminState.students = adminState.students.filter(s => s.admNo !== admNo);
-                render(AdminDashboard); 
-            } else {
-                showMessage(result.message || 'Failed.', true);
-            }
+        async function handleRemoveStudent(admNo, course) {
+            showConfirm(
+                "Remove Student?", 
+                `Are you sure you want to remove ${admNo}? This will delete their record from the class list.`, 
+                async () => {
+                    setLoading(true, `Removing ${admNo}...`);
+                    const result = await fetchAppsScript('removeStudent', { admNo, course });
+
+                    if (result.result === 'success') {
+                        showModal('Removed', `Student ${admNo} has been removed.`);
+                        adminState.students = adminState.students.filter(s => s.admNo !== admNo);
+                        render(AdminDashboard); 
+                    } else {
+                        showModal('Error', result.message || 'Failed.', true);
+                    }
+                }
+            );
         }
 
         // --- ATTENDANCE LOGIC ---
@@ -395,33 +540,44 @@
             btn.innerHTML = `<span class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>`;
             btn.disabled = true;
 
-            const result = await fetchAppsScript('recordAttendance', { admNo, status, date, course });
+            try {
+                const formBody = new URLSearchParams({
+                    action: 'recordAttendance', admNo, status, date, course
+                });
+                const response = await fetch(SCRIPT_URL, { method: 'POST', body: formBody });
+                const result = await response.json();
 
-            if (result.result === 'success') {
-                btn.innerHTML = `<span data-lucide="check-circle" class="w-4 h-4"></span>`;
-                btn.classList.replace('bg-indigo-600', 'bg-green-500');
-                btn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-600');
-                
-                const toast = document.getElementById('toastMsg');
-                toast.innerText = `Recorded: ${admNo} is ${status}`;
-                toast.classList.remove('opacity-0', 'translate-y-4');
-                setTimeout(() => {
-                    toast.classList.add('opacity-0', 'translate-y-4');
+                if (result.result === 'success') {
+                    btn.innerHTML = `<span data-lucide="check-circle" class="w-4 h-4"></span>`;
+                    btn.classList.replace('bg-indigo-600', 'bg-green-500');
+                    btn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-600');
+                    
+                    const toast = document.getElementById('toastMsg');
+                    toast.innerText = `Recorded: ${admNo} is ${status}`;
+                    toast.classList.remove('opacity-0', 'translate-y-4');
+                    setTimeout(() => {
+                        toast.classList.add('opacity-0', 'translate-y-4');
+                        btn.innerHTML = originalContent;
+                        btn.classList.replace('bg-green-500', 'bg-indigo-600');
+                        btn.classList.replace('hover:bg-green-600', 'hover:bg-indigo-700');
+                        btn.disabled = false;
+                        lucide.createIcons();
+                    }, 2000);
+                } else {
+                    alert("Failed: " + result.message);
                     btn.innerHTML = originalContent;
-                    btn.classList.replace('bg-green-500', 'bg-indigo-600');
-                    btn.classList.replace('hover:bg-green-600', 'hover:bg-indigo-700');
                     btn.disabled = false;
                     lucide.createIcons();
-                }, 2000);
-            } else {
-                alert("Failed to record attendance: " + result.message);
+                }
+            } catch(e) {
+                alert("Network error");
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
                 lucide.createIcons();
             }
         }
 
-        // --- SOCIAL INTERACTIONS (Improved with Error Checks) ---
+        // --- SOCIAL INTERACTIONS ---
 
         async function toggleLike(annId, btnElement) {
             const icon = btnElement.querySelector('.like-icon');
@@ -431,7 +587,6 @@
             let currentCount = (text === 'Like') ? 0 : parseInt(text);
             const isLiked = icon.classList.contains('fill-current') && icon.classList.contains('text-red-500');
 
-            // Optimistic UI Update
             if (isLiked) {
                 icon.classList.remove('fill-current', 'text-red-500');
                 icon.classList.add('text-gray-500');
@@ -443,26 +598,12 @@
                 countSpan.innerText = currentCount + 1;
             }
 
-            // Server Call
-            const result = await fetchAppsScript('toggleLike', { 
-                announcementId: annId, 
-                user: adminState.username 
-            });
-
-            // Revert if failed
-            if (!result || result.result !== 'success') {
-                console.error("Like failed on server:", result);
-                if (isLiked) {
-                    icon.classList.add('fill-current', 'text-red-500');
-                    icon.classList.remove('text-gray-500');
-                    countSpan.innerText = currentCount; 
-                } else {
-                    icon.classList.remove('fill-current', 'text-red-500');
-                    icon.classList.add('text-gray-500');
-                    countSpan.innerText = currentCount === 0 ? 'Like' : currentCount;
-                }
-                alert("Could not save like. Ensure 'Likes' sheet exists.");
-            }
+            try {
+                await fetchAppsScript('toggleLike', { 
+                    announcementId: annId, 
+                    user: adminState.username 
+                });
+            } catch (e) { console.error("Like failed", e); }
         }
 
         async function postComment(annId) {
@@ -511,7 +652,7 @@
             } else {
                 if(tempEl) tempEl.remove();
                 input.value = text;
-                alert("Failed to post comment. Ensure 'Comments' sheet exists.");
+                showModal("Error", "Failed to save comment.", true);
             }
         }
 
@@ -519,7 +660,6 @@
         // --- UI COMPONENTS ---
 
         function AdminLogin() {
-            const statusMessage = adminState.message || '';
             return `
                 <div class="min-h-screen flex items-center justify-center p-4">
                     <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
@@ -540,7 +680,6 @@
                                 <span data-lucide="log-in" class="w-5 h-5 mr-2"></span> Log In
                             </button>
                         </form>
-                        ${statusMessage ? `<p class="mt-4 text-center text-sm ${adminState.error ? 'text-red-600' : 'text-emerald-600'}">${statusMessage}</p>` : ''}
                     </div>
                 </div>
             `;
@@ -626,7 +765,7 @@
                             </div>
 
                             <div class="min-h-[500px]">
-                                ${adminState.loading ? LoadingSpinner() : renderActiveTabContent()}
+                                ${renderActiveTabContent()}
                             </div>
                         </div>
                     </main>
@@ -634,17 +773,7 @@
             `;
         }
         
-        function LoadingSpinner() {
-            return `
-                <div class="flex flex-col items-center justify-center py-20">
-                    <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p class="mt-4 text-gray-600">Loading data...</p>
-                </div>
-            `;
-        }
+        // Removed LoadingSpinner() function as it's no longer used for page-level loading
 
         function renderActiveTabContent() {
             switch (adminState.activeTab) {
@@ -795,8 +924,9 @@
                                                         <span class="text-emerald-600 font-medium bg-emerald-50 px-1.5 rounded text-[10px]">Admin</span>
                                                     </p>
                                                 </div>
-                                                <button class="text-gray-400 hover:text-gray-600">
-                                                    <span data-lucide="more-horizontal" class="w-5 h-5"></span>
+                                                
+                                                <button onclick="handleDeleteAnnouncement('${annId}')" class="text-gray-400 hover:text-red-500 transition">
+                                                    <span data-lucide="trash-2" class="w-5 h-5"></span>
                                                 </button>
                                             </div>
 
@@ -903,8 +1033,11 @@
                         <h2 class="text-2xl font-semibold mb-4 text-gray-700">Active</h2>
                         <div class="space-y-4 data-container max-h-96 overflow-y-auto">
                              ${adminState.assignments.map(a => `
-                                <div class="p-4 border rounded-lg bg-white shadow-sm border-l-4 border-blue-500">
-                                    <p class="font-bold text-gray-900">${a.title}</p>
+                                <div class="p-4 border rounded-lg bg-white shadow-sm border-l-4 border-blue-500 relative group">
+                                    <button onclick="handleDeleteAssignment('${a.id}')" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
+                                        <span data-lucide="trash-2" class="w-4 h-4"></span>
+                                    </button>
+                                    <p class="font-bold text-gray-900 pr-6">${a.title}</p>
                                     <p class="text-sm text-gray-600 mt-1">${a.description}</p>
                                     <p class="text-xs mt-2 font-medium text-blue-600 bg-blue-50 inline-block px-2 py-1 rounded">Due: ${a.dueDate}</p>
                                 </div>

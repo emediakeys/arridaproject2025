@@ -10,7 +10,6 @@
     <link rel="apple-touch-icon" href="icon.jpg">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://js.paystack.co/v1/inline.js"></script>
 
     <style>
@@ -92,7 +91,7 @@
                     body: new URLSearchParams(data)
                 });
                 return await response.json();
-            } catch (e) { setLoading(false); showMessage('Error', 'Connection failed.'); throw e; }
+            } catch (e) { setLoading(false); throw e; }
         }
 
         // --- AUTH ---
@@ -110,6 +109,7 @@
             setLoading(true, 'Authenticating...');
             try {
                 const response = await makeApiCall({ action: 'studentLogin', admNo, password });
+                setLoading(false);
                 if (response.result === 'success') {
                     studentData = {
                         admNo: response.data.Admission_No,
@@ -117,7 +117,6 @@
                         lastName: response.data.Last_Name,
                         email: response.data.Email,
                         course: response.data.Course_Applied,
-                        // Store Payment Status
                         hasPaidAcceptance: response.data.hasPaidAcceptance,
                         hasPaidTuition: response.data.hasPaidTuition
                     };
@@ -125,7 +124,7 @@
                     showMessage('Success', `Welcome back, ${studentData.firstName}!`, true);
                     renderDashboard();
                 } else { showMessage('Login Failed', response.message || 'Invalid Credentials.', false); }
-            } catch (e) {}
+            } catch (e) { showMessage('Error', 'Connection failed.', false); }
         }
 
         // --- PAYMENT LOGIC ---
@@ -138,7 +137,6 @@
                 ref: '' + Math.floor((Math.random() * 1000000000) + 1), 
                 metadata: { custom_fields: [{ display_name: "Admission No", variable_name: "adm_no", value: studentData.admNo }] },
                 callback: function(response) {
-                    // Verify on Server
                     setLoading(true, 'Verifying Payment...');
                     makeApiCall({
                         action: 'verifyPayment',
@@ -149,12 +147,18 @@
                     }).then(res => {
                         setLoading(false);
                         if(res.result === 'success') {
-                            showMessage("Success", "Payment successful!", true);
-                            // Update local state
+                            // Update local state immediately
                             if(feeType === 'Acceptance') studentData.hasPaidAcceptance = true;
                             if(feeType === 'Tuition') studentData.hasPaidTuition = true;
                             localStorage.setItem('studentData', JSON.stringify(studentData));
-                            renderDashboard(); // Refresh UI
+                            
+                            // Specific success message
+                            if(feeType === 'Acceptance') {
+                                showMessage("Success", "Acceptance Fee Paid! Your Admission Letter is now unlocked.", true);
+                            } else {
+                                showMessage("Success", "Payment successful!", true);
+                            }
+                            renderDashboard(); // Refresh all UI to reflect changes
                         } else {
                             showMessage("Verification Failed", "Payment could not be verified.", false);
                         }
@@ -214,10 +218,11 @@
 
         function loadTabContent(tab) {
             const content = document.getElementById('portalContent');
+            content.innerHTML = `<div class="text-center py-20"><i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i><p class="mt-4 text-gray-600">Loading...</p></div>`;
+
             if(tab === 'profile') {
                 content.innerHTML = `<div class="max-w-4xl mx-auto"><div class="card grid md:grid-cols-2 gap-6"><div class="col-span-2 border-b pb-4 mb-2 flex items-center"><div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl text-blue-600 font-bold mr-4">${studentData.firstName.charAt(0)}</div><div><h3 class="text-xl font-bold">${studentData.firstName} ${studentData.lastName}</h3><p class="text-gray-500">Student</p></div></div><div class="p-4 border rounded bg-gray-50"><p class="text-xs font-bold text-gray-400">Adm No</p><p class="font-mono text-blue-800 font-bold">${studentData.admNo}</p></div><div class="p-4 border rounded bg-gray-50"><p class="text-xs font-bold text-gray-400">Email</p><p>${studentData.email}</p></div><div class="p-4 border rounded bg-gray-50"><p class="text-xs font-bold text-gray-400">Course</p><p class="text-green-700 font-bold">${studentData.course}</p></div><div class="p-4 border rounded bg-gray-50"><p class="text-xs font-bold text-gray-400">Session</p><p>${getAcademicSession()}</p></div></div></div>`;
             } else if (tab === 'letter') {
-                // CONDITIONAL LOGIC FOR ADMISSION LETTER
                 if (studentData.hasPaidAcceptance) {
                     content.innerHTML = `
                         <div class="max-w-2xl mx-auto card text-center p-10">
@@ -240,6 +245,42 @@
                         </div>`;
                 }
             } else if (tab === 'payments') {
+                // SMART PAYMENTS TAB: Hide options if already paid
+                const showAcceptance = !studentData.hasPaidAcceptance;
+                const showTuition = !studentData.hasPaidTuition;
+                
+                let paymentFormHTML = '';
+                
+                if (!showAcceptance && !showTuition) {
+                    paymentFormHTML = `
+                        <div class="card text-center p-10 bg-green-50 border border-green-200">
+                            <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
+                            <h3 class="text-xl font-bold text-green-800">All Fees Paid!</h3>
+                            <p class="text-green-600">You are fully cleared for this session.</p>
+                        </div>
+                    `;
+                } else {
+                    paymentFormHTML = `
+                        <div class="card">
+                            <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Make Payment</h3>
+                            <form onsubmit="event.preventDefault(); const amt=this.amount.value; const type=this.type.value; initPaystack(amt, type);">
+                                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                                    <div><label class="block text-sm mb-1">Fee Type</label>
+                                        <select name="type" class="form-input bg-white" onchange="this.form.amount.value = (this.value==='Acceptance'?10000:50000)">
+                                            ${showAcceptance ? '<option value="Acceptance">Acceptance Fee</option>' : ''}
+                                            ${showTuition ? '<option value="Tuition">Tuition Fee</option>' : ''}
+                                        </select>
+                                    </div>
+                                    <div><label class="block text-sm mb-1">Amount (₦)</label>
+                                        <input type="number" name="amount" value="${showAcceptance ? '10000' : '50000'}" readonly class="form-input bg-gray-50">
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700">Proceed to Pay</button>
+                            </form>
+                        </div>
+                    `;
+                }
+
                 content.innerHTML = `
                     <div class="max-w-4xl mx-auto space-y-6">
                         <div class="grid md:grid-cols-2 gap-4">
@@ -258,21 +299,7 @@
                                 </p>
                             </div>
                         </div>
-                        <div class="card">
-                            <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Make Payment</h3>
-                            <form onsubmit="event.preventDefault(); const amt=this.amount.value; const type=this.type.value; initPaystack(amt, type);">
-                                <div class="grid md:grid-cols-2 gap-4 mb-4">
-                                    <div><label class="block text-sm mb-1">Fee Type</label>
-                                        <select name="type" class="form-input bg-white" onchange="this.form.amount.value = (this.value==='Acceptance'?10000:50000)">
-                                            <option value="Acceptance">Acceptance Fee</option>
-                                            <option value="Tuition">Tuition Fee</option>
-                                        </select>
-                                    </div>
-                                    <div><label class="block text-sm mb-1">Amount (₦)</label><input type="number" name="amount" value="10000" readonly class="form-input bg-gray-50"></div>
-                                </div>
-                                <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700">Proceed to Pay</button>
-                            </form>
-                        </div>
+                        ${paymentFormHTML}
                     </div>`;
             } else if (tab === 'announcements') { fetchAndRenderAnnouncements(); }
             else if (tab === 'assignments') { fetchAndRenderAssignments(); }
@@ -290,9 +317,8 @@
              }).catch(e => { setLoading(false); showMessage('Error', 'Network error.', false); });
         }
 
-        // Keep existing fetch logic for assignments/announcements from previous code...
+        // FETCH FUNCTIONS
         async function fetchAndRenderAnnouncements() {
-            setLoading(true, "Loading feed...");
             const data = { action: 'getAnnouncementsByCourse', course: studentData.course, currentUser: studentData.admNo };
             const content = document.getElementById('portalContent');
             try {
@@ -300,20 +326,30 @@
                 if(res.result === 'success' && res.data.length > 0) {
                     let html = `<div class="max-w-2xl mx-auto space-y-6">`;
                     res.data.forEach((ann, i) => {
-                       // ... (Reuse the rendering logic from previous code for consistency)
+                       const initials = "AD";
+                       const likes = ann.likes || 0;
+                       const comments = ann.comments || [];
+                       const likedByMe = ann.likedByMe;
                        html += `<div class="bg-white rounded-xl shadow-sm border p-4">
+                                <div class="flex items-center space-x-3 mb-2"><div class="w-8 h-8 bg-blue-600 rounded-full text-white flex items-center justify-center text-xs font-bold">AD</div><div><p class="text-sm font-bold">Admin</p><p class="text-xs text-gray-500">${ann.date}</p></div></div>
                                 <h3 class="font-bold text-gray-900">${ann.title}</h3>
                                 <p class="text-sm text-gray-600 mt-2 whitespace-pre-wrap">${ann.content}</p>
-                                <div class="mt-3 text-xs text-gray-400">${ann.date}</div>
+                                <div class="mt-3 text-xs text-gray-400 border-t pt-2 flex justify-between">
+                                    <button onclick="toggleLike('${ann.id}', this)" class="flex items-center space-x-1 ${likedByMe?'text-red-500':''}"><i class="${likedByMe?'fas':'far'} fa-heart"></i> <span class="like-count">${likes}</span></button>
+                                    <button onclick="document.getElementById('comments-${i}').classList.toggle('hidden')"><i class="far fa-comment"></i> Comment</button>
+                                </div>
+                                <div id="comments-${i}" class="hidden bg-gray-50 p-2 mt-2 text-xs">
+                                    <div id="comment-list-${ann.id}" class="space-y-2 mb-2 max-h-40 overflow-y-auto">${comments.map(c=>`<p><b>${c.user}:</b> ${c.text}</p>`).join('')}</div>
+                                    <div class="flex"><input id="input-${ann.id}" class="flex-1 border p-1" placeholder="Comment..."><button onclick="postComment('${ann.id}')" class="bg-blue-500 text-white px-2 ml-1">Send</button></div>
+                                </div>
                                </div>`;
                     });
                     content.innerHTML = html + `</div>`;
                 } else { content.innerHTML = `<div class="card text-center p-10 text-gray-500">No announcements.</div>`; }
-            } catch(e){}
+            } catch(e){ content.innerHTML = `<div class="text-center text-red-500 p-10">Failed to load feed.</div>`; }
         }
 
         async function fetchAndRenderAssignments() {
-            setLoading(true, "Loading assignments...");
             const data = { action: 'getAssignmentsByCourse', course: studentData.course };
             const content = document.getElementById('portalContent');
             try {
@@ -328,11 +364,10 @@
                     });
                     content.innerHTML = html + `</div>`;
                 } else { content.innerHTML = `<div class="card text-center p-10 text-gray-500">No active assignments.</div>`; }
-            } catch(e){}
+            } catch(e){ content.innerHTML = `<div class="text-center text-red-500 p-10">Failed to load assignments.</div>`; }
         }
 
         document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
 </html>
-

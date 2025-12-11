@@ -98,12 +98,37 @@
             } catch (e) { setLoading(false); throw e; }
         }
 
-        // --- AUTH ---
+        // --- AUTH & SYNC ---
+        
         function checkAuth() {
             const storedData = localStorage.getItem('studentData');
-            if (storedData) { studentData = JSON.parse(storedData); renderDashboard(); } 
+            if (storedData) { 
+                studentData = JSON.parse(storedData); 
+                renderDashboard(); 
+                // NEW: Background sync to check if payments changed (e.g. wiped by admin)
+                syncPaymentStatus();
+            } 
             else { renderLogin(); }
         }
+
+        // NEW FUNCTION: SYNC PAYMENT STATUS FROM SERVER
+        async function syncPaymentStatus() {
+            try {
+                const response = await makeApiCall({ action: 'checkPaymentStatus', admNo: studentData.admNo });
+                if(response.result === 'success') {
+                    // Update Local State
+                    studentData.hasPaidAcceptance = response.hasPaidAcceptance;
+                    studentData.hasPaidTuition = response.hasPaidTuition;
+                    localStorage.setItem('studentData', JSON.stringify(studentData));
+                    
+                    // If currently on a payment-related tab, re-render to show updates
+                    if(currentTab === 'payments' || currentTab === 'letter') {
+                        loadTabContent(currentTab);
+                    }
+                }
+            } catch(e) { console.log("Background sync failed"); }
+        }
+
         function handleLogout() { localStorage.removeItem('studentData'); studentData = {}; isSidebarOpen = false; renderLogin(); }
 
         async function handleStudentLogin(event) {
@@ -220,73 +245,79 @@
             if(tab === 'profile') {
                 content.innerHTML = `<div class="max-w-4xl mx-auto"><div class="card grid md:grid-cols-2 gap-6"><div class="col-span-2 border-b pb-4 mb-2 flex items-center"><div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl text-blue-600 font-bold mr-4">${studentData.firstName.charAt(0)}</div><div><h3 class="text-xl font-bold">${studentData.firstName} ${studentData.lastName}</h3><p class="text-gray-500">Student</p></div></div><div class="p-4 border rounded bg-gray-50"><p class="text-xs font-bold text-gray-400">Adm No</p><p class="font-mono text-blue-800 font-bold">${studentData.admNo}</p></div><div class="p-4 border rounded bg-gray-50"><p class="text-xs font-bold text-gray-400">Email</p><p>${studentData.email}</p></div><div class="p-4 border rounded bg-gray-50"><p class="text-xs font-bold text-gray-400">Course</p><p class="text-green-700 font-bold">${studentData.course}</p></div><div class="p-4 border rounded bg-gray-50"><p class="text-xs font-bold text-gray-400">Session</p><p>${getAcademicSession()}</p></div></div></div>`;
             } else if (tab === 'letter') {
-                if (studentData.hasPaidAcceptance) {
-                    content.innerHTML = `
-                        <div class="max-w-2xl mx-auto card text-center p-10">
-                            <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fas fa-file-alt"></i></div>
-                            <h2 class="text-xl font-bold text-gray-900 mb-2">Admission Letter</h2>
-                            <p class="text-gray-500 mb-6">Your admission has been confirmed. You can now download your letter.</p>
-                            <button onclick="handleDownloadLetter()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition transform hover:-translate-y-1">
-                                <i class="fas fa-download mr-2"></i> Download PDF
-                            </button>
-                        </div>`;
-                } else {
-                    content.innerHTML = `
-                        <div class="max-w-2xl mx-auto card text-center p-10 border-2 border-yellow-100">
-                            <div class="w-16 h-16 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fas fa-lock"></i></div>
-                            <h2 class="text-xl font-bold text-gray-900 mb-2">Admission Letter Locked</h2>
-                            <p class="text-gray-500 mb-6">You must pay your <strong>Acceptance Fee (₦10,000)</strong> to access your admission letter.</p>
-                            <button onclick="initPaystack(10000, 'Acceptance')" class="bg-yellow-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-yellow-600 transition transform hover:-translate-y-1">
-                                <i class="fas fa-credit-card mr-2"></i> Pay Acceptance Fee
-                            </button>
-                        </div>`;
-                }
+                // FORCE SYNC WHEN OPENING THIS TAB
+                syncPaymentStatus().then(() => {
+                    if (studentData.hasPaidAcceptance) {
+                        content.innerHTML = `
+                            <div class="max-w-2xl mx-auto card text-center p-10">
+                                <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fas fa-file-alt"></i></div>
+                                <h2 class="text-xl font-bold text-gray-900 mb-2">Admission Letter</h2>
+                                <p class="text-gray-500 mb-6">Your admission has been confirmed. You can now download your letter.</p>
+                                <button onclick="handleDownloadLetter()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition transform hover:-translate-y-1">
+                                    <i class="fas fa-download mr-2"></i> Download PDF
+                                </button>
+                            </div>`;
+                    } else {
+                        content.innerHTML = `
+                            <div class="max-w-2xl mx-auto card text-center p-10 border-2 border-yellow-100">
+                                <div class="w-16 h-16 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fas fa-lock"></i></div>
+                                <h2 class="text-xl font-bold text-gray-900 mb-2">Admission Letter Locked</h2>
+                                <p class="text-gray-500 mb-6">You must pay your <strong>Acceptance Fee (₦10,000)</strong> to access your admission letter.</p>
+                                <button onclick="initPaystack(10000, 'Acceptance')" class="bg-yellow-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-yellow-600 transition transform hover:-translate-y-1">
+                                    <i class="fas fa-credit-card mr-2"></i> Pay Acceptance Fee
+                                </button>
+                            </div>`;
+                    }
+                });
             } else if (tab === 'payments') {
-                const showAcceptance = !studentData.hasPaidAcceptance;
-                const showTuition = !studentData.hasPaidTuition;
-                let formHTML = '';
+                // FORCE SYNC WHEN OPENING THIS TAB
+                syncPaymentStatus().then(() => {
+                    const showAcceptance = !studentData.hasPaidAcceptance;
+                    const showTuition = !studentData.hasPaidTuition;
+                    let formHTML = '';
 
-                if (!showAcceptance && !showTuition) {
-                    formHTML = `<div class="card text-center p-10 bg-green-50 border border-green-200"><i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i><h3 class="text-xl font-bold text-green-800">All Fees Paid!</h3><p class="text-green-600">You are fully cleared for this session.</p></div>`;
-                } else {
-                    formHTML = `
-                        <div class="card">
-                            <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Make Payment</h3>
-                            <form onsubmit="event.preventDefault(); const amt=this.amount.value; const type=this.type.value; initPaystack(amt, type);">
-                                <div class="grid md:grid-cols-2 gap-4 mb-4">
-                                    <div><label class="block text-sm mb-1">Fee Type</label>
-                                        <select name="type" class="form-input bg-white" onchange="this.form.amount.value = (this.value==='Acceptance'?10000:50000)">
-                                            ${showAcceptance ? '<option value="Acceptance">Acceptance Fee</option>' : ''}
-                                            ${showTuition ? '<option value="Tuition">Tuition Fee</option>' : ''}
-                                        </select>
+                    if (!showAcceptance && !showTuition) {
+                        formHTML = `<div class="card text-center p-10 bg-green-50 border border-green-200"><i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i><h3 class="text-xl font-bold text-green-800">All Fees Paid!</h3><p class="text-green-600">You are fully cleared for this session.</p></div>`;
+                    } else {
+                        formHTML = `
+                            <div class="card">
+                                <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Make Payment</h3>
+                                <form onsubmit="event.preventDefault(); const amt=this.amount.value; const type=this.type.value; initPaystack(amt, type);">
+                                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                                        <div><label class="block text-sm mb-1">Fee Type</label>
+                                            <select name="type" class="form-input bg-white" onchange="this.form.amount.value = (this.value==='Acceptance'?10000:50000)">
+                                                ${showAcceptance ? '<option value="Acceptance">Acceptance Fee</option>' : ''}
+                                                ${showTuition ? '<option value="Tuition">Tuition Fee</option>' : ''}
+                                            </select>
+                                        </div>
+                                        <div><label class="block text-sm mb-1">Amount (₦)</label><input type="number" name="amount" value="${showAcceptance ? '10000' : '50000'}" readonly class="form-input bg-gray-50"></div>
                                     </div>
-                                    <div><label class="block text-sm mb-1">Amount (₦)</label><input type="number" name="amount" value="${showAcceptance ? '10000' : '50000'}" readonly class="form-input bg-gray-50"></div>
-                                </div>
-                                <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700">Proceed to Pay</button>
-                            </form>
-                        </div>`;
-                }
+                                    <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700">Proceed to Pay</button>
+                                </form>
+                            </div>`;
+                    }
 
-                content.innerHTML = `
-                    <div class="max-w-4xl mx-auto space-y-6">
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div class="bg-white p-4 rounded-xl shadow-sm border ${studentData.hasPaidAcceptance ? 'border-green-200 bg-green-50' : 'border-gray-200'}">
-                                <p class="text-xs font-bold text-gray-400 uppercase">Acceptance Fee</p>
-                                <p class="text-2xl font-bold text-gray-800">₦10,000</p>
-                                <p class="text-xs font-bold ${studentData.hasPaidAcceptance ? 'text-green-600' : 'text-red-500'} mt-1">
-                                    ${studentData.hasPaidAcceptance ? 'PAID <i class="fas fa-check-circle"></i>' : 'UNPAID'}
-                                </p>
+                    content.innerHTML = `
+                        <div class="max-w-4xl mx-auto space-y-6">
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="bg-white p-4 rounded-xl shadow-sm border ${studentData.hasPaidAcceptance ? 'border-green-200 bg-green-50' : 'border-gray-200'}">
+                                    <p class="text-xs font-bold text-gray-400 uppercase">Acceptance Fee</p>
+                                    <p class="text-2xl font-bold text-gray-800">₦10,000</p>
+                                    <p class="text-xs font-bold ${studentData.hasPaidAcceptance ? 'text-green-600' : 'text-red-500'} mt-1">
+                                        ${studentData.hasPaidAcceptance ? 'PAID <i class="fas fa-check-circle"></i>' : 'UNPAID'}
+                                    </p>
+                                </div>
+                                <div class="bg-white p-4 rounded-xl shadow-sm border ${studentData.hasPaidTuition ? 'border-green-200 bg-green-50' : 'border-gray-200'}">
+                                    <p class="text-xs font-bold text-gray-400 uppercase">Tuition Fee</p>
+                                    <p class="text-2xl font-bold text-gray-800">₦50,000</p>
+                                    <p class="text-xs font-bold ${studentData.hasPaidTuition ? 'text-green-600' : 'text-red-500'} mt-1">
+                                        ${studentData.hasPaidTuition ? 'PAID <i class="fas fa-check-circle"></i>' : 'UNPAID'}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="bg-white p-4 rounded-xl shadow-sm border ${studentData.hasPaidTuition ? 'border-green-200 bg-green-50' : 'border-gray-200'}">
-                                <p class="text-xs font-bold text-gray-400 uppercase">Tuition Fee</p>
-                                <p class="text-2xl font-bold text-gray-800">₦50,000</p>
-                                <p class="text-xs font-bold ${studentData.hasPaidTuition ? 'text-green-600' : 'text-red-500'} mt-1">
-                                    ${studentData.hasPaidTuition ? 'PAID <i class="fas fa-check-circle"></i>' : 'UNPAID'}
-                                </p>
-                            </div>
-                        </div>
-                        ${formHTML}
-                    </div>`;
+                            ${formHTML}
+                        </div>`;
+                });
             } else if (tab === 'announcements') { fetchAndRenderAnnouncements(); }
             else if (tab === 'assignments') { fetchAndRenderAssignments(); }
         }
@@ -369,22 +400,13 @@
                 if(res.result === 'success' && res.data.length > 0) {
                     let html = `<div class="max-w-3xl mx-auto space-y-4">`;
                     res.data.forEach(ass => {
-                       html += `<div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between md:items-center gap-4 transition hover:shadow-md">
-                                <div class="flex-1">
-                                    <div class="flex items-center mb-1">
-                                        <span class="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide mr-2">Assignment</span>
-                                        <h3 class="font-bold text-gray-900 text-lg">${ass.title||ass.Title}</h3>
-                                    </div>
-                                    <p class="text-gray-600 text-sm mb-3 line-clamp-2">${ass.description||ass.Description}</p>
-                                    <div class="flex items-center text-xs text-gray-500">
-                                        <i class="far fa-clock mr-1"></i> Due: ${ass.dueDate||ass.DueDate}
-                                    </div>
-                                </div>
+                       html += `<div class="bg-white p-5 rounded-xl shadow-sm border flex justify-between items-center">
+                                <div><h3 class="font-bold">${ass.title||ass.Title}</h3><p class="text-sm text-gray-600">${ass.description||ass.Description}</p><p class="text-xs text-red-500 mt-1">Due: ${ass.dueDate||ass.DueDate}</p></div>
                                 <button class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-medium text-sm hover:bg-blue-100 transition whitespace-nowrap">View</button>
                                </div>`;
                     });
                     content.innerHTML = html + `</div>`;
-                } else { content.innerHTML = `<div class="card text-center text-gray-500 p-10"><i class="fas fa-check-circle text-4xl mb-4 text-gray-300"></i><p>No active assignments.</p></div>`; }
+                } else { content.innerHTML = `<div class="card text-center p-10 text-gray-500">No active assignments.</div>`; }
             } catch(e){ content.innerHTML = `<div class="text-center text-red-500 p-10">Failed to load assignments.</div>`; }
         }
 

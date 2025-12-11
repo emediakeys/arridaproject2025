@@ -118,6 +118,36 @@
         </div>
     </div>
 
+    <div id="questionModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Add Question</h3>
+            <form id="addQuestionForm" class="space-y-4">
+                <input type="hidden" id="q_examId">
+                <textarea id="q_text" placeholder="Question Text" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-emerald-500 focus:border-emerald-500" rows="3" required></textarea>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="q_optA" placeholder="Option A" class="p-3 border border-gray-300 rounded-lg" required>
+                    <input type="text" id="q_optB" placeholder="Option B" class="p-3 border border-gray-300 rounded-lg" required>
+                    <input type="text" id="q_optC" placeholder="Option C" class="p-3 border border-gray-300 rounded-lg" required>
+                    <input type="text" id="q_optD" placeholder="Option D" class="p-3 border border-gray-300 rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Correct Answer</label>
+                    <select id="q_answer" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50" required>
+                        <option value="">Select Correct Option</option>
+                        <option value="A">Option A</option>
+                        <option value="B">Option B</option>
+                        <option value="C">Option C</option>
+                        <option value="D">Option D</option>
+                    </select>
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="document.getElementById('questionModal').classList.add('hidden'); document.getElementById('questionModal').classList.remove('flex');" class="flex-1 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">Cancel</button>
+                    <button type="submit" class="flex-1 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium shadow-md">Save Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // --- APP CONFIGURATION ---
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
@@ -132,10 +162,10 @@
             announcements: [],
             assignments: [],
             attendance: [],
+            exams: [], 
             isSidebarOpen: false 
         };
 
-        // Holds the function to run if user clicks "Delete"
         let confirmCallback = null;
 
         // --- UI UTILITIES ---
@@ -173,14 +203,12 @@
             modal.classList.remove('flex');
         }
 
-        // --- NEW CONFIRMATION LOGIC ---
-
         function showConfirm(title, message, callback) {
             const modal = document.getElementById('confirmModal');
             document.getElementById('confirmTitle').innerText = title;
             document.getElementById('confirmMessage').innerText = message;
             
-            confirmCallback = callback; // Store the action to run later
+            confirmCallback = callback;
             
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -190,12 +218,12 @@
             const modal = document.getElementById('confirmModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-            confirmCallback = null; // Clear callback
+            confirmCallback = null;
         }
 
         function executeConfirm() {
             if (confirmCallback) {
-                confirmCallback(); // Run the stored function
+                confirmCallback();
             }
             closeConfirm();
         }
@@ -316,6 +344,7 @@
                 assignedCourse: '', 
                 activeTab: 'dashboard', 
                 students: [], announcements: [], assignments: [], attendance: [],
+                exams: [],
                 isSidebarOpen: false
             };
             render(AdminLogin);
@@ -344,15 +373,17 @@
             const course = adminState.assignedCourse;
 
             try {
-                const [studentsResult, announcementsResult, assignmentsResult] = await Promise.all([
+                const [studentsResult, announcementsResult, assignmentsResult, examsResult] = await Promise.all([
                     fetchAppsScript('getStudentsByCourse', { course }),
                     fetchAppsScript('getAnnouncementsByCourse', { course, currentUser: adminState.username }),
-                    fetchAppsScript('getAssignmentsByCourse', { course })
+                    fetchAppsScript('getAssignmentsByCourse', { course }),
+                    fetchAppsScript('getExamsAdmin', { course })
                 ]);
 
                 adminState.students = studentsResult && studentsResult.result === 'success' ? studentsResult.data : [];
                 adminState.announcements = announcementsResult && announcementsResult.result === 'success' ? announcementsResult.data : [];
                 adminState.assignments = assignmentsResult && assignmentsResult.result === 'success' ? assignmentsResult.data : [];
+                adminState.exams = examsResult && examsResult.result === 'success' ? examsResult.data : [];
             } catch (err) {
                 console.error("Error loading dashboard data", err);
             }
@@ -385,7 +416,77 @@
             }
         }
 
-        // --- CRUD OPERATIONS ---
+        // --- EXAM LOGIC ---
+        
+        async function handleCreateExam(e) {
+            e.preventDefault();
+            const title = e.target.title.value;
+            const duration = e.target.duration.value;
+            
+            const result = await fetchAppsScript('createExam', { course: adminState.assignedCourse, title, duration });
+            
+            if(result.result === 'success') { 
+                showModal('Success', 'Exam created successfully!'); 
+                loadInitialData(); 
+            } else { 
+                showModal('Error', result.message, true); 
+            }
+        }
+
+        function openAddQuestionModal(examId) {
+            document.getElementById('q_examId').value = examId;
+            document.getElementById('addQuestionForm').reset();
+            document.getElementById('questionModal').classList.remove('hidden');
+            document.getElementById('questionModal').classList.add('flex');
+        }
+
+        async function handleAddQuestion(e) {
+            e.preventDefault();
+            const val = (id) => document.getElementById(id).value;
+            
+            // Get the text value of the selected correct option
+            const ansKey = val('q_answer');
+            if(!ansKey) { showModal('Error', 'Please select correct answer', true); return; }
+            const ansText = val('q_opt' + ansKey); 
+            
+            const data = {
+                examId: val('q_examId'),
+                question: val('q_text'),
+                optA: val('q_optA'),
+                optB: val('q_optB'),
+                optC: val('q_optC'),
+                optD: val('q_optD'),
+                answer: ansText
+            };
+            
+            const res = await fetchAppsScript('addQuestion', data);
+            if(res.result === 'success') { 
+                showModal('Success', 'Question added successfully!'); 
+                e.target.reset(); 
+            } else { 
+                showModal('Error', 'Failed to add question.', true); 
+            }
+        }
+
+        async function toggleExamStatus(examId) {
+            const res = await fetchAppsScript('toggleExamStatus', { examId });
+            if(res.result === 'success') loadInitialData();
+        }
+        
+        async function toggleResultRelease(examId) {
+            const res = await fetchAppsScript('toggleResultRelease', { examId });
+            if(res.result === 'success') loadInitialData();
+        }
+
+        async function deleteExam(examId) {
+            showConfirm("Delete Exam?", "Are you sure? This cannot be undone.", async () => {
+                 setLoading(true, "Deleting Exam...");
+                 const res = await fetchAppsScript('deleteExam', { examId });
+                 if(res.result === 'success') loadInitialData();
+            });
+        }
+
+        // --- CRUD OPERATIONS (STANDARD) ---
 
         async function handleAddAnnouncement(e) {
             e.preventDefault();
@@ -407,22 +508,16 @@
         }
 
         function handleDeleteAnnouncement(id) {
-            // Updated to use custom modal
-            showConfirm(
-                "Delete Post?", 
-                "Are you sure you want to delete this announcement? This cannot be undone.", 
-                async () => {
-                    setLoading(true, "Deleting Post...");
-                    const result = await fetchAppsScript('deleteAnnouncement', { id });
-                    
-                    if (result.result === 'success') {
-                        showModal('Deleted', 'Post deleted successfully.');
-                        loadInitialData();
-                    } else {
-                        showModal('Error', result.message || 'Failed to delete.', true);
-                    }
+            showConfirm("Delete Post?", "Are you sure you want to delete this announcement? This cannot be undone.", async () => {
+                setLoading(true, "Deleting Post...");
+                const result = await fetchAppsScript('deleteAnnouncement', { id });
+                if (result.result === 'success') {
+                    showModal('Deleted', 'Post deleted successfully.');
+                    loadInitialData();
+                } else {
+                    showModal('Error', result.message || 'Failed to delete.', true);
                 }
-            );
+            });
         }
 
         async function handleAddAssignment(e) {
@@ -445,41 +540,30 @@
         }
 
         function handleDeleteAssignment(id) {
-            // Updated to use custom modal
-            showConfirm(
-                "Delete Assignment?", 
-                "Are you sure you want to remove this assignment? Students will no longer see it.", 
-                async () => {
-                    setLoading(true, "Deleting Assignment...");
-                    const result = await fetchAppsScript('deleteAssignment', { id });
-                    
-                    if (result.result === 'success') {
-                        showModal('Deleted', 'Assignment deleted successfully.');
-                        loadInitialData();
-                    } else {
-                        showModal('Error', result.message || 'Failed to delete.', true);
-                    }
+            showConfirm("Delete Assignment?", "Are you sure you want to remove this assignment? Students will no longer see it.", async () => {
+                setLoading(true, "Deleting Assignment...");
+                const result = await fetchAppsScript('deleteAssignment', { id });
+                if (result.result === 'success') {
+                    showModal('Deleted', 'Assignment deleted successfully.');
+                    loadInitialData();
+                } else {
+                    showModal('Error', result.message || 'Failed to delete.', true);
                 }
-            );
+            });
         }
 
         async function handleRemoveStudent(admNo, course) {
-            showConfirm(
-                "Remove Student?", 
-                `Are you sure you want to remove ${admNo}? This will delete their record from the class list.`, 
-                async () => {
-                    setLoading(true, `Removing ${admNo}...`);
-                    const result = await fetchAppsScript('removeStudent', { admNo, course });
-
-                    if (result.result === 'success') {
-                        showModal('Removed', `Student ${admNo} has been removed.`);
-                        adminState.students = adminState.students.filter(s => s.admNo !== admNo);
-                        render(AdminDashboard); 
-                    } else {
-                        showModal('Error', result.message || 'Failed.', true);
-                    }
+            showConfirm("Remove Student?", `Are you sure you want to remove ${admNo}? This will delete their record from the class list.`, async () => {
+                setLoading(true, `Removing ${admNo}...`);
+                const result = await fetchAppsScript('removeStudent', { admNo, course });
+                if (result.result === 'success') {
+                    showModal('Removed', `Student ${admNo} has been removed.`);
+                    adminState.students = adminState.students.filter(s => s.admNo !== admNo);
+                    render(AdminDashboard); 
+                } else {
+                    showModal('Error', result.message || 'Failed.', true);
                 }
-            );
+            });
         }
 
         // --- ATTENDANCE LOGIC ---
@@ -564,95 +648,16 @@
                         lucide.createIcons();
                     }, 2000);
                 } else {
-                    alert("Failed: " + result.message);
+                    showModal("Error", result.message, true);
                     btn.innerHTML = originalContent;
                     btn.disabled = false;
                     lucide.createIcons();
                 }
             } catch(e) {
-                alert("Network error");
+                showModal("Error", "Network connection failed.", true);
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
                 lucide.createIcons();
-            }
-        }
-
-        // --- SOCIAL INTERACTIONS ---
-
-        async function toggleLike(annId, btnElement) {
-            const icon = btnElement.querySelector('.like-icon');
-            const countSpan = btnElement.querySelector('.like-count');
-            
-            let text = countSpan.innerText;
-            let currentCount = (text === 'Like') ? 0 : parseInt(text);
-            const isLiked = icon.classList.contains('fill-current') && icon.classList.contains('text-red-500');
-
-            if (isLiked) {
-                icon.classList.remove('fill-current', 'text-red-500');
-                icon.classList.add('text-gray-500');
-                const newCount = currentCount - 1;
-                countSpan.innerText = newCount > 0 ? newCount : 'Like';
-            } else {
-                icon.classList.add('fill-current', 'text-red-500');
-                icon.classList.remove('text-gray-500');
-                countSpan.innerText = currentCount + 1;
-            }
-
-            try {
-                await fetchAppsScript('toggleLike', { 
-                    announcementId: annId, 
-                    user: adminState.username 
-                });
-            } catch (e) { console.error("Like failed", e); }
-        }
-
-        async function postComment(annId) {
-            const input = document.getElementById(`comment-input-${annId}`);
-            const text = input.value.trim();
-            if(!text) return;
-
-            const list = document.getElementById(`comment-list-${annId}`);
-            const emptyMsg = list.querySelector('.empty-msg');
-            if(emptyMsg) emptyMsg.remove();
-
-            const tempId = 'temp-' + Date.now();
-
-            const tempComment = `
-                <div id="${tempId}" class="flex space-x-3 group animate-pulse opacity-70">
-                    <div class="w-8 h-8 rounded-full bg-emerald-100 flex-shrink-0 flex items-center justify-center text-emerald-600 text-xs font-bold">
-                        ME
-                    </div>
-                    <div class="flex-1">
-                        <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm inline-block min-w-[150px] border border-gray-100">
-                            <div class="flex justify-between items-baseline mb-1">
-                                <span class="text-xs font-bold text-gray-900">Me</span>
-                                <span class="text-[10px] text-gray-400 ml-2">Saving...</span>
-                            </div>
-                            <p class="text-sm text-gray-700">${text}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            list.insertAdjacentHTML('beforeend', tempComment);
-            input.value = '';
-
-            const result = await fetchAppsScript('addComment', { 
-                announcementId: annId, 
-                user: adminState.username, 
-                comment: text 
-            });
-
-            const tempEl = document.getElementById(tempId);
-
-            if (result && result.result === 'success') {
-                if(tempEl) {
-                    tempEl.classList.remove('animate-pulse', 'opacity-70');
-                    tempEl.querySelector('span.text-gray-400').innerText = 'Just now';
-                }
-            } else {
-                if(tempEl) tempEl.remove();
-                input.value = text;
-                showModal("Error", "Failed to save comment.", true);
             }
         }
 
@@ -689,8 +694,9 @@
             const tabs = [
                 { id: 'dashboard', name: 'Dashboard', icon: 'layout-dashboard' },
                 { id: 'students', name: 'Students', icon: 'users' },
-                { id: 'announcements', name: 'Announcements', icon: 'megaphone' },
+                { id: 'announcements', name: 'News', icon: 'megaphone' },
                 { id: 'assignments', name: 'Assignments', icon: 'clipboard-list' },
+                { id: 'exams', name: 'CBT / Exams', icon: 'monitor-check' },
                 { id: 'attendance', name: 'Attendance', icon: 'calendar-check' },
             ];
 
@@ -700,7 +706,7 @@
             return `
                 <div class="min-h-screen flex relative overflow-hidden bg-gray-50">
                     
-                    <div id="sidebarOverlay" onclick="toggleSidebar()" 
+                    <div id="sidebarOverlay" onclick="toggleSidebar()" 
                         class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden ${overlayClasses}">
                     </div>
 
@@ -723,7 +729,7 @@
 
                         <nav class="flex-grow p-4 space-y-1 overflow-y-auto">
                             ${tabs.map(tab => `
-                                <div class="nav-item ${adminState.activeTab === tab.id ? 'active' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}" 
+                                <div class="nav-item ${adminState.activeTab === tab.id ? 'active' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}" 
                                      data-tab="${tab.id}">
                                     <span data-lucide="${tab.icon}" class="w-5 h-5 mr-3"></span>
                                     ${tab.name}
@@ -772,8 +778,6 @@
                 </div>
             `;
         }
-        
-        // Removed LoadingSpinner() function as it's no longer used for page-level loading
 
         function renderActiveTabContent() {
             switch (adminState.activeTab) {
@@ -781,6 +785,7 @@
                 case 'students': return StudentList();
                 case 'announcements': return AnnouncementsTab();
                 case 'assignments': return AssignmentsTab();
+                case 'exams': return renderExamsTab();
                 case 'attendance': return AttendanceTab();
                 default: return `<p>Select a tab.</p>`;
             }
@@ -792,6 +797,7 @@
             const studentCount = adminState.students.length;
             const assignmentCount = adminState.assignments.length;
             const announcementCount = adminState.announcements.length;
+            const examCount = adminState.exams.length;
 
             return `
                 <h2 class="text-2xl font-semibold mb-6 text-gray-700 hidden md:block">Course: ${adminState.assignedCourse}</h2>
@@ -807,6 +813,10 @@
                     <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500 flex justify-between items-center">
                         <div><p class="text-sm font-medium text-gray-500">Total Announcements</p><p class="text-3xl font-extrabold text-gray-800 mt-1">${announcementCount}</p></div>
                         <div class="p-3 bg-emerald-50 rounded-lg text-emerald-500"><span data-lucide="megaphone" class="w-6 h-6"></span></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500 flex justify-between items-center">
+                        <div><p class="text-sm font-medium text-gray-500">Total Exams</p><p class="text-3xl font-extrabold text-gray-800 mt-1">${examCount}</p></div>
+                        <div class="p-3 bg-purple-50 rounded-lg text-purple-500"><span data-lucide="monitor-check" class="w-6 h-6"></span></div>
                     </div>
                 </div>
             `;
@@ -858,14 +868,13 @@
                                 </h2>
                                 <form id="announcementForm" class="space-y-4">
                                     <div>
-                                        <input type="text" name="title" required placeholder="Post Title" 
+                                        <input type="text" name="title" required placeholder="Post Title" 
                                             class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none text-sm font-semibold text-gray-800">
                                     </div>
                                     <div>
-                                        <textarea name="content" rows="4" required placeholder="What's happening in ${adminState.assignedCourse}?" 
+                                        <textarea name="content" rows="4" required placeholder="What's happening in ${adminState.assignedCourse}?" 
                                             class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none text-sm resize-none"></textarea>
                                     </div>
-                                    
                                     <div>
                                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Visibility</label>
                                         <select name="visibility" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none text-sm text-gray-800">
@@ -873,10 +882,8 @@
                                             <option value="private">🔒 Private (Course Students Only)</option>
                                         </select>
                                     </div>
-
                                     <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center transform active:scale-95">
-                                        <span data-lucide="send" class="w-4 h-4 mr-2"></span>
-                                        Post Update
+                                        <span data-lucide="send" class="w-4 h-4 mr-2"></span> Post Update
                                     </button>
                                 </form>
                             </div>
@@ -889,126 +896,36 @@
                                     ${adminState.announcements.length} Posts
                                 </span>
                             </div>
-                            
                             <div class="space-y-5 pb-20">
-                                ${adminState.announcements.length === 0 ? 
-                                    `<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-                                        <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                            <span data-lucide="coffee" class="w-8 h-8 text-gray-400"></span>
-                                        </div>
-                                        <h3 class="text-lg font-medium text-gray-900">No posts yet</h3>
-                                        <p class="text-gray-500 mt-1">Be the first to post an update for your students.</p>
-                                    </div>` : 
+                                ${adminState.announcements.length === 0 ? 
+                                    `<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center"><div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"><span data-lucide="coffee" class="w-8 h-8 text-gray-400"></span></div><h3 class="text-lg font-medium text-gray-900">No posts yet</h3><p class="text-gray-500 mt-1">Be the first to post an update for your students.</p></div>` : 
                                     adminState.announcements.map((a, index) => {
                                         const likes = a.likes || 0;
                                         const comments = a.comments || [];
                                         const likedByMe = a.likedByMe || false;
                                         const annId = a.id;
-                                        const initials = "AD"; 
+                                        const initials = "AD"; 
                                         const isPublic = a.visibility === 'public';
                                         
                                         return `
                                         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-shadow hover:shadow-md">
                                             <div class="p-4 flex items-center space-x-3">
-                                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                                                    ${initials}
-                                                </div>
+                                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">${initials}</div>
                                                 <div class="flex-1 min-w-0">
-                                                    <p class="text-sm font-bold text-gray-900 truncate">
-                                                        ${adminState.username || 'Administrator'}
-                                                        ${isPublic ? '<span class="ml-2 text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Public</span>' : '<span class="ml-2 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Private</span>'}
-                                                    </p>
-                                                    <p class="text-xs text-gray-500 flex items-center">
-                                                        <span>${a.date}</span>
-                                                        <span class="mx-1">•</span>
-                                                        <span class="text-emerald-600 font-medium bg-emerald-50 px-1.5 rounded text-[10px]">Admin</span>
-                                                    </p>
+                                                    <p class="text-sm font-bold text-gray-900 truncate">${adminState.username || 'Administrator'} ${isPublic ? '<span class="ml-2 text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Public</span>' : '<span class="ml-2 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Private</span>'}</p>
+                                                    <p class="text-xs text-gray-500 flex items-center"><span>${a.date}</span><span class="mx-1">•</span><span class="text-emerald-600 font-medium bg-emerald-50 px-1.5 rounded text-[10px]">Admin</span></p>
                                                 </div>
-                                                
-                                                <button onclick="handleDeleteAnnouncement('${annId}')" class="text-gray-400 hover:text-red-500 transition">
-                                                    <span data-lucide="trash-2" class="w-5 h-5"></span>
-                                                </button>
+                                                <button onclick="handleDeleteAnnouncement('${annId}')" class="text-gray-400 hover:text-red-500 transition"><span data-lucide="trash-2" class="w-5 h-5"></span></button>
                                             </div>
-
-                                            <div class="px-4 pb-2">
-                                                <h3 class="text-base font-bold text-gray-900 mb-2 leading-tight">${a.title}</h3>
-                                                <div class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">${a.content}</div>
+                                            <div class="px-4 pb-2"><h3 class="text-base font-bold text-gray-900 mb-2 leading-tight">${a.title}</h3><div class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">${a.content}</div></div>
+                                            <div class="px-2 py-1 flex items-center justify-between border-t border-gray-100 text-xs text-gray-500">
+                                                 <div class="flex items-center p-2"><span data-lucide="heart" class="w-4 h-4 mr-1 ${likedByMe ? 'fill-current text-red-500' : ''}"></span> ${likes}</div>
+                                                 <div class="p-2">${comments.length} comments</div>
                                             </div>
-
-                                            ${(likes > 0 || comments.length > 0) ? `
-                                            <div class="px-4 py-2 flex items-center justify-between text-xs text-gray-500 border-b border-gray-50">
-                                                <div class="flex items-center">
-                                                    ${likes > 0 ? `<div class="flex -space-x-1 mr-2">
-                                                        <div class="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center border border-white">
-                                                            <span data-lucide="heart" class="w-2 h-2 text-white fill-current"></span>
-                                                        </div>
-                                                    </div>
-                                                    <span>${likes}</span>` : ''}
-                                                </div>
-                                                <div>
-                                                    ${comments.length > 0 ? `<span>${comments.length} comments</span>` : ''}
-                                                </div>
-                                            </div>` : ''}
-
-                                            <div class="px-2 py-1 flex items-center justify-between border-t border-gray-100">
-                                                <button onclick="toggleLike('${annId}', this)" 
-                                                    class="flex-1 flex items-center justify-center py-2 space-x-2 rounded-lg hover:bg-gray-50 transition active:scale-95 group">
-                                                    <span data-lucide="heart" class="like-icon w-5 h-5 ${likedByMe ? 'fill-current text-red-500' : 'text-gray-500 group-hover:text-gray-600'} transition-colors"></span>
-                                                    <span class="text-sm font-medium ${likedByMe ? 'text-red-500' : 'text-gray-600'} like-count">${likes > 0 ? likes : 'Like'}</span>
-                                                </button>
-                                                
-                                                <button onclick="document.getElementById('comments-${index}').classList.toggle('hidden')" 
-                                                    class="flex-1 flex items-center justify-center py-2 space-x-2 rounded-lg hover:bg-gray-50 transition active:scale-95 text-gray-600">
-                                                    <span data-lucide="message-circle" class="w-5 h-5"></span>
-                                                    <span class="text-sm font-medium">Comment</span>
-                                                </button>
-                                                
-                                                <button class="flex-1 flex items-center justify-center py-2 space-x-2 rounded-lg hover:bg-gray-50 transition active:scale-95 text-gray-600">
-                                                    <span data-lucide="share-2" class="w-5 h-5"></span>
-                                                    <span class="text-sm font-medium">Share</span>
-                                                </button>
+                                            <div class="bg-gray-50 border-t border-gray-100 p-4 max-h-40 overflow-y-auto text-xs space-y-2">
+                                                 ${comments.map(c => `<div><b>${c.user}:</b> ${c.text}</div>`).join('') || '<p class="text-gray-400">No comments</p>'}
                                             </div>
-
-                                            <div id="comments-${index}" class="hidden bg-gray-50 border-t border-gray-100 p-4">
-                                                <div class="space-y-4 mb-4 max-h-60 overflow-y-auto custom-scrollbar" id="comment-list-${annId}">
-                                                    ${comments.length === 0 ? 
-                                                        `<div class="empty-msg text-center py-4">
-                                                            <p class="text-xs text-gray-400 italic">No comments yet. Start the conversation!</p>
-                                                        </div>` :
-                                                        comments.map(c => `
-                                                            <div class="flex space-x-3 group">
-                                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-600 text-xs font-bold">
-                                                                    ${c.user.charAt(0)}
-                                                                </div>
-                                                                <div class="flex-1">
-                                                                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm inline-block min-w-[150px]">
-                                                                        <div class="flex justify-between items-baseline mb-1">
-                                                                            <span class="text-xs font-bold text-gray-900">${c.user}</span>
-                                                                            <span class="text-[10px] text-gray-400 ml-2">${c.time}</span>
-                                                                        </div>
-                                                                        <p class="text-sm text-gray-700">${c.text}</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        `).join('')}
-                                                </div>
-                                                
-                                                <div class="flex items-center space-x-2 bg-white p-1.5 rounded-full border border-gray-300 shadow-sm focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 transition-all">
-                                                    <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xs font-bold ml-1">
-                                                        AD
-                                                    </div>
-                                                    <input type="text" id="comment-input-${annId}" 
-                                                        placeholder="Write a comment..." 
-                                                        class="flex-1 bg-transparent border-none focus:ring-0 text-sm px-2 py-1"
-                                                        onkeydown="if(event.key === 'Enter') postComment('${annId}')">
-                                                    <button onclick="postComment('${annId}')" 
-                                                        class="w-8 h-8 bg-emerald-600 text-white rounded-full flex items-center justify-center hover:bg-emerald-700 transition shadow-sm">
-                                                        <span data-lucide="send" class="w-4 h-4 ml-0.5"></span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        `;
+                                        </div>`;
                                     }).join('')}
                             </div>
                         </div>
@@ -1048,6 +965,51 @@
             `;
         }
 
+        // --- NEW: EXAM MANAGEMENT TAB ---
+        function renderExamsTab() {
+            return `
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h2 class="text-2xl font-bold mb-4 text-gray-800">Create Exam</h2>
+                        <form onsubmit="handleCreateExam(event)" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
+                            <input name="title" placeholder="Exam Title (e.g. 1st Semester GST)" class="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white" required>
+                            <input name="duration" type="number" placeholder="Duration (Minutes)" class="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white" required>
+                            <button class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition">Create Exam</button>
+                        </form>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold mb-4 text-gray-800">Manage Exams</h2>
+                        <div class="space-y-4 data-container max-h-96 overflow-y-auto">
+                            ${adminState.exams.length === 0 ? '<div class="p-8 text-center text-gray-500 bg-white rounded-xl border border-gray-200">No exams created yet.</div>' : adminState.exams.map(ex => `
+                                <div class="bg-white p-5 rounded-xl shadow-sm border border-l-4 ${ex.status==='Open'?'border-green-500':'border-gray-400'}">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 class="font-bold text-lg text-gray-900">${ex.title}</h3>
+                                            <p class="text-xs text-gray-500">${ex.duration} Mins • <span class="${ex.status==='Open'?'text-green-600':'text-red-500'} font-bold">${ex.status}</span></p>
+                                        </div>
+                                        <button onclick="deleteExam('${ex.id}')" class="text-gray-400 hover:text-red-500 transition"><span data-lucide="trash-2" class="w-4 h-4"></span></button>
+                                    </div>
+                                    
+                                    <div class="flex gap-2 mt-3 mb-3">
+                                        <button onclick="toggleExamStatus('${ex.id}')" class="flex-1 py-1.5 text-xs font-bold border rounded transition ${ex.status==='Open'?'bg-red-50 text-red-600 border-red-200 hover:bg-red-100':'bg-green-50 text-green-600 border-green-200 hover:bg-green-100'}">
+                                            ${ex.status==='Open'?'Close Exam':'Open Exam'}
+                                        </button>
+                                        <button onclick="toggleResultRelease('${ex.id}')" class="flex-1 py-1.5 text-xs font-bold border rounded transition ${ex.resultStatus==='Released'?'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100':'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'}">
+                                            ${ex.resultStatus==='Released'?'Results: Released':'Results: Held'}
+                                        </button>
+                                    </div>
+
+                                    <button onclick="openAddQuestionModal('${ex.id}')" class="w-full py-2 border border-dashed border-blue-300 text-blue-600 rounded bg-blue-50 text-sm font-medium hover:bg-blue-100 transition">
+                                        + Add Questions
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         function AttendanceTab() {
             return `
                 <div class="max-w-4xl mx-auto">
@@ -1055,31 +1017,21 @@
                         <h2 class="text-2xl font-semibold text-gray-700">Mark Attendance</h2>
                         <div class="flex items-center space-x-2 bg-white p-2 rounded-lg shadow-sm border border-gray-200">
                             <label class="text-sm font-bold text-gray-600 pl-2">Date:</label>
-                            <input type="date" id="attendanceDate" value="${new Date().toISOString().slice(0, 10)}" 
+                            <input type="date" id="attendanceDate" value="${new Date().toISOString().slice(0, 10)}" 
                                 class="px-2 py-1 border-none focus:ring-0 text-gray-700 font-medium">
                         </div>
                     </div>
-
                     <div class="relative mb-6">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span data-lucide="search" class="text-gray-400 w-5 h-5"></span>
-                        </div>
-                        <input type="text" id="studentSearchInput" placeholder="Search by Student Name or Admission Number..." 
-                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg transition bg-white"
-                            autocomplete="off">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span data-lucide="search" class="text-gray-400 w-5 h-5"></span></div>
+                        <input type="text" id="studentSearchInput" placeholder="Search by Student Name or Admission Number..." class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg transition bg-white" autocomplete="off">
                     </div>
-
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="bg-gray-50 px-4 py-2 border-b border-gray-200 flex justify-between items-center">
                             <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Student Details</span>
                             <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Mark Status</span>
                         </div>
-                        
                         <div id="attendanceListContainer" class="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
-                            <div class="p-8 text-center text-gray-500 flex flex-col items-center">
-                                <span data-lucide="search" class="w-12 h-12 text-gray-300 mb-2"></span>
-                                <p>Start typing a name or admission number above to find students.</p>
-                            </div>
+                            <div class="p-8 text-center text-gray-500 flex flex-col items-center"><span data-lucide="search" class="w-12 h-12 text-gray-300 mb-2"></span><p>Start typing a name or admission number above to find students.</p></div>
                         </div>
                     </div>
                 </div>
@@ -1089,32 +1041,19 @@
         // --- BINDING EVENTS ---
 
         function bindDashboardEvents() {
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.onclick = () => changeTab(item.getAttribute('data-tab'));
-            });
-
-            const logoutBtn = document.getElementById('logoutBtn');
-            if(logoutBtn) logoutBtn.onclick = handleLogout;
-            
-            const announcementForm = document.getElementById('announcementForm');
-            if(announcementForm) announcementForm.onsubmit = handleAddAnnouncement;
-            
-            const assignmentForm = document.getElementById('assignmentForm');
-            if(assignmentForm) assignmentForm.onsubmit = handleAddAssignment;
+            document.querySelectorAll('.nav-item').forEach(item => { item.onclick = () => changeTab(item.getAttribute('data-tab')); });
+            if(document.getElementById('logoutBtn')) document.getElementById('logoutBtn').onclick = handleLogout;
+            if(document.getElementById('announcementForm')) document.getElementById('announcementForm').onsubmit = handleAddAnnouncement;
+            if(document.getElementById('assignmentForm')) document.getElementById('assignmentForm').onsubmit = handleAddAssignment;
+            if(document.getElementById('addQuestionForm')) document.getElementById('addQuestionForm').onsubmit = handleAddQuestion;
 
             const searchInput = document.getElementById('studentSearchInput');
             if (searchInput) {
                 searchInput.addEventListener('input', (e) => {
                     const query = e.target.value.trim();
-                    if (query.length > 0) {
-                        filterAttendanceList(query);
-                    } else {
-                        document.getElementById('attendanceListContainer').innerHTML = `
-                             <div class="p-8 text-center text-gray-500 flex flex-col items-center">
-                                <span data-lucide="search" class="w-12 h-12 text-gray-300 mb-2"></span>
-                                <p>Start typing a name or admission number above to find students.</p>
-                            </div>
-                        `;
+                    if (query.length > 0) filterAttendanceList(query);
+                    else {
+                        document.getElementById('attendanceListContainer').innerHTML = `<div class="p-8 text-center text-gray-500 flex flex-col items-center"><span data-lucide="search" class="w-12 h-12 text-gray-300 mb-2"></span><p>Start typing a name or admission number above to find students.</p></div>`;
                         lucide.createIcons();
                     }
                 });

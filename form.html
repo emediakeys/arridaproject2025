@@ -11,51 +11,15 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom "Inter" font style for better aesthetics (Added for consistency) */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fc;
-        }
-        /* Original Custom styles for better form aesthetics and ensuring file input visibility */
-        .form-group label {
-            transition: color 0.2s;
-        }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            border-color: #3b82f6; /* Blue-500 on focus */
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* Focus ring */
-        }
-        /* Style for the disabled submit button */
-        .btn-submit:disabled {
-            @apply bg-gray-400 cursor-not-allowed;
-        }
-        
-        /* Modal specific styling for the custom popup */
-        .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(2px);
-            z-index: 50;
-            transition: opacity 0.3s ease;
-        }
-        .modal-content {
-            animation: slideIn 0.3s ease-out;
-        }
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -60%);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%);
-            }
-        }
-        /* Style for print output: hide the "Go Back" button when printing */
-        @media print {
-            .print-hidden {
-                display: none !important;
-            }
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fc; }
+        .form-group label { transition: color 0.2s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
+        .btn-submit:disabled { @apply bg-gray-400 cursor-not-allowed; }
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(2px); z-index: 50; transition: opacity 0.3s ease; }
+        .modal-content { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translate(-50%, -60%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+        @media print { .print-hidden { display: none !important; } }
     </style>
 </head>
 <body class="bg-gray-100 p-4 sm:p-8">
@@ -70,564 +34,295 @@
         
         <fieldset class="border border-gray-200 p-6 rounded-lg mb-8 print-hidden">
             <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">1. Biodata & Passport</legend>
-            
             <div class="form-group mb-4">
-                <label for="passport" class="block text-sm font-medium text-gray-700 mb-2">Upload Passport Photograph (Max 2MB)</label>
-                <input type="file" id="passport" accept="image/png, image/jpeg" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                <div id="preview-container" class="mt-4">
-                    </div>
+                <label for="passport" class="block text-sm font-medium text-gray-700 mb-2">Upload Passport Photograph</label>
+                <input type="file" id="passport" accept="image/*" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <div id="preview-container" class="mt-4"></div>
                 <input type="hidden" id="passportBase64">
             </div>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="col">
-                    <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
-                    <input type="text" id="firstName" name="firstName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                </div>
-                <div class="col">
-                    <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>
-                    <input type="text" id="lastName" name="lastName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                </div>
+                <div class="col"><label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label><input type="text" id="firstName" name="firstName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
+                <div class="col"><label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label><input type="text" id="lastName" name="lastName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div class="col">
-                    <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
-                    <input type="date" id="dob" name="dob" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                </div>
-                <div class="col">
-                    <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
-                    <select id="gender" name="gender" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                        <option value="">Select...</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                    </select>
-                </div>
+                <div class="col"><label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label><input type="date" id="dob" name="dob" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
+                <div class="col"><label for="gender" class="block text-sm font-medium text-gray-700">Gender</label><select id="gender" name="gender" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"><option value="">Select...</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
             </div>
         </fieldset>
         
         <fieldset class="border border-gray-200 p-6 rounded-lg mb-8 print-hidden">
             <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">2. Contact & Login Details</legend>
-            
-            <div class="form-group mb-4">
-                <label for="address" class="block text-sm font-medium text-gray-700">Home Address</label>
-                <textarea id="address" name="address" rows="2" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
-            </div>
-            
+            <div class="form-group mb-4"><label for="address" class="block text-sm font-medium text-gray-700">Home Address</label><textarea id="address" name="address" rows="2" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea></div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="col">
-                    <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
-                    <input type="email" id="email" name="email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                </div>
-                <div class="col">
-                    <label for="password" class="block text-sm font-medium text-gray-700">Create Password</label>
-                    <input type="password" id="password" name="password" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    <small class="block text-xs text-gray-500 mt-1">You will use this to login to the dashboard.</small>
-                </div>
+                <div class="col"><label for="email" class="block text-sm font-medium text-gray-700">Email Address</label><input type="email" id="email" name="email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
+                <div class="col"><label for="password" class="block text-sm font-medium text-gray-700">Create Password</label><input type="password" id="password" name="password" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"><small class="block text-xs text-gray-500 mt-1">You will use this to login to the dashboard.</small></div>
             </div>
         </fieldset>
         
         <fieldset class="border border-gray-200 p-6 rounded-lg mb-8 print-hidden">
-            <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">3. Background Information & Documents</legend>
-            
-            <div class="form-group mb-4">
-                <label for="course" class="block text-sm font-medium text-gray-700">Course Applying For</label>
-                <select name="course" id="course" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    <option value="">-- Select Course --</option>
-                    <option value="Community Health Extension Workers">Community Health Extension Workers</option>
-                    <option value="Public Health">Public Health</option>
-                    <option value="Pharmacy Technician">Pharmacy Technician</option>
-                    <option value="Medical Laboratory Technician">Medical Laboratory Technician</option>
-                </select>
-            </div>
-
+            <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">3. Background & Documents</legend>
+            <div class="form-group mb-4"><label for="course" class="block text-sm font-medium text-gray-700">Course Applying For</label><select name="course" id="course" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"><option value="">-- Select Course --</option><option value="Community Health Extension Workers">Community Health Extension Workers</option><option value="Public Health">Public Health</option><option value="Pharmacy Technician">Pharmacy Technician</option><option value="Medical Laboratory Technician">Medical Laboratory Technician</option></select></div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div class="col">
-                    <label for="birthCert" class="block text-sm font-medium text-gray-700">Upload Birth Certificate (PDF/Image)</label>
+                    <label for="birthCert" class="block text-sm font-medium text-gray-700">Upload Birth Certificate</label>
                     <input type="file" id="birthCert" accept=".pdf, image/*" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
                     <input type="hidden" id="birthCertBase64">
                 </div>
                 <div class="col">
-                    <label for="olevel" class="block text-sm font-medium text-gray-700">Upload O'Level Result (PDF/Image)</label>
+                    <label for="olevel" class="block text-sm font-medium text-gray-700">Upload O'Level Result</label>
                     <input type="file" id="olevel" accept=".pdf, image/*" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
                     <input type="hidden" id="olevelBase64">
                 </div>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div class="col">
-                    <label for="nokName" class="block text-sm font-medium text-gray-700">Next of Kin Name</label>
-                    <input type="text" id="nokName" name="nokName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                </div>
-                <div class="col">
-                    <label for="nokPhone" class="block text-sm font-medium text-gray-700">Next of Kin Phone</label>
-                    <input type="tel" id="nokPhone" name="nokPhone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                </div>
+                <div class="col"><label for="nokName" class="block text-sm font-medium text-gray-700">Next of Kin Name</label><input type="text" id="nokName" name="nokName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
+                <div class="col"><label for="nokPhone" class="block text-sm font-medium text-gray-700">Next of Kin Phone</label><input type="tel" id="nokPhone" name="nokPhone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
             </div>
-
-            <div class="form-group mb-4">
-                <label for="sponsor" class="block text-sm font-medium text-gray-700">Sponsor Name</label>
-                <input type="text" id="sponsor" name="sponsor" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-            </div>
-
-            <div class="form-group">
-                <label for="prevSchool" class="block text-sm font-medium text-gray-700">Previous School Attended</label>
-                <input type="text" id="prevSchool" name="prevSchool" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-            </div>
+            <div class="form-group mb-4"><label for="sponsor" class="block text-sm font-medium text-gray-700">Sponsor Name</label><input type="text" id="sponsor" name="sponsor" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
+            <div class="form-group"><label for="prevSchool" class="block text-sm font-medium text-gray-700">Previous School Attended</label><input type="text" id="prevSchool" name="prevSchool" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
         </fieldset>
         
         <div class="payment-section text-center bg-yellow-50 p-6 rounded-lg border border-yellow-200 print-hidden">
             <p class="text-lg font-bold text-gray-800 mb-4">Application Fee: <strong class="text-green-600">₦7,500</strong></p>
-            
-            <button type="button" id="payBtn" class="btn-pay w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-150 ease-in-out shadow-md">
-                Pay ₦7,500 Now
-            </button>
-            <p id="payment-status" class="mt-4 text-green-700 font-bold hidden">
-                <svg class="inline w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Payment Successful!
-            </p>
-
+            <button type="button" id="payBtn" class="btn-pay w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-150 ease-in-out shadow-md">Pay ₦7,500 Now</button>
+            <p id="payment-status" class="mt-4 text-green-700 font-bold hidden"><svg class="inline w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Payment Successful!</p>
             <hr class="my-6 border-gray-300">
-
-            <button type="submit" id="submitBtn" class="btn-submit w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 px-8 rounded-lg text-lg transition duration-150 ease-in-out shadow-xl" disabled>
-                Submit Application
-            </button>
+            <button type="submit" id="submitBtn" class="btn-submit w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 px-8 rounded-lg text-lg transition duration-150 ease-in-out shadow-xl" disabled>Submit Application</button>
         </div>
-
     </form>
-    <div id="loading" class="text-center mt-6 p-4 bg-blue-100 text-blue-800 rounded-md font-semibold hidden print-hidden">
-        Processing Application...
-    </div>
+    <div id="loading" class="text-center mt-6 p-4 bg-blue-100 text-blue-800 rounded-md font-semibold hidden print-hidden">Processing Application...</div>
 </div>
 
-<!-- 
-=======================================================
-1. Custom Popup Modal Structure (Hidden by Default)
-=======================================================
--->
 <div id="customPopup" class="modal-overlay fixed inset-0 hidden items-center justify-center p-4">
     <div class="modal-content bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full relative">
-        
-        <!-- Icon/Indicator (Success/Error) -->
-        <div id="popupIcon" class="flex justify-center mb-4">
-            <!-- SVG Icon will be injected here by JS -->
-        </div>
-
-        <!-- Title -->
+        <div id="popupIcon" class="flex justify-center mb-4"></div>
         <h3 id="popupTitle" class="text-xl font-bold text-gray-900 mb-2 text-center"></h3>
-        
-        <!-- Message Content -->
         <p id="popupMessage" class="text-gray-600 mb-6 text-center"></p>
-        
-        <!-- Action Buttons (NEW DYNAMIC CONTAINER) -->
-        <div id="popupActions" class="flex justify-center gap-4">
-        </div>
-
+        <div id="popupActions" class="flex justify-center gap-4"></div>
     </div>
 </div>
-
 
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script>
-    // --- CONFIGURATION MOVED TO GLOBAL SCOPE ---
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
-    
-    // **PAYSTACK CONFIGURATION** - Made globally accessible
     const PAYSTACK_PUBLIC_KEY = "pk_test_29f23a0e0bde6c074ae9efb019002a8d95e721b4"; 
     const APPLICATION_FEE_NAIRA = 7500;
     const APPLICATION_FEE_KOBO = APPLICATION_FEE_NAIRA * 100;
 
-    // Global references to the modal elements
     const popupElement = document.getElementById('customPopup');
     const popupTitle = document.getElementById('popupTitle');
     const popupMessage = document.getElementById('popupMessage');
     const popupIconContainer = document.getElementById('popupIcon');
     const popupActionsContainer = document.getElementById('popupActions');
     const mainContainer = document.querySelector('.max-w-3xl.mx-auto');
-
-    // Global variable to hold the submitted data for printing
     let lastSubmittedData = null;
 
-    // Error Icon SVG (for reuse)
-    const errorIcon = `
-        <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-    `;
+    const errorIcon = `<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+    const successIcon = `<svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
-    // Success Icon SVG (for reuse)
-    const successIcon = `
-        <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-    `;
-
-
-    /**
-     * Restores the original form content to the main container.
-     * @param {string} encodedContent - The URI-encoded HTML string of the original form content.
-     */
     function restoreFormContent(encodedContent) {
-        // FIX: Decode the URI-encoded content before setting it as innerHTML
-        const content = decodeURIComponent(encodedContent);
-        mainContainer.innerHTML = content;
+        mainContainer.innerHTML = decodeURIComponent(encodedContent);
+        window.location.reload();
     }
 
-
-    /**
-     * Replaces the native alert() function with a custom, styled popup modal.
-     * @param {string} message - The main message content to display.
-     * @param {string} type - 'success' or 'error' to determine the styling and icon.
-     * @param {string} [title='Notification'] - Optional title for the popup.
-     * @param {Array<Object>} [actions=[]] - Array of button objects: [{text: string, handler: function, isPrimary: boolean}]
-     */
     function showCustomPopup(message, type = 'error', title = 'Notification', actions = []) {
-        // 1. Set content
         popupTitle.textContent = title;
         popupMessage.textContent = message;
-        
-        // 2. Set icon based on type
-        popupIconContainer.innerHTML = ''; // Clear previous icon
-        if (type === 'success') {
-            popupIconContainer.innerHTML = successIcon;
-        } else if (type === 'error') {
-            popupIconContainer.innerHTML = errorIcon;
-        } else {
-            // Default notification icon (e.g., info)
-            popupIconContainer.innerHTML = `
-                <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            `;
-        }
-
-        // 3. Set dynamic action buttons
-        popupActionsContainer.innerHTML = ''; // Clear previous buttons
-
-        if (actions.length === 0) {
-            // Default action: 'OK'
-            actions.push({ text: 'OK', handler: closeCustomPopup, isPrimary: true });
-        }
-
+        popupIconContainer.innerHTML = type === 'success' ? successIcon : errorIcon;
+        popupActionsContainer.innerHTML = '';
+        if (actions.length === 0) actions.push({ text: 'OK', handler: closeCustomPopup, isPrimary: true });
         actions.forEach(action => {
             const button = document.createElement('button');
             button.textContent = action.text;
-            // Determine Tailwind classes based on primary status
             const baseClasses = 'px-5 py-2 font-medium rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2';
-            button.className = action.isPrimary
-                ? `${baseClasses} bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500`
-                : `${baseClasses} bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400`;
-            
-            // Add spacing between buttons
-            if (actions.length > 1) {
-                button.classList.add('mx-1');
-            }
-
+            button.className = action.isPrimary ? `${baseClasses} bg-blue-600 text-white hover:bg-blue-700` : `${baseClasses} bg-gray-200 text-gray-800 hover:bg-gray-300`;
+            if (actions.length > 1) button.classList.add('mx-1');
             button.addEventListener('click', action.handler);
             popupActionsContainer.appendChild(button);
         });
-
-        // 4. Show the modal
         popupElement.classList.remove('hidden');
         popupElement.classList.add('flex');
     }
-
-    /**
-     * Closes the custom popup modal.
-     */
     function closeCustomPopup() {
         popupElement.classList.add('hidden');
         popupElement.classList.remove('flex');
-        popupActionsContainer.innerHTML = ''; // Clear buttons on close
+        popupActionsContainer.innerHTML = '';
     }
-    
-    /**
-     * Generates and prints a summary of the submitted form data, then restores the form.
-     * @param {string} admNo - The generated admission number.
-     */
+
     function printSummary(admNo) {
-        if (!lastSubmittedData) {
-            showCustomPopup("Cannot print: No valid submission data found.", 'error', 'Print Failed');
-            return;
-        }
-        
+        if (!lastSubmittedData) return;
         closeCustomPopup();
-
         const data = lastSubmittedData;
-        const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        // Store original content before replacing it
+        const today = new Date().toLocaleDateString();
         const originalContent = mainContainer.innerHTML; 
-
-        // Create the printable HTML content
-        const printContent = `
-            <div class="p-6">
-                <div class="text-center mb-8 border-b pb-4">
-                    <h2 class="text-3xl font-extrabold text-blue-800">Student Application Summary</h2>
-                    <p class="text-lg text-gray-500 mt-2">Admission Number: <strong class="text-blue-600">${admNo}</strong></p>
-                    <p class="text-sm text-gray-500">Date: ${today}</p>
-                </div>
-                
-                <div class="flex justify-between items-start mb-6">
-                    <div class="space-y-1 text-sm">
-                        <p class="font-bold text-gray-800">${data.firstName} ${data.lastName}</p>
-                        <p class="text-gray-600">Email: ${data.email}</p>
-                        <p class="text-gray-600">DOB: ${data.dob} (${data.gender})</p>
-                    </div>
-                    <!-- Passport Photo (using stored Base64) -->
-                    <img src="${data.passportBase64}" alt="Passport Photo" class="w-24 h-24 object-cover border-4 border-blue-200 shadow-lg rounded-lg print:w-32 print:h-32">
-                </div>
-
-                <div class="space-y-4">
-                    <!-- Section 1: Contact & Address -->
-                    <h3 class="text-xl font-semibold text-blue-700 border-b pb-1">Contact & Personal</h3>
-                    <p class="text-sm"><strong>Home Address:</strong> ${data.address}</p>
-                    
-                    <!-- Section 2: Application Details -->
-                    <h3 class="text-xl font-semibold text-blue-700 border-b pb-1 pt-4">Application Details</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <p><strong>Course:</strong> ${data.course}</p>
-                        <p><strong>Previous School:</strong> ${data.prevSchool}</p>
-                    </div>
-
-                    <!-- Section 3: Next of Kin & Sponsor -->
-                    <h3 class="text-xl font-semibold text-blue-700 border-b pb-1 pt-4">Sponsor & Next of Kin</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <p><strong>Sponsor Name:</strong> ${data.sponsor}</p>
-                        <p><strong>Next of Kin:</strong> ${data.nokName}</p>
-                        <p><strong>NOK Phone:</strong> ${data.nokPhone}</p>
-                    </div>
-
-                    <!-- Section 4: Payment -->
-                    <h3 class="text-xl font-semibold text-blue-700 border-b pb-1 pt-4">Payment Confirmation</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <p class="text-green-700 font-bold"><strong>Fee Paid:</strong> ₦${APPLICATION_FEE_NAIRA}.00</p>
-                        <p><strong>Payment Reference:</strong> ${data.paymentRef}</p>
-                    </div>
-                </div>
-
-                <div class="text-center mt-10 p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 print-hidden">
-                    <p>--- End of Summary. Use your browser's print function (Ctrl+P/Cmd+P) to save this document. ---</p>
-                    <!-- IMPORTANT: The restoreFormContent function now handles decoding the original content. -->
-                    <button onclick='restoreFormContent(this.dataset.originalContent)' data-original-content='${encodeURIComponent(originalContent)}' class="mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">Go Back to Form</button>
-                </div>
-                
-                <div class="text-center mt-10 text-xs text-gray-500 print:block hidden">
-                    Generated from Student Admission Portal on ${today}.
-                </div>
-            </div>
-        `;
-
-        // Temporarily replace the main container content with the print summary
+        const printContent = `<div class="p-6"><div class="text-center mb-8 border-b pb-4"><h2 class="text-3xl font-extrabold text-blue-800">Student Application Summary</h2><p class="text-lg text-gray-500 mt-2">Admission Number: <strong class="text-blue-600">${admNo}</strong></p><p class="text-sm text-gray-500">Date: ${today}</p></div><div class="flex justify-between items-start mb-6"><div class="space-y-1 text-sm"><p class="font-bold text-gray-800">${data.firstName} ${data.lastName}</p><p class="text-gray-600">Email: ${data.email}</p><p class="text-gray-600">DOB: ${data.dob} (${data.gender})</p></div><img src="${data.passportBase64}" alt="Passport" class="w-24 h-24 object-cover border-4 border-blue-200 shadow-lg rounded-lg"></div><div class="space-y-4"><h3 class="text-xl font-semibold text-blue-700 border-b pb-1">Application Details</h3><p class="text-sm"><strong>Course:</strong> ${data.course}</p><p class="text-sm"><strong>Address:</strong> ${data.address}</p><p class="text-sm text-green-700 font-bold">Fee Paid: ₦${APPLICATION_FEE_NAIRA}.00 (Ref: ${data.paymentRef})</p></div><div class="text-center mt-10 p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 print-hidden"><button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Start New Application</button></div></div>`;
         mainContainer.innerHTML = printContent;
-        
-        // Trigger the browser's print dialogue
         window.print();
     }
 
+    // --- SMART COMPRESSION LOGIC ---
+    function compressImage(file, maxWidth, quality, callback) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = event => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const elem = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                elem.width = width;
+                elem.height = height;
+                const ctx = elem.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                // Compress to JPEG to reduce size significantly
+                const dataUrl = elem.toDataURL('image/jpeg', quality);
+                callback(dataUrl);
+            };
+        };
+    }
 
-    // --- JAVASCRIPT LOGIC (Updated with custom popup and print functionality) ---
+    function handleFileUpload(input, hiddenField, previewEl = null) {
+        input.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            
+            // If image, compress it. If PDF, read as-is (but beware size limits)
+            if(file.type.startsWith('image/')) {
+                // Compress to 800px width, 0.6 quality (High compression)
+                compressImage(file, 800, 0.6, (base64) => {
+                    hiddenField.value = base64;
+                    if(previewEl) previewEl.innerHTML = `<img src="${base64}" class="max-w-[150px] mt-2 rounded-md border-4 border-blue-200 shadow-lg">`;
+                });
+            } else {
+                // For PDFs, just read them (User must ensure they are small < 2MB)
+                const reader = new FileReader();
+                reader.onload = (e) => hiddenField.value = e.target.result;
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-    
-        // --- Element and Field Variables ---
         const payBtn = document.getElementById('payBtn');
         const submitBtn = document.getElementById('submitBtn');
         const paymentStatus = document.getElementById('payment-status');
         const form = document.getElementById('admissionForm');
-        const emailInput = document.getElementById('email');
         
-        // Passport Elements
+        // Element references
         const passportInput = document.getElementById('passport');
         const passportBase64Field = document.getElementById('passportBase64');
         const previewContainer = document.getElementById('preview-container');
         
-        // Document Elements
         const birthCertInput = document.getElementById('birthCert');
         const birthCertBase64Field = document.getElementById('birthCertBase64');
+        
         const olevelInput = document.getElementById('olevel');
         const olevelBase64Field = document.getElementById('olevelBase64');
         
-        // Holds the transaction reference after successful payment
         let transactionReference = null;
 
-        // --- 1. FILE TO BASE64 CONVERSION LOGIC ---
-        
-        function convertFileToBase64(fileInput, base64Field, previewElement = null) {
-            fileInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        base64Field.value = e.target.result;
-                        if (previewElement) {
-                            // Tailwind styling for image preview
-                            previewElement.innerHTML = `<img src="${e.target.result}" alt="Passport Preview" class="max-w-[150px] mt-2 rounded-md border-4 border-blue-200 shadow-lg">`;
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
+        // Apply compression handlers
+        handleFileUpload(passportInput, passportBase64Field, previewContainer);
+        handleFileUpload(birthCertInput, birthCertBase64Field);
+        handleFileUpload(olevelInput, olevelBase64Field);
 
-        convertFileToBase64(passportInput, passportBase64Field, previewContainer);
-        convertFileToBase64(birthCertInput, birthCertBase64Field);
-        convertFileToBase64(olevelInput, olevelBase64Field);
-        
-        // --- 2. PAYSTACK INTEGRATION ---
-        
         payBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            
-            // Basic client-side check for critical fields before initiating payment
-            const studentEmail = emailInput.value.trim();
-            const studentFirstName = document.getElementById('firstName').value.trim();
-            const studentLastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const fname = document.getElementById('firstName').value.trim();
+            const lname = document.getElementById('lastName').value.trim();
 
-
-            if (!studentEmail || !studentFirstName || !studentLastName) {
-                // *** ALERT REPLACED ***
-                showCustomPopup("Please fill in your first name, last name, and a valid email address before paying.", 'error', 'Missing Details');
-                emailInput.focus();
+            if (!email || !fname || !lname) {
+                showCustomPopup("Please fill in first name, last name, and email before paying.", 'error', 'Missing Details');
                 return;
             }
 
-            payBtn.textContent = "Opening Payment...";
-            payBtn.disabled = true;
-
             const handler = PaystackPop.setup({
                 key: PAYSTACK_PUBLIC_KEY,
-                email: studentEmail,
+                email: email,
                 amount: APPLICATION_FEE_KOBO,
                 currency: 'NGN',
-                ref: '' + Math.floor((Math.random() * 1000000000) + 1), // Unique transaction reference
-                metadata: {
-                    custom_fields: [{
-                        display_name: "Application Fee",
-                        variable_name: "application_fee",
-                        value: APPLICATION_FEE_NAIRA
-                    }]
-                },
+                ref: ''+Math.floor((Math.random() * 1000000000) + 1),
                 callback: function(response){
-                    // Payment was successful. 
                     transactionReference = response.reference;
-                    
-                    payBtn.classList.add('hidden'); // Hide pay button using Tailwind class
-                    paymentStatus.classList.remove('hidden'); // Show success message
-                    
+                    payBtn.classList.add('hidden');
+                    paymentStatus.classList.remove('hidden');
                     submitBtn.disabled = false;
                     submitBtn.textContent = "Submit Application (Payment Confirmed)";
-                    
-                    // *** ALERT REPLACED ***
-                    showCustomPopup("Payment Successful! Reference: " + transactionReference + ". You can now submit your form.", 'success', 'Payment Confirmed');
+                    showCustomPopup("Payment Successful! Ref: " + transactionReference, 'success', 'Payment Confirmed');
                 },
-                onClose: function(){
-                    // User closed the popup
-                    payBtn.textContent = `Pay ₦${APPLICATION_FEE_NAIRA} Now`;
-                    payBtn.disabled = false;
-                    // *** ALERT REPLACED ***
-                    showCustomPopup('Payment cancelled. You must pay to submit the form.', 'error', 'Payment Required');
-                }
+                onClose: function(){ showCustomPopup('Payment cancelled.', 'error', 'Payment Required'); }
             });
-
-            handler.openIframe(); 
+            handler.openIframe();
         });
 
-        // --- 3. HANDLE FORM SUBMISSION ---
-        
+        // --- SUBMISSION LOGIC ---
         form.addEventListener('submit', function(e) {
             e.preventDefault(); 
             
             if (!transactionReference) {
-                // *** ALERT REPLACED ***
-                showCustomPopup("Please complete the ₦7,500 payment before submitting.", 'error', 'Payment Required');
+                showCustomPopup("Please complete payment first.", 'error', 'Payment Required');
                 return; 
             }
 
-            // Client-side validation: Check all required fields again, including files
             if (!form.checkValidity()) {
-                // *** ALERT REPLACED ***
-                showCustomPopup("Please fill in all required fields and upload all required documents before submitting.", 'error', 'Incomplete Form');
+                showCustomPopup("Please fill in all required fields.", 'error', 'Incomplete Form');
                 return;
             }
-
 
             document.getElementById('loading').classList.remove('hidden');
             submitBtn.disabled = true;
             submitBtn.textContent = "Sending Data...";
 
-            // Collect all data from the form fields using 'name' attributes
             const formData = new FormData(form);
             const dataObject = {};
-            // CRITICAL: Ensure values are captured using the 'name' attribute
             formData.forEach((value, key) => dataObject[key] = value);
 
-            // Add the crucial Base64 documents and Payment Reference manually
             dataObject['passportBase64'] = passportBase64Field.value;
             dataObject['birthCertBase64'] = birthCertBase64Field.value;
             dataObject['olevelBase64'] = olevelBase64Field.value;
-            dataObject['paymentRef'] = transactionReference; // Send the Paystack reference
-            
-            // 💡 CRITICAL FIX: Explicitly set the action for Apps Script routing
+            dataObject['paymentRef'] = transactionReference;
             dataObject['action'] = 'submitApplication'; 
 
-            // Send the JSON data to the Google Apps Script Web App
+            // Convert to URLSearchParams for Apps Script compatibility (This handles large payloads better for POST)
+            // But if files are huge (PDFs), this might still hit limits. 
+            // The compression logic added above minimizes this risk for images.
+            // Sending as JSON string for maximum compatibility with the new backend logic.
+            
             fetch(SCRIPT_URL, {
                 method: 'POST',
-                body: JSON.stringify(dataObject)
+                // Using JSON.stringify here because the backend now robustly handles JSON input.
+                // JSON is generally safer for large base64 strings than URL params.
+                body: JSON.stringify(dataObject) 
             })
-            .then(response => {
-                // Check if response is okay, sometimes fetch fails silently
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(res => { if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
             .then(data => {
                 document.getElementById('loading').classList.add('hidden');
                 if(data.result === "success") {
-                    
-                    // NEW: Store submission data (including passport for print, but excluding large docs)
                     lastSubmittedData = { ...dataObject };
-                    delete lastSubmittedData.birthCertBase64; // Don't need to print these
-                    delete lastSubmittedData.olevelBase64;     // Don't need to print these
-
-                    // NEW: Show popup with Print button
-                    showCustomPopup(
-                        "Success! Your Admission Number is: " + data.admNo + ". Check your email shortly for the receipt.", 
-                        'success', 
-                        'Application Submitted!',
-                        [
-                            { text: 'Close', handler: closeCustomPopup },
-                            { text: 'Print Application', handler: () => printSummary(data.admNo), isPrimary: true }
-                        ]
-                    );
-
+                    delete lastSubmittedData.birthCertBase64; 
+                    delete lastSubmittedData.olevelBase64;      
+                    showCustomPopup("Success! Your Admission Number is: " + data.admNo, 'success', 'Submitted!', [{ text: 'Close', handler: closeCustomPopup }, { text: 'Print', handler: () => printSummary(data.admNo), isPrimary: true }]);
                     form.reset();
-                    // Reset UI after successful submission
-                    submitBtn.disabled = true;
                     submitBtn.textContent = "Submit Application";
                     payBtn.classList.remove('hidden');
                     paymentStatus.classList.add('hidden');
                     previewContainer.innerHTML = '';
                     transactionReference = null;
-
                 } else {
-                    // *** ALERT REPLACED ***
-                    showCustomPopup("Submission Error: " + data.message, 'error', 'Submission Failed');
+                    showCustomPopup("Error: " + data.message, 'error', 'Failed');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = "Try Submitting Again";
                 }
             })
-            .catch(error => {
-                console.error('Network Error:', error);
-                // *** ALERT REPLACED ***
-                showCustomPopup("A network error occurred. Please check your connection or Apps Script URL and try again. Details: " + error.message, 'error', 'Network Failure');
+            .catch(err => {
+                showCustomPopup("Network error.", 'error', 'Failed');
+                document.getElementById('loading').classList.add('hidden');
                 submitBtn.disabled = false;
-                submitBtn.textContent = "Try Submitting Again";
             });
         });
-
     });
 </script>
 </body>
 </html>
-

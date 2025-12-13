@@ -252,7 +252,7 @@
         function renderDashboard() {
             const tabs = [
                 { id: 'profile', icon: 'fas fa-user-circle', label: 'My Profile' },
-                { id: 'coursereg', icon: 'fas fa-book-open', label: 'Course Reg.' }, // --- NEW ---
+                { id: 'coursereg', icon: 'fas fa-book-open', label: 'Course Reg.' }, 
                 { id: 'performance', icon: 'fas fa-chart-line', label: 'Performance' },
                 { id: 'announcements', icon: 'fas fa-bullhorn', label: 'News Feed' },
                 { id: 'assignments', icon: 'fas fa-tasks', label: 'Assignments' },
@@ -262,10 +262,11 @@
             ];
             
             const sbClass = isSidebarOpen ? 'translate-x-0' : '-translate-x-full';
+            const overlayClass = isSidebarOpen ? '' : 'hidden';
             
             document.getElementById('app').innerHTML = `
-                <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden ${isSidebarOpen ? '' : 'hidden'}"></div>
-                <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-2xl transform transition-transform duration-300 -translate-x-full md:translate-x-0 md:static flex flex-col ${sbClass}">
+                <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden ${overlayClass}"></div>
+                <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${sbClass} md:translate-x-0 md:relative md:static flex flex-col h-full">
                     <div class="p-4 border-b border-gray-100 bg-blue-50 flex justify-between"><div class="font-bold text-lg text-gray-800"><i class="fas fa-graduation-cap text-blue-500 mr-2"></i>Student Portal</div><button onclick="toggleSidebar()" class="md:hidden text-red-500"><i class="fas fa-times"></i></button></div>
                     <div class="p-4 border-b border-gray-100"><p class="font-bold text-gray-800 truncate">${studentData.firstName}</p><p class="text-xs text-gray-500">${studentData.admNo}</p></div>
                     <nav class="flex-grow p-4 space-y-1 overflow-y-auto">
@@ -273,15 +274,22 @@
                     </nav>
                     <div class="p-4 border-t"><button id="logoutBtn" class="w-full p-3 text-red-500 hover:bg-red-50 rounded-lg"><i class="fas fa-sign-out-alt mr-2"></i> Logout</button></div>
                 </div>
-                <main class="flex-grow flex flex-col h-screen overflow-hidden bg-gray-50">
-                    <div class="md:hidden bg-white p-4 shadow-sm flex justify-between items-center"><button onclick="toggleSidebar()"><i class="fas fa-bars text-xl"></i></button><h1 class="text-lg font-bold capitalize">${tabs.find(t=>t.id===currentTab).label}</h1><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">${studentData.firstName.charAt(0)}</div></div>
+                <main class="flex-grow flex flex-col h-screen overflow-hidden bg-gray-50 relative">
+                    <div class="md:hidden bg-white p-4 shadow-sm flex justify-between items-center z-30 sticky top-0"><button onclick="toggleSidebar()"><i class="fas fa-bars text-xl"></i></button><h1 class="text-lg font-bold capitalize">${tabs.find(t=>t.id===currentTab).label}</h1><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">${studentData.firstName.charAt(0)}</div></div>
                     <div class="flex-grow overflow-y-auto p-4 md:p-8" id="contentScrollArea">
                         <h1 class="text-3xl font-bold text-gray-800 mb-6 hidden md:block capitalize">${tabs.find(t=>t.id===currentTab).label}</h1>
                         <div id="portalContent"></div>
                     </div>
                 </main>`;
             
-            document.querySelectorAll('.nav-item').forEach(i => i.onclick = () => { currentTab = i.dataset.tab; renderDashboard(); });
+            document.querySelectorAll('.nav-item').forEach(i => i.onclick = () => { 
+                currentTab = i.dataset.tab; 
+                if(window.innerWidth < 768) {
+                    isSidebarOpen = false;
+                }
+                renderDashboard(); 
+            });
+            
             document.getElementById('logoutBtn').onclick = handleLogout;
             loadTabContent(currentTab);
         }
@@ -291,7 +299,36 @@
             content.innerHTML = `<div class="text-center py-20"><i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i><p class="mt-4 text-gray-600">Loading...</p></div>`;
 
             if(tab === 'profile') {
-                content.innerHTML = `<div class="max-w-4xl mx-auto"><div class="card grid md:grid-cols-2 gap-6"><div class="col-span-2 border-b pb-4 mb-2 flex items-center"><div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl text-blue-600 font-bold mr-4">${studentData.firstName.charAt(0)}</div><div><h3 class="text-xl font-bold">${studentData.firstName} ${studentData.lastName}</h3><p class="text-gray-500">Student</p></div></div><div class="p-4 border rounded bg-gray-50"><p class="text-xs font-bold text-gray-400">Adm No</p><p class="font-mono text-blue-800 font-bold">${studentData.admNo}</p></div><div class="p-4 border rounded bg-gray-50"><p class="text-xs font-bold text-gray-400">Email</p><p>${studentData.email}</p></div><div class="p-4 border rounded bg-gray-50"><p class="text-xs font-bold text-gray-400">Course</p><p class="text-green-700 font-bold">${studentData.course}</p></div><div class="p-4 border rounded bg-gray-50"><p class="text-xs font-bold text-gray-400">Session</p><p>${getAcademicSession()}</p></div></div></div>`;
+                content.innerHTML = `
+                <div class="max-w-4xl mx-auto">
+                    <div class="card grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="col-span-1 md:col-span-2 border-b pb-4 mb-2 flex flex-col sm:flex-row items-center text-center sm:text-left">
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl text-blue-600 font-bold mb-3 sm:mb-0 sm:mr-4">
+                                ${studentData.firstName.charAt(0)}
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold">${studentData.firstName} ${studentData.lastName}</h3>
+                                <p class="text-gray-500">Student</p>
+                            </div>
+                        </div>
+                        <div class="p-4 border rounded bg-gray-50 break-words">
+                            <p class="text-xs font-bold text-gray-400 uppercase">Adm No</p>
+                            <p class="font-mono text-blue-800 font-bold break-all">${studentData.admNo}</p>
+                        </div>
+                        <div class="p-4 border rounded bg-gray-50 break-words">
+                            <p class="text-xs font-bold text-gray-400 uppercase">Email</p>
+                            <p class="break-all">${studentData.email}</p>
+                        </div>
+                        <div class="p-4 border rounded bg-gray-50 break-words">
+                            <p class="text-xs font-bold text-gray-400 uppercase">Course</p>
+                            <p class="text-green-700 font-bold break-words">${studentData.course}</p>
+                        </div>
+                        <div class="p-4 border rounded bg-gray-50 break-words">
+                            <p class="text-xs font-bold text-gray-400 uppercase">Session</p>
+                            <p>${getAcademicSession()}</p>
+                        </div>
+                    </div>
+                </div>`;
             } else if (tab === 'letter') {
                 syncPaymentStatus().then(() => {
                     if (studentData.hasPaidAcceptance) {
@@ -316,13 +353,13 @@
             else if (tab === 'assignments') { fetchAndRenderAssignments(); }
             else if (tab === 'exams') { renderExamsTab(); }
             else if (tab === 'performance') { renderPerformanceTab(); }
-            else if (tab === 'coursereg') { renderCourseRegTab(); } // --- NEW ---
+            else if (tab === 'coursereg') { renderCourseRegTab(); } 
         }
 
-        // --- NEW UPDATE: COURSE REGISTRATION LOGIC ---
+        // --- UPDATED: NO POPUP LOADING ANIMATION ---
         async function renderCourseRegTab() {
             const content = document.getElementById('portalContent');
-            setLoading(true, 'Loading Courses...');
+            // NO setLoading(true) here anymore. Relies on loadTabContent's inline loader.
             
             try {
                 // Fetch available subjects and registered subjects
@@ -331,7 +368,6 @@
                     makeApiCall({ action: 'getRegisteredCourses', admNo: studentData.admNo })
                 ]);
                 
-                setLoading(false);
                 const availableSubjects = availRes.data || [];
                 const registeredCourses = regRes.data || [];
 
@@ -424,7 +460,7 @@
                     content.innerHTML = `<div class="card text-center p-10 text-gray-500">No courses available for your department yet. Contact Admin.</div>`;
                 }
             } catch (err) {
-                setLoading(false);
+                // Remove loading here in case makeApiCall threw an error
                 content.innerHTML = `<div class="text-center text-red-500 p-10">Error loading courses.</div>`;
             }
         }
@@ -556,7 +592,10 @@
                         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 transition hover:shadow-md">
                             <div class="flex items-center space-x-3 mb-3">
                                 <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">AD</div>
-                                <div><p class="text-sm font-bold text-gray-900">Admin</p><p class="text-xs text-gray-500">${ann.date}</p></div>
+                                <div>
+                                    <p class="text-sm font-bold text-gray-900">Admin</p>
+                                    <p class="text-xs text-gray-500">${ann.date}</p>
+                                </div>
                             </div>
                             <h3 class="font-bold text-lg text-gray-900 mb-2">${ann.title}</h3>
                             <div class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed mb-4">${ann.content}</div>
@@ -572,11 +611,26 @@
                             </div>
                             <div id="comments-${i}" class="hidden mt-4 pt-4 border-t border-gray-100 bg-gray-50 -mx-5 -mb-5 p-5 rounded-b-xl">
                                 <div id="comment-list-${ann.id}" class="space-y-3 mb-4 max-h-60 overflow-y-auto custom-scrollbar">
-                                    ${comments.length ? comments.map(c => `<div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs font-bold text-gray-600">${c.user.substring(0,2).toUpperCase()}</div><div class="flex-1 bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm"><div class="flex justify-between items-baseline mb-1"><span class="font-bold text-gray-900">${c.user}</span><span class="text-xs text-gray-400">${c.time || ''}</span></div><p class="text-gray-700">${c.text}</p></div></div>`).join('') : '<p class="text-center text-gray-400 italic text-sm py-2">No comments yet.</p>'}
+                                    ${comments.length ? comments.map(c => `
+                                        <div class="flex gap-3">
+                                            <div class="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs font-bold text-gray-600">
+                                                ${c.user.substring(0,2).toUpperCase()}
+                                            </div>
+                                            <div class="flex-1 bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm">
+                                                <div class="flex justify-between items-baseline mb-1">
+                                                    <span class="font-bold text-gray-900">${c.user}</span>
+                                                    <span class="text-xs text-gray-400">${c.time || ''}</span>
+                                                </div>
+                                                <p class="text-gray-700">${c.text}</p>
+                                            </div>
+                                        </div>
+                                    `).join('') : '<p class="text-center text-gray-400 italic text-sm py-2">No comments yet.</p>'}
                                 </div>
                                 <form onsubmit="postComment(event, '${ann.id}')" class="flex gap-2 relative">
                                     <input name="comment" class="w-full bg-white border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" placeholder="Write a comment..." autocomplete="off">
-                                    <button type="submit" class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-blue-700 transition shadow-sm flex-shrink-0"><i class="fas fa-paper-plane text-sm"></i></button>
+                                    <button type="submit" class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-blue-700 transition shadow-sm flex-shrink-0">
+                                        <i class="fas fa-paper-plane text-sm"></i>
+                                    </button>
                                 </form>
                             </div>
                         </div>`;

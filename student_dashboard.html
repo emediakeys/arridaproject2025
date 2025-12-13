@@ -244,9 +244,45 @@
                             <div class="mb-6"><label class="block text-gray-700 font-medium mb-2">Password</label><input type="password" id="password" class="form-input" required placeholder="••••••••"></div>
                             <button type="submit" class="w-full py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition">Log In</button>
                         </form>
+                        <div class="mt-4 text-center">
+                            <button onclick="renderForgotPassword()" class="text-sm text-blue-500 hover:text-blue-700 hover:underline transition">Forgot Password?</button>
+                        </div>
                     </div>
                 </div>`;
             document.getElementById('loginForm').onsubmit = handleStudentLogin;
+        }
+
+        function renderForgotPassword() {
+            document.getElementById('app').innerHTML = `
+                <div class="min-h-screen flex items-center justify-center w-full p-4 bg-gray-200">
+                    <div class="card w-full max-w-md">
+                        <div class="text-center mb-6">
+                            <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 text-blue-600 text-2xl"><i class="fas fa-lock-open"></i></div>
+                            <h2 class="text-2xl font-bold text-gray-800">Reset Password</h2>
+                            <p class="text-gray-500 text-sm mt-1">Enter your Admission No. or Email Address</p>
+                        </div>
+                        <form onsubmit="handlePasswordReset(event)">
+                            <div class="mb-6"><input type="text" name="identifier" class="form-input" required placeholder="e.g. ACHSTS001 or student@example.com"></div>
+                            <button type="submit" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition shadow-lg">Send New Password</button>
+                        </form>
+                        <button onclick="renderLogin()" class="w-full mt-4 py-2 text-gray-500 text-sm hover:text-gray-700 transition"><i class="fas fa-arrow-left mr-1"></i> Back to Login</button>
+                    </div>
+                </div>`;
+        }
+
+        async function handlePasswordReset(e) {
+            e.preventDefault();
+            const id = e.target.identifier.value.trim();
+            if(!id) return;
+            setLoading(true, "Processing Request...");
+            try {
+                const res = await makeApiCall({ action: 'resetStudentPassword', identifier: id });
+                setLoading(false);
+                if(res.result === 'success') { showMessage("Success", res.message); renderLogin(); } 
+                else { showMessage("Error", res.message, false); }
+            } catch(err) {
+                setLoading(false); showMessage("Error", "Network connection failed.", false);
+            }
         }
 
         function renderDashboard() {
@@ -300,32 +336,29 @@
 
             if(tab === 'profile') {
                 content.innerHTML = `
-                <div class="max-w-4xl mx-auto">
+                <div class="max-w-4xl mx-auto space-y-6">
                     <div class="card grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="col-span-1 md:col-span-2 border-b pb-4 mb-2 flex flex-col sm:flex-row items-center text-center sm:text-left">
-                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl text-blue-600 font-bold mb-3 sm:mb-0 sm:mr-4">
-                                ${studentData.firstName.charAt(0)}
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold">${studentData.firstName} ${studentData.lastName}</h3>
-                                <p class="text-gray-500">Student</p>
-                            </div>
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl text-blue-600 font-bold mb-3 sm:mb-0 sm:mr-4">${studentData.firstName.charAt(0)}</div>
+                            <div><h3 class="text-xl font-bold">${studentData.firstName} ${studentData.lastName}</h3><p class="text-gray-500">Student</p></div>
                         </div>
-                        <div class="p-4 border rounded bg-gray-50 break-words">
-                            <p class="text-xs font-bold text-gray-400 uppercase">Adm No</p>
-                            <p class="font-mono text-blue-800 font-bold break-all">${studentData.admNo}</p>
+                        <div class="p-4 border rounded bg-gray-50 break-words"><p class="text-xs font-bold text-gray-400 uppercase">Adm No</p><p class="font-mono text-blue-800 font-bold break-all">${studentData.admNo}</p></div>
+                        <div class="p-4 border rounded bg-gray-50 break-words"><p class="text-xs font-bold text-gray-400 uppercase">Email</p><p class="break-all">${studentData.email}</p></div>
+                        <div class="p-4 border rounded bg-gray-50 break-words"><p class="text-xs font-bold text-gray-400 uppercase">Course</p><p class="text-green-700 font-bold break-words">${studentData.course}</p></div>
+                        <div class="p-4 border rounded bg-gray-50 break-words"><p class="text-xs font-bold text-gray-400 uppercase">Session</p><p>${getAcademicSession()}</p></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="flex justify-between items-center cursor-pointer" onclick="document.getElementById('securityForm').classList.toggle('hidden')">
+                            <h3 class="font-bold text-gray-800"><i class="fas fa-shield-alt mr-2 text-blue-600"></i>Security Settings</h3>
+                            <i class="fas fa-chevron-down text-gray-400"></i>
                         </div>
-                        <div class="p-4 border rounded bg-gray-50 break-words">
-                            <p class="text-xs font-bold text-gray-400 uppercase">Email</p>
-                            <p class="break-all">${studentData.email}</p>
-                        </div>
-                        <div class="p-4 border rounded bg-gray-50 break-words">
-                            <p class="text-xs font-bold text-gray-400 uppercase">Course</p>
-                            <p class="text-green-700 font-bold break-words">${studentData.course}</p>
-                        </div>
-                        <div class="p-4 border rounded bg-gray-50 break-words">
-                            <p class="text-xs font-bold text-gray-400 uppercase">Session</p>
-                            <p>${getAcademicSession()}</p>
+                        <div id="securityForm" class="hidden mt-4 pt-4 border-t border-gray-100">
+                            <form onsubmit="submitPasswordChange(event)" class="space-y-4 max-w-md">
+                                <div><label class="block text-sm text-gray-600 mb-1">Old Password</label><input type="password" name="oldPass" class="form-input" required></div>
+                                <div><label class="block text-sm text-gray-600 mb-1">New Password</label><input type="password" name="newPass" class="form-input" required minlength="6"></div>
+                                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition text-sm">Update Password</button>
+                            </form>
                         </div>
                     </div>
                 </div>`;
@@ -354,6 +387,32 @@
             else if (tab === 'exams') { renderExamsTab(); }
             else if (tab === 'performance') { renderPerformanceTab(); }
             else if (tab === 'coursereg') { renderCourseRegTab(); } 
+        }
+
+        async function submitPasswordChange(e) {
+            e.preventDefault();
+            const form = e.target;
+            const oldPass = form.oldPass.value;
+            const newPass = form.newPass.value;
+            setLoading(true, "Updating Password...");
+            try {
+                const res = await makeApiCall({ 
+                    action: 'changeStudentPassword', 
+                    admNo: studentData.admNo, 
+                    oldPassword: oldPass, 
+                    newPassword: newPass 
+                });
+                setLoading(false);
+                if(res.result === 'success') {
+                    showMessage("Success", "Password changed successfully!");
+                    form.reset();
+                } else {
+                    showMessage("Error", res.message, false);
+                }
+            } catch(e) {
+                setLoading(false);
+                showMessage("Error", "Network error.", false);
+            }
         }
 
         // --- UPDATED: NO POPUP LOADING ANIMATION ---

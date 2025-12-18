@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Portal - Dashboard</title>
-    
+
     <link rel="icon" type="image/png" sizes="32x32" href="icon.jpg">
     <link rel="icon" type="image/png" sizes="16x16" href="icon.jpg">
     <link rel="apple-touch-icon" href="icon.jpg">
@@ -13,25 +14,98 @@
     <script src="https://js.paystack.co/v1/inline.js"></script>
 
     <style>
-        :root { --primary-color: #3b82f6; }
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .nav-item { display: flex; align-items: center; padding: 0.75rem 1rem; cursor: pointer; border-radius: 0.5rem; margin-bottom: 0.5rem; transition: all 0.2s; }
-        .nav-item:hover, .nav-item.active { background-color: var(--primary-color); color: white; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
-        .card { background-color: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .form-input { width: 100%; 
-    padding: 0.75rem; 
-    border: 1px solid #e5e7eb; /* Slightly lighter border */
-    border-radius: 0.75rem; 
-    background-color: #f9fafb;
-    transition: all 0.2s; }
-        .form-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); outline: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #e5e7eb; border-radius: 4px; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        :root {
+            --primary-color: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+        }
+
+        .card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            /* Slightly lighter border */
+            border-radius: 0.75rem;
+            background-color: #f9fafb;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+            outline: none;
+        }
+
+        /* Target the scrollbar container */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            /* Width of the scrollbar */
+        }
+
+        /* Make the track (background) transparent */
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        /* Make the handle (thumb) transparent */
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: transparent;
+        }
+
+        /* Standard properties for Firefox */
+        .custom-scrollbar {
+            scrollbar-width: none;
+            /* Hides scrollbar in Firefox */
+            -ms-overflow-style: none;
+            /* Hides scrollbar in IE and Edge */
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
+
 <body>
 
     <div id="app" class="min-h-screen flex flex-col md:flex-row bg-gray-100 relative overflow-hidden"></div>
@@ -40,7 +114,8 @@
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
             <h3 id="modalTitle" class="text-xl font-semibold text-gray-900 mb-3">Message</h3>
             <p id="modalMessage" class="text-gray-700 mb-6"></p>
-            <button onclick="closeModal()" class="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">Close</button>
+            <button onclick="closeModal()"
+                class="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">Close</button>
         </div>
     </div>
 
@@ -53,12 +128,14 @@
             <p id="confirmMessage" class="text-sm text-gray-500 mt-2 mb-4">Are you sure?</p>
             <div class="flex space-x-3">
                 <button onclick="closeConfirm()" class="flex-1 py-2 border rounded hover:bg-gray-50">Cancel</button>
-                <button onclick="executeConfirm()" class="flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Confirm</button>
+                <button onclick="executeConfirm()"
+                    class="flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Confirm</button>
             </div>
         </div>
     </div>
-    
-    <div id="apiLoadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+
+    <div id="apiLoadingOverlay"
+        class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
             <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
             <p class="mt-4 text-gray-600 font-semibold" id="loadingMessage">Processing request...</p>
@@ -68,8 +145,8 @@
     <script>
         // *** REPLACE WITH YOUR DEPLOYED WEB APP URL ***
         const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec';
-        
-        const PAYSTACK_PUBLIC_KEY = 'pk_test_34033a8e8865add5341146621b171d687d606024'; 
+
+        const PAYSTACK_PUBLIC_KEY = 'pk_test_34033a8e8865add5341146621b171d687d606024';
 
         let studentData = {};
         let currentTab = 'profile';
@@ -80,7 +157,7 @@
         // --- UTILS ---
         function togglePassword(inputId, icon) {
             const input = document.getElementById(inputId);
-            if(input.type === 'password') {
+            if (input.type === 'password') {
                 input.type = 'text';
                 icon.classList.remove('fa-eye');
                 icon.classList.add('fa-eye-slash');
@@ -92,7 +169,7 @@
         }
 
         function showMessage(title, message, isSuccess = true) {
-            setLoading(false); 
+            setLoading(false);
             const modal = document.getElementById('messageModal');
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalMessage').textContent = message;
@@ -100,11 +177,11 @@
             titleEl.className = isSuccess ? 'text-xl font-semibold mb-3 text-green-600' : 'text-xl font-semibold mb-3 text-red-600';
             modal.classList.remove('hidden'); modal.classList.add('flex');
         }
-        function closeModal() { 
-            document.getElementById('messageModal').classList.remove('flex'); 
-            document.getElementById('messageModal').classList.add('hidden'); 
+        function closeModal() {
+            document.getElementById('messageModal').classList.remove('flex');
+            document.getElementById('messageModal').classList.add('hidden');
         }
-        
+
         function showConfirm(title, message, callback) {
             document.getElementById('confirmTitle').innerText = title;
             document.getElementById('confirmMessage').innerText = message;
@@ -112,22 +189,22 @@
             document.getElementById('confirmModal').classList.remove('hidden');
             document.getElementById('confirmModal').classList.add('flex');
         }
-        function closeConfirm() { 
-            document.getElementById('confirmModal').classList.add('hidden'); 
-            document.getElementById('confirmModal').classList.remove('flex'); 
-            confirmCallback = null; 
+        function closeConfirm() {
+            document.getElementById('confirmModal').classList.add('hidden');
+            document.getElementById('confirmModal').classList.remove('flex');
+            confirmCallback = null;
         }
         function executeConfirm() { if (confirmCallback) confirmCallback(); closeConfirm(); }
 
         function setLoading(isLoading, message = 'Processing...') {
             const overlay = document.getElementById('apiLoadingOverlay');
-            if (isLoading) { 
-                document.getElementById('loadingMessage').textContent = message; 
-                overlay.classList.remove('hidden'); 
-                overlay.classList.add('flex'); 
-            } else { 
-                overlay.classList.remove('flex'); 
-                overlay.classList.add('hidden'); 
+            if (isLoading) {
+                document.getElementById('loadingMessage').textContent = message;
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            } else {
+                overlay.classList.remove('flex');
+                overlay.classList.add('hidden');
             }
         }
         function toggleSidebar() {
@@ -148,9 +225,9 @@
                     body: new URLSearchParams(data)
                 });
                 return await response.json();
-            } catch (e) { 
-                if(!silent) setLoading(false); 
-                throw e; 
+            } catch (e) {
+                if (!silent) setLoading(false);
+                throw e;
             }
         }
 
@@ -158,15 +235,15 @@
         function checkAuth() {
             try {
                 const storedData = localStorage.getItem('studentData');
-                if (storedData) { 
-                    studentData = JSON.parse(storedData); 
-                    renderDashboard(); 
+                if (storedData) {
+                    studentData = JSON.parse(storedData);
+                    renderDashboard();
                     syncPaymentStatus();
                     startPolling(); // Start live updates
-                } else { 
-                    renderLogin(); 
+                } else {
+                    renderLogin();
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error(e);
                 renderLogin();
             }
@@ -175,41 +252,41 @@
         async function syncPaymentStatus() {
             try {
                 const response = await makeApiCall({ action: 'checkPaymentStatus', admNo: studentData.admNo }, true);
-                if(response.result === 'success') {
+                if (response.result === 'success') {
                     studentData.hasPaidAcceptance = response.hasPaidAcceptance;
                     studentData.hasPaidTuition = response.hasPaidTuition;
                     localStorage.setItem('studentData', JSON.stringify(studentData));
-                    if(currentTab === 'payments' || currentTab === 'letter') loadTabContent(currentTab);
+                    if (currentTab === 'payments' || currentTab === 'letter') loadTabContent(currentTab);
                 }
-            } catch(e) {}
+            } catch (e) { }
         }
 
-        function handleLogout() { 
+        function handleLogout() {
             stopPolling();
-            localStorage.removeItem('studentData'); 
-            studentData = {}; 
-            isSidebarOpen = false; 
-            renderLogin(); 
+            localStorage.removeItem('studentData');
+            studentData = {};
+            isSidebarOpen = false;
+            renderLogin();
         }
 
         // --- POLLING FOR LIVE UPDATES ---
         function startPolling() {
-            if(pollInterval) clearInterval(pollInterval);
+            if (pollInterval) clearInterval(pollInterval);
             pollInterval = setInterval(() => {
-                if(currentTab === 'announcements') {
-                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-                        fetchAndRenderAnnouncements(true); 
+                if (currentTab === 'announcements') {
+                    if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                        fetchAndRenderAnnouncements(true);
                     }
                 }
-            }, 30000); 
+            }, 30000);
         }
 
         function stopPolling() {
-            if(pollInterval) clearInterval(pollInterval);
+            if (pollInterval) clearInterval(pollInterval);
         }
 
         async function handleStudentLogin(event) {
-            event.preventDefault(); 
+            event.preventDefault();
             const admNo = document.getElementById('admNo').value;
             const password = document.getElementById('password').value;
             setLoading(true, 'Authenticating...');
@@ -230,11 +307,11 @@
                     showMessage('Success', `Welcome back, ${studentData.firstName}!`, true);
                     renderDashboard();
                     startPolling();
-                } else { 
-                    showMessage('Login Failed', response.message || 'Invalid Credentials.', false); 
+                } else {
+                    showMessage('Login Failed', response.message || 'Invalid Credentials.', false);
                 }
-            } catch (e) { 
-                showMessage('Error', 'Connection failed.', false); 
+            } catch (e) {
+                showMessage('Error', 'Connection failed.', false);
             }
         }
 
@@ -245,9 +322,9 @@
                 email: studentData.email,
                 amount: amount * 100,
                 currency: 'NGN',
-                ref: '' + Math.floor((Math.random() * 1000000000) + 1), 
+                ref: '' + Math.floor((Math.random() * 1000000000) + 1),
                 metadata: { custom_fields: [{ display_name: "Admission No", variable_name: "adm_no", value: studentData.admNo }] },
-                callback: function(response) {
+                callback: function (response) {
                     setLoading(true, 'Verifying Payment...');
                     makeApiCall({
                         action: 'verifyPayment',
@@ -257,25 +334,25 @@
                         feeType: feeType
                     }).then(res => {
                         setLoading(false);
-                        if(res.result === 'success') {
-                            if(feeType === 'Acceptance') studentData.hasPaidAcceptance = true;
-                            if(feeType === 'Tuition') studentData.hasPaidTuition = true;
+                        if (res.result === 'success') {
+                            if (feeType === 'Acceptance') studentData.hasPaidAcceptance = true;
+                            if (feeType === 'Tuition') studentData.hasPaidTuition = true;
                             localStorage.setItem('studentData', JSON.stringify(studentData));
                             showMessage("Success", "Payment successful!", true);
-                            renderDashboard(); 
+                            renderDashboard();
                         } else {
                             showMessage("Verification Failed", "Payment could not be verified.", false);
                         }
                     });
                 },
-                onClose: function() { showMessage('Cancelled', 'Transaction was not completed.', false); } 
+                onClose: function () { showMessage('Cancelled', 'Transaction was not completed.', false); }
             });
             handler.openIframe();
         }
 
         // --- RENDERERS ---
-function renderLogin() {
-    document.getElementById('app').innerHTML = `
+        function renderLogin() {
+            document.getElementById('app').innerHTML = `
         <div class="min-h-screen w-full flex flex-col md:flex-row bg-white overflow-hidden">
             
             <div class="hidden md:flex md:w-1/2 relative items-center justify-center p-12 text-white overflow-hidden group transition-all duration-700">
@@ -346,9 +423,9 @@ function renderLogin() {
                 </div>
             </div>
         </div>`;
-    
-    document.getElementById('loginForm').onsubmit = handleStudentLogin;
-}
+
+            document.getElementById('loginForm').onsubmit = handleStudentLogin;
+        }
         function renderForgotPassword() {
             document.getElementById('app').innerHTML = `
                 <div class="min-h-screen flex items-center justify-center w-full p-4 bg-gray-200">
@@ -370,35 +447,35 @@ function renderLogin() {
         async function handlePasswordReset(e) {
             e.preventDefault();
             const id = e.target.identifier.value.trim();
-            if(!id) return;
+            if (!id) return;
             setLoading(true, "Processing Request...");
             try {
                 const res = await makeApiCall({ action: 'resetStudentPassword', identifier: id });
                 setLoading(false);
-                if(res.result === 'success') { showMessage("Success", res.message); renderLogin(); } 
+                if (res.result === 'success') { showMessage("Success", res.message); renderLogin(); }
                 else { showMessage("Error", res.message, false); }
-            } catch(err) {
+            } catch (err) {
                 setLoading(false); showMessage("Error", "Network connection failed.", false);
             }
         }
 
         function renderDashboard() {
-    const tabs = [
-        { id: 'profile', icon: 'fas fa-user-circle', label: 'My Profile' },
-        { id: 'coursereg', icon: 'fas fa-book-open', label: 'Course Reg.' }, 
-        { id: 'performance', icon: 'fas fa-chart-line', label: 'Performance' },
-        { id: 'announcements', icon: 'fas fa-bullhorn', label: 'News Feed' },
-        { id: 'assignments', icon: 'fas fa-tasks', label: 'Assignments' },
-        { id: 'exams', icon: 'fas fa-laptop-code', label: 'Take Exam' },
-        { id: 'letter', icon: 'fas fa-file-alt', label: 'Admission Letter' },
-        { id: 'payments', icon: 'fas fa-wallet', label: 'Payments' },
-    ];
-    
-    const sbClass = isSidebarOpen ? 'translate-x-0' : '-translate-x-full';
-    const overlayClass = isSidebarOpen ? '' : 'hidden';
-    const activeTabLabel = tabs.find(t => t.id === currentTab).label;
-    
-    document.getElementById('app').innerHTML = `
+            const tabs = [
+                { id: 'profile', icon: 'fas fa-user-circle', label: 'My Profile' },
+                { id: 'coursereg', icon: 'fas fa-book-open', label: 'Course Reg.' },
+                { id: 'performance', icon: 'fas fa-chart-line', label: 'Performance' },
+                { id: 'announcements', icon: 'fas fa-bullhorn', label: 'News Feed' },
+                { id: 'assignments', icon: 'fas fa-tasks', label: 'Assignments' },
+                { id: 'exams', icon: 'fas fa-laptop-code', label: 'Take Exam' },
+                { id: 'letter', icon: 'fas fa-file-alt', label: 'Admission Letter' },
+                { id: 'payments', icon: 'fas fa-wallet', label: 'Payments' },
+            ];
+
+            const sbClass = isSidebarOpen ? 'translate-x-0' : '-translate-x-full';
+            const overlayClass = isSidebarOpen ? '' : 'hidden';
+            const activeTabLabel = tabs.find(t => t.id === currentTab).label;
+
+            document.getElementById('app').innerHTML = `
         <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden ${overlayClass}"></div>
         
         <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${sbClass} md:translate-x-0 md:relative md:static flex flex-col h-screen">
@@ -450,22 +527,22 @@ function renderLogin() {
                 <div id="portalContent" class="fade-in"></div>
             </div>
         </main>`;
-    
-    // Re-attach listeners
-    document.querySelectorAll('.nav-item').forEach(i => i.onclick = () => { 
-        currentTab = i.dataset.tab; 
-        if(window.innerWidth < 768) isSidebarOpen = false;
-        renderDashboard(); 
-    });
-    
-    document.getElementById('logoutBtn').onclick = handleLogout;
-    loadTabContent(currentTab);
-}
+
+            // Re-attach listeners
+            document.querySelectorAll('.nav-item').forEach(i => i.onclick = () => {
+                currentTab = i.dataset.tab;
+                if (window.innerWidth < 768) isSidebarOpen = false;
+                renderDashboard();
+            });
+
+            document.getElementById('logoutBtn').onclick = handleLogout;
+            loadTabContent(currentTab);
+        }
         async function loadTabContent(tab) {
             const content = document.getElementById('portalContent');
             content.innerHTML = `<div class="text-center py-20"><i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i><p class="mt-4 text-gray-600">Loading...</p></div>`;
 
-            if(tab === 'profile') {
+            if (tab === 'profile') {
                 try {
                     const res = await makeApiCall({ action: 'getStudentProfile', admNo: studentData.admNo }, true);
                     const p = res.result === 'success' ? res.data : studentData;
@@ -489,10 +566,10 @@ function renderLogin() {
                                     <p class="text-gray-500 font-medium">${p.admNo} • ${studentData.course}</p>
                                     <div class="mt-3 flex flex-wrap justify-center md:justify-start gap-2">
                                         <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold">Session: ${getAcademicSession()}</span>
-                                        ${isComplete 
-                                            ? '<span class="px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-bold"><i class="fas fa-check-circle mr-1"></i> Registration Complete</span>' 
-                                            : '<span class="px-3 py-1 bg-yellow-50 text-yellow-600 rounded-full text-xs font-bold"><i class="fas fa-exclamation-circle mr-1"></i> Incomplete Bio-Data</span>'
-                                        }
+                                        ${isComplete
+                            ? '<span class="px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-bold"><i class="fas fa-check-circle mr-1"></i> Registration Complete</span>'
+                            : '<span class="px-3 py-1 bg-yellow-50 text-yellow-600 rounded-full text-xs font-bold"><i class="fas fa-exclamation-circle mr-1"></i> Incomplete Bio-Data</span>'
+                        }
                                     </div>
                                 </div>
                                 <div>
@@ -625,8 +702,8 @@ function renderLogin() {
                             </div>
                         </div>
                     </div>`;
-                } catch(e) { content.innerHTML = `<div class="p-8 text-center text-red-500">Failed to load profile.</div>`; }
-            
+                } catch (e) { content.innerHTML = `<div class="p-8 text-center text-red-500">Failed to load profile.</div>`; }
+
             } else if (tab === 'letter') {
                 syncPaymentStatus().then(() => {
                     if (studentData.hasPaidAcceptance) {
@@ -651,7 +728,7 @@ function renderLogin() {
             else if (tab === 'assignments') { fetchAndRenderAssignments(); }
             else if (tab === 'exams') { renderExamsTab(); }
             else if (tab === 'performance') { renderPerformanceTab(); }
-            else if (tab === 'coursereg') { renderCourseRegTab(); } 
+            else if (tab === 'coursereg') { renderCourseRegTab(); }
         }
 
         // --- NEW HELPERS FOR PROFILE ---
@@ -660,16 +737,16 @@ function renderLogin() {
             const formDiv = document.getElementById('profileFormContainer');
             const btn = document.getElementById('toggleProfileBtn');
 
-            if(view.classList.contains('hidden')) {
+            if (view.classList.contains('hidden')) {
                 // Close Form -> Show View
                 view.classList.remove('hidden');
                 formDiv.classList.add('hidden');
-                if(btn) btn.classList.remove('hidden'); 
+                if (btn) btn.classList.remove('hidden');
             } else {
                 // Open Form -> Hide View
                 view.classList.add('hidden');
                 formDiv.classList.remove('hidden');
-                if(btn) btn.classList.add('hidden'); 
+                if (btn) btn.classList.add('hidden');
             }
         }
 
@@ -677,7 +754,7 @@ function renderLogin() {
         function toggleSecurity() {
             const sec = document.getElementById('securitySection');
             const chev = document.getElementById('secChevron');
-            if(sec.classList.contains('hidden')) {
+            if (sec.classList.contains('hidden')) {
                 sec.classList.remove('hidden');
                 chev.style.transform = 'rotate(180deg)';
             } else {
@@ -699,13 +776,13 @@ function renderLogin() {
             try {
                 const res = await makeApiCall(data);
                 setLoading(false);
-                if(res.result === 'success') {
+                if (res.result === 'success') {
                     showMessage("Success", "Profile updated successfully!");
                     loadTabContent('profile'); // Reload to show read-only view
                 } else {
                     showMessage("Error", res.message, false);
                 }
-            } catch(err) {
+            } catch (err) {
                 setLoading(false);
                 showMessage("Error", "Network failed.", false);
             }
@@ -718,20 +795,20 @@ function renderLogin() {
             const newPass = form.newPass.value;
             setLoading(true, "Updating Password...");
             try {
-                const res = await makeApiCall({ 
-                    action: 'changeStudentPassword', 
-                    admNo: studentData.admNo, 
-                    oldPassword: oldPass, 
-                    newPassword: newPass 
+                const res = await makeApiCall({
+                    action: 'changeStudentPassword',
+                    admNo: studentData.admNo,
+                    oldPassword: oldPass,
+                    newPassword: newPass
                 });
                 setLoading(false);
-                if(res.result === 'success') {
+                if (res.result === 'success') {
                     showMessage("Success", "Password changed successfully!");
                     form.reset();
                 } else {
                     showMessage("Error", res.message, false);
                 }
-            } catch(e) {
+            } catch (e) {
                 setLoading(false);
                 showMessage("Error", "Network error.", false);
             }
@@ -745,7 +822,7 @@ function renderLogin() {
                     makeApiCall({ action: 'getSubjectsByProgram', program: studentData.course }),
                     makeApiCall({ action: 'getRegisteredCourses', admNo: studentData.admNo })
                 ]);
-                
+
                 const availableSubjects = availRes.data || [];
                 const registeredCourses = regRes.data || [];
 
@@ -820,26 +897,26 @@ function renderLogin() {
         async function submitCourseReg(e) {
             e.preventDefault();
             const checkboxes = document.querySelectorAll('input[name="courseRegItem"]:checked');
-            if(checkboxes.length === 0) { showMessage('Error', 'Please select at least one course.', false); return; }
+            if (checkboxes.length === 0) { showMessage('Error', 'Please select at least one course.', false); return; }
             const selectedCourses = Array.from(checkboxes).map(cb => cb.value);
             showConfirm('Confirm Registration', `Are you sure you want to register ${selectedCourses.length} courses?`, async () => {
                 setLoading(true, 'Submitting Registration...');
                 try {
                     const res = await makeApiCall({ action: 'registerStudentCourses', admNo: studentData.admNo, courses: JSON.stringify(selectedCourses) });
                     setLoading(false);
-                    if(res.result === 'success') { showMessage('Success', 'Courses registered successfully!'); renderCourseRegTab(); } 
+                    if (res.result === 'success') { showMessage('Success', 'Courses registered successfully!'); renderCourseRegTab(); }
                     else { showMessage('Error', 'Registration failed.', false); }
-                } catch(err) { setLoading(false); showMessage('Error', 'Registration failed.', false); }
+                } catch (err) { setLoading(false); showMessage('Error', 'Registration failed.', false); }
             });
         }
 
         // --- EXAM LOGIC ---
         async function renderExamsTab() {
-             const content = document.getElementById('portalContent');
-             const res = await makeApiCall({ action: 'getAvailableExams', course: studentData.course, admNo: studentData.admNo });
-             if(res.data.length === 0) {
+            const content = document.getElementById('portalContent');
+            const res = await makeApiCall({ action: 'getAvailableExams', course: studentData.course, admNo: studentData.admNo });
+            if (res.data.length === 0) {
                 content.innerHTML = `<div class="card text-center p-10"><i class="fas fa-coffee text-4xl mb-4 text-gray-300"></i><p>No exams available right now.</p></div>`;
-             } else {
+            } else {
                 content.innerHTML = `<div class="grid md:grid-cols-2 gap-4">${res.data.map(ex => `
                     <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
                         <h3 class="font-bold text-lg">${ex.title}</h3>
@@ -847,27 +924,27 @@ function renderLogin() {
                         <button onclick="startExam('${ex.id}', '${ex.title}', ${ex.duration})" class="w-full bg-blue-600 text-white py-2 rounded shadow hover:bg-blue-700">Start Exam</button>
                     </div>
                 `).join('')}</div>`;
-             }
+            }
         }
-        
+
         async function startExam(id, title, duration) {
             setLoading(true, "Loading Questions...");
             const res = await makeApiCall({ action: 'getExamQuestions', examId: id });
             setLoading(false);
-            if(res.data.length === 0) { showMessage("Error", "No questions found.", false); return; }
+            if (res.data.length === 0) { showMessage("Error", "No questions found.", false); return; }
             const content = document.getElementById('portalContent');
-            let qHtml = res.data.map((q, i) => `<div class="mb-6 pb-4 border-b"><p class="font-bold text-gray-800 mb-3">${i+1}. ${q.text}</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${['A','B','C','D'].map(opt => `<label class="flex items-center p-3 border rounded cursor-pointer hover:bg-blue-50"><input type="radio" name="q_${q.id}" value="${q.options[opt]}" class="mr-3"><span>${q.options[opt]}</span></label>`).join('')}</div></div>`).join('');
+            let qHtml = res.data.map((q, i) => `<div class="mb-6 pb-4 border-b"><p class="font-bold text-gray-800 mb-3">${i + 1}. ${q.text}</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${['A', 'B', 'C', 'D'].map(opt => `<label class="flex items-center p-3 border rounded cursor-pointer hover:bg-blue-50"><input type="radio" name="q_${q.id}" value="${q.options[opt]}" class="mr-3"><span>${q.options[opt]}</span></label>`).join('')}</div></div>`).join('');
             content.innerHTML = `<div class="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-lg"><div class="flex justify-between items-center border-b pb-4 mb-6"><h2 class="text-2xl font-bold">${title}</h2><span class="bg-red-100 text-red-600 px-3 py-1 rounded font-mono font-bold"><i class="far fa-clock"></i> ${duration}m</span></div><form id="examForm">${qHtml}<button type="submit" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 mt-4">Submit Exam</button></form></div>`;
             document.getElementById('examForm').onsubmit = async (e) => {
                 e.preventDefault();
                 showConfirm("Submit Exam?", "Are you sure? You cannot undo this.", async () => {
                     const formData = new FormData(document.getElementById('examForm'));
                     const answers = {};
-                    res.data.forEach(q => { const val = formData.get(`q_${q.id}`); if(val) answers[q.id] = val; });
+                    res.data.forEach(q => { const val = formData.get(`q_${q.id}`); if (val) answers[q.id] = val; });
                     setLoading(true, "Submitting...");
                     const subRes = await makeApiCall({ action: 'submitExam', admNo: studentData.admNo, examId: id, answers: JSON.stringify(answers) });
                     setLoading(false);
-                    if(subRes.result === 'success') { showMessage("Submitted", "Exam submitted successfully."); renderDashboard(); } else { showMessage("Error", "Submission failed.", false); }
+                    if (subRes.result === 'success') { showMessage("Submitted", "Exam submitted successfully."); renderDashboard(); } else { showMessage("Error", "Submission failed.", false); }
                 });
             };
         }
@@ -875,22 +952,22 @@ function renderLogin() {
         async function renderPerformanceTab() {
             const content = document.getElementById('portalContent');
             const res = await makeApiCall({ action: 'getStudentPerformance', admNo: studentData.admNo });
-            if(res.result === 'success') {
+            if (res.result === 'success') {
                 const { cgpa, attendancePct, breakdown } = res;
                 content.innerHTML = `<div class="max-w-4xl mx-auto space-y-6"><div class="grid md:grid-cols-2 gap-4"><div class="bg-blue-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden"><i class="fas fa-chart-pie absolute -right-6 -bottom-6 text-9xl text-blue-500 opacity-20"></i><h3 class="text-lg font-medium opacity-80">Current CGPA</h3><h1 class="text-5xl font-extrabold mt-2">${cgpa}</h1><p class="text-sm mt-2 opacity-80">Out of 5.00</p></div><div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 flex flex-col justify-center items-center"><h3 class="text-gray-500 font-bold uppercase text-xs mb-2">Class Attendance</h3><div class="relative w-24 h-24 rounded-full border-8 border-gray-100 flex items-center justify-center"><span class="text-xl font-bold text-gray-800">${attendancePct}%</span></div><p class="text-xs text-gray-400 mt-2">Weighted Score: ${(attendancePct * 0.3).toFixed(1)}</p></div></div><div class="card overflow-hidden"><h3 class="font-bold text-gray-800 mb-4">Course Breakdown</h3><div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-gray-50 border-b"><tr><th class="p-3">Course / Exam</th><th class="p-3">Score</th><th class="p-3">Grade</th><th class="p-3">Points</th></tr></thead><tbody class="divide-y">${breakdown.length === 0 ? '<tr><td colspan="4" class="p-4 text-center text-gray-500">No grades recorded yet.</td></tr>' : breakdown.map(b => `<tr><td class="p-3 font-medium">${b.course}</td><td class="p-3">${b.score}</td><td class="p-3 font-bold ${b.grade === 'F' ? 'text-red-500' : 'text-green-600'}">${b.grade}</td><td class="p-3">${b.gp.toFixed(1)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
             } else { content.innerHTML = `<div class="card text-center text-red-500 p-10">Failed to load performance data.</div>`; }
         }
 
         function handleDownloadLetter() {
-             const admNo = studentData.admNo;
-             setLoading(true, 'Generating PDF...');
-             makeApiCall({ action: 'generateLetter', admNo: admNo }).then(response => {
+            const admNo = studentData.admNo;
+            setLoading(true, 'Generating PDF...');
+            makeApiCall({ action: 'generateLetter', admNo: admNo }).then(response => {
                 setLoading(false);
                 if (response.result === 'success' && response.url) {
                     window.open(response.url, '_blank');
                     showMessage('Success', 'Admission Letter opened.');
                 } else { showMessage('Error', response.message || 'Failed.', false); }
-             }).catch(e => { setLoading(false); showMessage('Error', 'Network error.', false); });
+            }).catch(e => { setLoading(false); showMessage('Error', 'Network error.', false); });
         }
 
         async function fetchAndRenderAnnouncements(silent = false) {
@@ -898,7 +975,7 @@ function renderLogin() {
             const content = document.getElementById('portalContent');
             try {
                 const res = await makeApiCall(data, silent);
-                if(res.result === 'success' && res.data.length > 0) {
+                if (res.result === 'success' && res.data.length > 0) {
                     let html = `<div class="max-w-2xl mx-auto space-y-6">`;
                     res.data.forEach((ann, i) => {
                         const likes = ann.likes || 0;
@@ -929,7 +1006,7 @@ function renderLogin() {
                                 <div id="comment-list-${ann.id}" class="space-y-3 mb-4 max-h-60 overflow-y-auto custom-scrollbar">
                                     ${comments.length ? comments.map(c => `
                                         <div class="flex gap-3">
-                                            <div class="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs font-bold text-gray-600">${c.user.substring(0,2).toUpperCase()}</div>
+                                            <div class="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs font-bold text-gray-600">${c.user.substring(0, 2).toUpperCase()}</div>
                                             <div class="flex-1 bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm">
                                                 <div class="flex justify-between items-baseline mb-1">
                                                     <span class="font-bold text-gray-900">${c.user}</span>
@@ -947,16 +1024,16 @@ function renderLogin() {
                         </div>`;
                     });
                     content.innerHTML = html + `</div>`;
-                } else { if(!silent) content.innerHTML = `<div class="card text-center p-10 text-gray-500">No announcements.</div>`; }
-            } catch(e){ if(!silent) content.innerHTML = `<div class="text-center text-red-500 p-10">Failed to load feed.</div>`; }
+                } else { if (!silent) content.innerHTML = `<div class="card text-center p-10 text-gray-500">No announcements.</div>`; }
+            } catch (e) { if (!silent) content.innerHTML = `<div class="text-center text-red-500 p-10">Failed to load feed.</div>`; }
         }
 
         async function fetchAndRenderAssignments() {
-             const data = { action: 'getAssignmentsByCourse', course: studentData.course };
-             const content = document.getElementById('portalContent');
-             try {
+            const data = { action: 'getAssignmentsByCourse', course: studentData.course };
+            const content = document.getElementById('portalContent');
+            try {
                 const res = await makeApiCall(data);
-                if(res.result === 'success' && res.data.length > 0) {
+                if (res.result === 'success' && res.data.length > 0) {
                     let html = `<div class="max-w-3xl mx-auto space-y-4">`;
                     res.data.forEach(ass => {
                         html += `<div class="bg-white p-5 rounded-xl shadow-sm border flex justify-between items-center">
@@ -966,58 +1043,58 @@ function renderLogin() {
                     });
                     content.innerHTML = html + `</div>`;
                 } else { content.innerHTML = `<div class="card text-center p-10 text-gray-500">No active assignments.</div>`; }
-             } catch(e){}
+            } catch (e) { }
         }
-        
+
         function toggleComments(id) {
             const section = document.getElementById(id);
-            if(section.classList.contains('hidden')) {
+            if (section.classList.contains('hidden')) {
                 section.classList.remove('hidden'); section.classList.add('fade-in');
             } else {
                 section.classList.add('hidden'); section.classList.remove('fade-in');
             }
         }
 
-        async function toggleLike(annId, btnElement) { 
-            const icon = btnElement.querySelector('i'); 
-            const countSpan = btnElement.querySelector('.like-count'); 
-            let currentCount = parseInt(countSpan.innerText) || 0; 
-            const isLiked = icon.classList.contains('fas') && icon.classList.contains('text-red-500'); 
-            
+        async function toggleLike(annId, btnElement) {
+            const icon = btnElement.querySelector('i');
+            const countSpan = btnElement.querySelector('.like-count');
+            let currentCount = parseInt(countSpan.innerText) || 0;
+            const isLiked = icon.classList.contains('fas') && icon.classList.contains('text-red-500');
+
             // Optimistic update
-            if (isLiked) { 
-                icon.classList.remove('fas', 'text-red-500'); 
-                icon.classList.add('far', 'text-gray-500'); 
+            if (isLiked) {
+                icon.classList.remove('fas', 'text-red-500');
+                icon.classList.add('far', 'text-gray-500');
                 btnElement.classList.remove('text-red-500');
                 btnElement.classList.add('text-gray-500');
-                countSpan.innerText = Math.max(0, currentCount - 1); 
-            } else { 
-                icon.classList.remove('far', 'text-gray-500'); 
-                icon.classList.add('fas', 'text-red-500'); 
+                countSpan.innerText = Math.max(0, currentCount - 1);
+            } else {
+                icon.classList.remove('far', 'text-gray-500');
+                icon.classList.add('fas', 'text-red-500');
                 btnElement.classList.remove('text-gray-500');
                 btnElement.classList.add('text-red-500');
-                countSpan.innerText = currentCount + 1; 
-            } 
-            
-            try { 
-                await fetch(ENDPOINT_URL, { 
-                    method: 'POST', mode: 'cors', 
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, 
-                    body: new URLSearchParams({ action: 'toggleLike', announcementId: annId, user: studentData.admNo }) 
-                }); 
-            } catch (e) { console.error("Like failed", e); } 
+                countSpan.innerText = currentCount + 1;
+            }
+
+            try {
+                await fetch(ENDPOINT_URL, {
+                    method: 'POST', mode: 'cors',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ action: 'toggleLike', announcementId: annId, user: studentData.admNo })
+                });
+            } catch (e) { console.error("Like failed", e); }
         }
-        
-        async function postComment(event, annId) { 
+
+        async function postComment(event, annId) {
             event.preventDefault();
             const form = event.target;
-            const input = form.comment; 
-            const text = input.value.trim(); 
-            if(!text) return; 
-            
-            const list = document.getElementById(`comment-list-${annId}`); 
+            const input = form.comment;
+            const text = input.value.trim();
+            if (!text) return;
+
+            const list = document.getElementById(`comment-list-${annId}`);
             const noComments = list.querySelector('p.text-center');
-            if(noComments) noComments.remove();
+            if (noComments) noComments.remove();
 
             const temp = `
                 <div class="flex gap-3 fade-in">
@@ -1026,45 +1103,35 @@ function renderLogin() {
                         <div class="flex justify-between items-baseline mb-1"><span class="font-bold text-gray-900">Me</span><span class="text-xs text-gray-400">Just now</span></div>
                         <p class="text-gray-700">${text}</p>
                     </div>
-                </div>`; 
-            
-            list.insertAdjacentHTML('beforeend', temp); 
+                </div>`;
+
+            list.insertAdjacentHTML('beforeend', temp);
             list.scrollTop = list.scrollHeight;
-            input.value = ''; 
-            
+            input.value = '';
+
             const countBtn = document.getElementById(`comment-count-btn-${annId}`);
-            if(countBtn) {
+            if (countBtn) {
                 let current = parseInt(countBtn.innerText) || 0;
                 countBtn.innerText = current + 1;
             }
 
-            try { 
-                await fetch(ENDPOINT_URL, { 
-                    method: 'POST', mode: 'cors', 
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, 
-                    body: new URLSearchParams({ 
-                        action: 'addComment', 
-                        announcementId: annId, 
-                        user: `${studentData.firstName} ${studentData.lastName}`, 
-                        comment: text 
-                    }) 
-                }); 
-            } catch (e) { console.error("Comment failed", e); } 
+            try {
+                await fetch(ENDPOINT_URL, {
+                    method: 'POST', mode: 'cors',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        action: 'addComment',
+                        announcementId: annId,
+                        user: `${studentData.firstName} ${studentData.lastName}`,
+                        comment: text
+                    })
+                });
+            } catch (e) { console.error("Comment failed", e); }
         }
 
         // Initialize App
         document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
+
 </html>
-
-
-
-
-
-
-
-
-
-
-

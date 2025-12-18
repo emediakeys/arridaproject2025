@@ -172,6 +172,7 @@
         };
 
         let confirmCallback = null;
+        let pollInterval = null; // Timer for live updates
 
         // --- UI UTILITIES (unchanged) ---
         function setLoading(active, text = 'Processing...') {
@@ -235,8 +236,10 @@
             lucide.createIcons();
             if (adminState.isLoggedIn) {
                 bindDashboardEvents();
+                startPolling(); // Start Checking for updates
             } else {
                 bindLoginEvents();
+                stopPolling();
             }
         }
 
@@ -324,6 +327,7 @@
 
         function handleLogout() {
             localStorage.removeItem('adminState');
+            stopPolling();
             adminState = { isLoggedIn: false, username: '', assignedCourse: '', activeTab: 'dashboard', students: [], announcements: [], assignments: [], attendance: [], exams: [], isSidebarOpen: false };
             render(AdminLogin);
         }
@@ -335,7 +339,7 @@
             }
         }
 
-        // --- DATA LOADING & DASHBOARD MANAGEMENT ---
+        // --- DATA LOADING & LIVE POLLING ---
         async function loadInitialData(silent = false) {
             if (!adminState.isLoggedIn) return;
             if(!document.getElementById('sidebar')) {
@@ -356,11 +360,40 @@
                 if(announcementsResult.result === 'success') adminState.announcements = announcementsResult.data;
                 if(assignmentsResult.result === 'success') adminState.assignments = assignmentsResult.data;
                 if(examsResult.result === 'success') adminState.exams = examsResult.data;
+                
+                // Only re-render if not silent (initial load) OR if the user is not actively typing
+                if(!silent || (document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA")) {
+                   render(AdminDashboard); 
+                }
             } catch (err) {
                 console.error("Error loading dashboard data", err);
             }
             setLoading(false);
-            render(AdminDashboard);
+        }
+        
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            // Poll every 30 seconds to fetch new data (Live Updates - Safe Mode)
+            pollInterval = setInterval(() => {
+                if(adminState.isLoggedIn && adminState.activeTab === 'announcements') {
+                    // We only re-fetch announcements frequently as that's where interaction happens
+                    fetchAppsScript('getAnnouncementsByCourse', { course: adminState.assignedCourse, currentUser: adminState.username }, true)
+                    .then(res => {
+                        if(res.result === 'success') {
+                            adminState.announcements = res.data;
+                            // Re-render ONLY if user is not typing a comment to prevent losing focus
+                            if(document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
+                                document.getElementById('announcementListContainer').innerHTML = renderAnnouncementList();
+                                lucide.createIcons();
+                            }
+                        }
+                    });
+                }
+            }, 30000); 
+        }
+        
+        function stopPolling() {
+            if (pollInterval) clearInterval(pollInterval);
         }
 
         function changeTab(tabName) {
@@ -467,6 +500,8 @@
             const countSpan = btn.querySelector('span:nth-child(2)');
             let count = parseInt(countSpan.innerText) || 0;
             const isLiked = icon.classList.contains('text-red-500');
+            
+            // Optimistic UI update
             if (isLiked) {
                 icon.classList.remove('fill-current', 'text-red-500');
                 icon.classList.add('text-gray-500');
@@ -478,7 +513,18 @@
                 countSpan.classList.add('text-red-500', 'font-bold');
                 countSpan.innerText = count + 1;
             }
-            await fetchAppsScript('toggleLike', { announcementId: annId, user: adminState.username }, true);
+            
+            // Send to backend and correct if necessary
+            const res = await fetchAppsScript('toggleLike', { announcementId: annId, user: adminState.username }, true);
+            if(res.result === 'success' && res.liked !== undefined) {
+                 // Sync server truth if needed
+                 const serverLiked = res.liked;
+                 if(serverLiked) {
+                     icon.classList.remove('text-gray-500'); icon.classList.add('fill-current', 'text-red-500'); countSpan.classList.add('text-red-500', 'font-bold');
+                 } else {
+                     icon.classList.remove('fill-current', 'text-red-500'); icon.classList.add('text-gray-500'); countSpan.classList.remove('text-red-500', 'font-bold');
+                 }
+            }
         }
 
         async function handlePostCommentOptimistic(e, annId) {
@@ -486,19 +532,42 @@
             const input = e.target.comment;
             const text = input.value.trim();
             if(!text) return;
+            
+            // Clear "No comments yet" message if exists
             const list = document.getElementById(`comments-list-${annId}`);
             if(list.querySelector('p.italic')) { list.innerHTML = ''; }
-            const newCommentHtml = `<div class="animate-pulse fade-enter"><div class="flex items-start space-x-2"><div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-700">ME</div><div class="flex-1 bg-white p-2 rounded-lg rounded-tl-none shadow-sm border border-gray-100"><p class="font-bold text-gray-800 text-[11px] mb-0.5">${adminState.username} <span class="text-[9px] text-gray-400 font-normal">• Just now</span></p><p class="text-gray-600 leading-relaxed">${text}</p></div></div></div>`;
+            
+            // Show optimistic comment
+            const tempId = 'temp-' + new Date().getTime();
+            const optimisticHtml = `<div id="${tempId}" class="animate-pulse fade-enter opacity-50"><div class="flex items-start space-x-2"><div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-700">ME</div><div class="flex-1 bg-white p-2 rounded-lg rounded-tl-none shadow-sm border border-gray-100"><p class="font-bold text-gray-800 text-[11px] mb-0.5">${adminState.username} <span class="text-[9px] text-gray-400 font-normal">• Posting...</span></p><p class="text-gray-600 leading-relaxed">${text}</p></div></div></div>`;
             const temp = document.createElement('div');
-            temp.innerHTML = newCommentHtml;
-            const newCommentEl = temp.firstElementChild;
-            list.appendChild(newCommentEl);
+            temp.innerHTML = optimisticHtml;
+            list.appendChild(temp.firstElementChild);
             list.scrollTop = list.scrollHeight;
             input.value = ''; 
-            const commentBtn = document.querySelector(`button[onclick="toggleComments('${annId}')"] span:nth-child(2)`);
-            if(commentBtn) { let currentCount = parseInt(commentBtn.innerText) || 0; commentBtn.innerText = `${currentCount + 1} Comments`; }
-            await fetchAppsScript('addComment', { announcementId: annId, user: adminState.username, comment: text }, true);
-            setTimeout(() => { newCommentEl.classList.remove('animate-pulse'); }, 1000);
+            
+            // Send to backend
+            const res = await fetchAppsScript('addComment', { announcementId: annId, user: adminState.username, comment: text }, true);
+            
+            if(res.result === 'success' && res.newComment) {
+                 // Replace temp comment with confirmed data
+                 const c = res.newComment;
+                 const confirmedHtml = `<div class="fade-enter"><div class="flex items-start space-x-2"><div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-700">ME</div><div class="flex-1 bg-white p-2 rounded-lg rounded-tl-none shadow-sm border border-gray-100"><p class="font-bold text-gray-800 text-[11px] mb-0.5">${c.user} <span class="text-[9px] text-gray-400 font-normal">• ${c.time}</span></p><p class="text-gray-600 leading-relaxed">${c.text}</p></div></div></div>`;
+                 const finalEl = document.getElementById(tempId);
+                 if(finalEl) finalEl.outerHTML = confirmedHtml;
+                 
+                 // Update Count
+                 const commentBtn = document.querySelector(`button[onclick="toggleComments('${annId}')"] span:nth-child(2)`);
+                 if(commentBtn) { 
+                     let currentCount = parseInt(commentBtn.innerText) || 0; 
+                     commentBtn.innerText = `${currentCount + 1} Comments`; 
+                 }
+            } else {
+                // Remove temp comment if failed
+                const finalEl = document.getElementById(tempId);
+                if(finalEl) finalEl.remove();
+                alert("Failed to post comment");
+            }
         }
 
         async function handleAddAssignment(e) {
@@ -750,6 +819,24 @@
                 </div>
             `;
         }
+        
+        function renderAnnouncementList() {
+            if(adminState.announcements.length === 0) {
+                return `<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center"><div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"><span data-lucide="coffee" class="w-8 h-8 text-gray-400"></span></div><h3 class="text-lg font-medium text-gray-900">No posts yet</h3><p class="text-gray-500 mt-1">Be the first to post an update for your students.</p></div>`;
+            }
+            return adminState.announcements.map((a, index) => { 
+                const likes = a.likes || 0; 
+                const comments = a.comments || []; 
+                const likedByMe = a.likedByMe || false; 
+                const annId = a.id; 
+                const initials = "AD"; 
+                const isPublic = a.visibility === 'public'; 
+                const likeColorClass = likedByMe ? 'fill-current text-red-500' : 'text-gray-500'; 
+                const likeCountClass = likedByMe ? 'text-red-500 font-bold' : 'text-gray-500'; 
+                
+                return `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-shadow hover:shadow-md"><div class="p-4 flex items-center space-x-3"><div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">${initials}</div><div class="flex-1 min-w-0"><p class="text-sm font-bold text-gray-900 truncate">${adminState.username || 'Administrator'} ${isPublic ? '<span class="ml-2 text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Public</span>' : '<span class="ml-2 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Private</span>'}</p><p class="text-xs text-gray-500 flex items-center"><span>${a.date}</span><span class="mx-1">•</span><span class="text-emerald-600 font-medium bg-emerald-50 px-1.5 rounded text-[10px]">Admin</span></p></div><button onclick="handleDeleteAnnouncement('${annId}')" class="text-gray-400 hover:text-red-500 transition"><span data-lucide="trash-2" class="w-5 h-5"></span></button></div><div class="px-4 pb-2"><h3 class="text-base font-bold text-gray-900 mb-2 leading-tight">${a.title}</h3><div class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">${a.content}</div></div><div class="px-4 py-2 flex items-center justify-between border-t border-gray-100 text-xs text-gray-500 bg-gray-50"><button onclick="handleLikeOptimistic(this, '${annId}')" class="flex items-center space-x-1 hover:bg-gray-200 p-2 rounded-lg transition group cursor-pointer"><span data-lucide="heart" class="w-4 h-4 transition-transform group-active:scale-125 ${likeColorClass}"></span> <span class="${likeCountClass}">${likes}</span></button><button onclick="toggleComments('${annId}')" class="flex items-center space-x-1 hover:bg-gray-200 p-2 rounded-lg transition text-gray-600 cursor-pointer"><span data-lucide="message-circle" class="w-4 h-4"></span><span>${comments.length} Comments</span><span id="chevron-${annId}" data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-300"></span></button></div><div id="comments-section-${annId}" class="hidden bg-gray-50 border-t border-gray-100"><div id="comments-list-${annId}" class="p-4 max-h-60 overflow-y-auto text-xs space-y-3 custom-scrollbar">${comments.map(c => `<div class="flex items-start space-x-2"><div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">${c.user.substring(0,2).toUpperCase()}</div><div class="flex-1 bg-white p-2 rounded-lg rounded-tl-none shadow-sm border border-gray-100"><p class="font-bold text-gray-800 text-[11px] mb-0.5">${c.user} <span class="text-[9px] text-gray-400 font-normal">• ${c.time || ''}</span></p><p class="text-gray-600 leading-relaxed">${c.text}</p></div></div>`).join('') || '<p class="text-gray-400 italic text-center py-2">No comments yet. Be the first to start the conversation.</p>'}</div><form onsubmit="handlePostCommentOptimistic(event, '${annId}')" class="p-3 border-t border-gray-200 flex gap-2 bg-white"><input type="text" name="comment" placeholder="Write a comment..." class="flex-1 bg-gray-100 border-transparent focus:bg-white focus:border-emerald-500 focus:ring-0 rounded-lg px-3 py-2 text-xs transition outline-none"><button type="submit" class="text-xs bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 font-medium transition shadow-sm">Post</button></form></div></div>`;
+            }).join('');
+        }
 
         function AnnouncementsTab() {
             return `
@@ -760,7 +847,9 @@
                         </div>
                         <div class="lg:w-2/3 order-2">
                             <div class="flex items-center justify-between mb-4 px-1"><h2 class="text-xl font-bold text-gray-800">News Feed</h2><span class="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded-full border shadow-sm">${adminState.announcements.length} Posts</span></div>
-                            <div class="space-y-5 pb-20">${adminState.announcements.length === 0 ? `<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center"><div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"><span data-lucide="coffee" class="w-8 h-8 text-gray-400"></span></div><h3 class="text-lg font-medium text-gray-900">No posts yet</h3><p class="text-gray-500 mt-1">Be the first to post an update for your students.</p></div>` : adminState.announcements.map((a, index) => { const likes = a.likes || 0; const comments = a.comments || []; const likedByMe = a.likedByMe || false; const annId = a.id; const initials = "AD"; const isPublic = a.visibility === 'public'; const likeColorClass = likedByMe ? 'fill-current text-red-500' : 'text-gray-500'; const likeCountClass = likedByMe ? 'text-red-500 font-bold' : 'text-gray-500'; return `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-shadow hover:shadow-md"><div class="p-4 flex items-center space-x-3"><div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">${initials}</div><div class="flex-1 min-w-0"><p class="text-sm font-bold text-gray-900 truncate">${adminState.username || 'Administrator'} ${isPublic ? '<span class="ml-2 text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Public</span>' : '<span class="ml-2 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Private</span>'}</p><p class="text-xs text-gray-500 flex items-center"><span>${a.date}</span><span class="mx-1">•</span><span class="text-emerald-600 font-medium bg-emerald-50 px-1.5 rounded text-[10px]">Admin</span></p></div><button onclick="handleDeleteAnnouncement('${annId}')" class="text-gray-400 hover:text-red-500 transition"><span data-lucide="trash-2" class="w-5 h-5"></span></button></div><div class="px-4 pb-2"><h3 class="text-base font-bold text-gray-900 mb-2 leading-tight">${a.title}</h3><div class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">${a.content}</div></div><div class="px-4 py-2 flex items-center justify-between border-t border-gray-100 text-xs text-gray-500 bg-gray-50"><button onclick="handleLikeOptimistic(this, '${annId}')" class="flex items-center space-x-1 hover:bg-gray-200 p-2 rounded-lg transition group cursor-pointer"><span data-lucide="heart" class="w-4 h-4 transition-transform group-active:scale-125 ${likeColorClass}"></span> <span class="${likeCountClass}">${likes}</span></button><button onclick="toggleComments('${annId}')" class="flex items-center space-x-1 hover:bg-gray-200 p-2 rounded-lg transition text-gray-600 cursor-pointer"><span data-lucide="message-circle" class="w-4 h-4"></span><span>${comments.length} Comments</span><span id="chevron-${annId}" data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-300"></span></button></div><div id="comments-section-${annId}" class="hidden bg-gray-50 border-t border-gray-100"><div id="comments-list-${annId}" class="p-4 max-h-60 overflow-y-auto text-xs space-y-3 custom-scrollbar">${comments.map(c => `<div class="flex items-start space-x-2"><div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">${c.user.substring(0,2).toUpperCase()}</div><div class="flex-1 bg-white p-2 rounded-lg rounded-tl-none shadow-sm border border-gray-100"><p class="font-bold text-gray-800 text-[11px] mb-0.5">${c.user} <span class="text-[9px] text-gray-400 font-normal">• ${c.time || ''}</span></p><p class="text-gray-600 leading-relaxed">${c.text}</p></div></div>`).join('') || '<p class="text-gray-400 italic text-center py-2">No comments yet. Be the first to start the conversation.</p>'}</div><form onsubmit="handlePostCommentOptimistic(event, '${annId}')" class="p-3 border-t border-gray-200 flex gap-2 bg-white"><input type="text" name="comment" placeholder="Write a comment..." class="flex-1 bg-gray-100 border-transparent focus:bg-white focus:border-emerald-500 focus:ring-0 rounded-lg px-3 py-2 text-xs transition outline-none"><button type="submit" class="text-xs bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 font-medium transition shadow-sm">Post</button></form></div></div>`;}).join('')}</div>
+                            <div id="announcementListContainer" class="space-y-5 pb-20">
+                                ${renderAnnouncementList()}
+                            </div>
                         </div>
                     </div>
                 </div>

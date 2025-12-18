@@ -3,326 +3,491 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Admission Portal</title>
+    <title>Apply Now | School Admission</title>
 
     <link rel="icon" type="image/png" sizes="32x32" href="icon.jpg">
-    <link rel="icon" type="image/png" sizes="16x16" href="icon.jpg">
-    <link rel="apple-touch-icon" href="icon.jpg">
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f7f9fc; }
-        .form-group label { transition: color 0.2s; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); }
-        .btn-submit:disabled { @apply bg-gray-400 cursor-not-allowed; }
-        .modal-overlay { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(2px); z-index: 50; transition: opacity 0.3s ease; }
-        .modal-content { animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translate(-50%, -60%); } to { opacity: 1; transform: translate(-50%, -50%); } }
-        @media print { .print-hidden { display: none !important; } }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f3f4f6; background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 24px 24px; }
+        
+        /* Smooth Transitions */
+        .step-panel { display: none; opacity: 0; transform: translateX(20px); transition: all 0.4s ease-in-out; }
+        .step-panel.active { display: block; opacity: 1; transform: translateX(0); }
+        .step-panel.leaving { opacity: 0; transform: translateX(-20px); }
+
+        /* Custom Form Inputs */
+        .form-label { @apply block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wide; }
+        .form-input { @apply w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 outline-none; }
+        .form-input.error { @apply border-red-500 ring-1 ring-red-500 bg-red-50; }
+
+        /* Progress Bar */
+        .progress-circle { @apply w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 z-10 border-2; }
+        .progress-circle.active { @apply bg-blue-600 text-white border-blue-600 shadow-lg scale-110; }
+        .progress-circle.completed { @apply bg-green-500 text-white border-green-500; }
+        .progress-circle.pending { @apply bg-white text-gray-400 border-gray-200; }
+        
+        /* Custom File Upload */
+        .file-upload-wrapper { @apply relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-blue-50 hover:border-blue-400 transition-colors cursor-pointer group; }
+        
+        /* Button Gradients */
+        .btn-primary { @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200; }
+        
+        /* Glassmorphism for Modal */
+        .glass-modal { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
     </style>
 </head>
-<body class="bg-gray-100 p-4 sm:p-8">
+<body class="min-h-screen flex items-center justify-center py-10 px-4">
 
-<div class="max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-2xl">
-    <header class="text-center mb-8 print-hidden">
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-800">Student Application Form</h1>
-        <p class="text-gray-500 mt-2">Please fill in all details carefully to complete your admission.</p>
-    </header>
+    <a href="index.html" class="fixed top-6 right-6 z-50 bg-white/80 backdrop-blur px-4 py-2 rounded-full shadow-sm border border-gray-200 text-gray-500 hover:text-red-600 hover:bg-white transition-all duration-200 font-medium text-sm flex items-center gap-2 group">
+        <span>Exit Application</span>
+        <i class="fas fa-times-circle text-lg group-hover:rotate-90 transition-transform"></i>
+    </a>
 
-    <form id="admissionForm">
+    <div class="max-w-4xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 relative">
         
-        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8 print-hidden">
-            <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">1. Biodata & Passport</legend>
-            <div class="form-group mb-4">
-                <label for="passport" class="block text-sm font-medium text-gray-700 mb-2">Upload Passport Photograph</label>
-                <input type="file" id="passport" accept="image/*" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                <div id="preview-container" class="mt-4"></div>
-                <input type="hidden" id="passportBase64">
+        <div class="bg-gradient-to-r from-blue-900 to-blue-800 p-8 text-white relative overflow-hidden">
+            <div class="absolute top-0 right-0 opacity-10 transform translate-x-10 -translate-y-10">
+                <i class="fas fa-graduation-cap text-9xl"></i>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="col"><label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label><input type="text" id="firstName" name="firstName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
-                <div class="col"><label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label><input type="text" id="lastName" name="lastName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div class="col"><label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label><input type="date" id="dob" name="dob" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
-                <div class="col"><label for="gender" class="block text-sm font-medium text-gray-700">Gender</label><select id="gender" name="gender" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"><option value="">Select...</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
-            </div>
-        </fieldset>
-        
-        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8 print-hidden">
-            <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">2. Contact & Login Details</legend>
-            <div class="form-group mb-4"><label for="address" class="block text-sm font-medium text-gray-700">Home Address</label><textarea id="address" name="address" rows="2" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea></div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="col"><label for="email" class="block text-sm font-medium text-gray-700">Email Address</label><input type="email" id="email" name="email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
-                <div class="col"><label for="password" class="block text-sm font-medium text-gray-700">Create Password</label><input type="password" id="password" name="password" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"><small class="block text-xs text-gray-500 mt-1">You will use this to login to the dashboard.</small></div>
-            </div>
-        </fieldset>
-        
-        <fieldset class="border border-gray-200 p-6 rounded-lg mb-8 print-hidden">
-            <legend class="text-xl font-semibold text-blue-700 px-3 -ml-3">3. Background & Documents</legend>
-            <div class="form-group mb-4"><label for="course" class="block text-sm font-medium text-gray-700">Course Applying For</label><select name="course" id="course" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"><option value="">-- Select Course --</option><option value="Community Health Extension Workers">Community Health Extension Workers</option><option value="Public Health">Public Health</option><option value="Pharmacy Technician">Pharmacy Technician</option><option value="Medical Laboratory Technician">Medical Laboratory Technician</option></select></div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div class="col">
-                    <label for="birthCert" class="block text-sm font-medium text-gray-700">Upload Birth Certificate</label>
-                    <input type="file" id="birthCert" accept=".pdf, image/*" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                    <input type="hidden" id="birthCertBase64">
-                </div>
-                <div class="col">
-                    <label for="olevel" class="block text-sm font-medium text-gray-700">Upload O'Level Result</label>
-                    <input type="file" id="olevel" accept=".pdf, image/*" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                    <input type="hidden" id="olevelBase64">
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div class="col"><label for="nokName" class="block text-sm font-medium text-gray-700">Next of Kin Name</label><input type="text" id="nokName" name="nokName" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
-                <div class="col"><label for="nokPhone" class="block text-sm font-medium text-gray-700">Next of Kin Phone</label><input type="tel" id="nokPhone" name="nokPhone" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
-            </div>
-            <div class="form-group mb-4"><label for="sponsor" class="block text-sm font-medium text-gray-700">Sponsor Name</label><input type="text" id="sponsor" name="sponsor" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
-            <div class="form-group"><label for="prevSchool" class="block text-sm font-medium text-gray-700">Previous School Attended</label><input type="text" id="prevSchool" name="prevSchool" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></div>
-        </fieldset>
-        
-        <div class="payment-section text-center bg-yellow-50 p-6 rounded-lg border border-yellow-200 print-hidden">
-            <p class="text-lg font-bold text-gray-800 mb-4">Application Fee: <strong class="text-green-600">₦7,500</strong></p>
-            <button type="button" id="payBtn" class="btn-pay w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-150 ease-in-out shadow-md">Pay ₦7,500 Now</button>
-            <p id="payment-status" class="mt-4 text-green-700 font-bold hidden"><svg class="inline w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Payment Successful!</p>
-            <hr class="my-6 border-gray-300">
-            <button type="submit" id="submitBtn" class="btn-submit w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-4 px-8 rounded-lg text-lg transition duration-150 ease-in-out shadow-xl" disabled>Submit Application</button>
+            <h1 class="text-3xl font-bold mb-2 relative z-10">Application Form</h1>
+            <p class="text-blue-200 text-sm relative z-10">Complete the wizard below to join us. <br>Please ensure all details are accurate.</p>
         </div>
-    </form>
-    <div id="loading" class="text-center mt-6 p-4 bg-blue-100 text-blue-800 rounded-md font-semibold hidden print-hidden">Processing Application...</div>
-</div>
 
-<div id="customPopup" class="modal-overlay fixed inset-0 hidden items-center justify-center p-4">
-    <div class="modal-content bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full relative">
-        <div id="popupIcon" class="flex justify-center mb-4"></div>
-        <h3 id="popupTitle" class="text-xl font-bold text-gray-900 mb-2 text-center"></h3>
-        <p id="popupMessage" class="text-gray-600 mb-6 text-center"></p>
-        <div id="popupActions" class="flex justify-center gap-4"></div>
+        <div class="px-8 py-6 bg-white border-b border-gray-100 sticky top-0 z-20">
+            <div class="relative flex justify-between items-center max-w-2xl mx-auto">
+                <div class="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -z-0 rounded-full"></div>
+                <div class="absolute top-1/2 left-0 h-1 bg-blue-600 -z-0 rounded-full transition-all duration-500" id="progressBar" style="width: 0%"></div>
+
+                <div class="flex flex-col items-center gap-2 cursor-pointer" onclick="goToStep(1)">
+                    <div class="progress-circle active" id="step-circle-1">1</div>
+                    <span class="text-xs font-semibold text-gray-600 hidden sm:block">Biodata</span>
+                </div>
+                <div class="flex flex-col items-center gap-2 cursor-pointer" onclick="goToStep(2)">
+                    <div class="progress-circle pending" id="step-circle-2">2</div>
+                    <span class="text-xs font-semibold text-gray-600 hidden sm:block">Contact</span>
+                </div>
+                <div class="flex flex-col items-center gap-2 cursor-pointer" onclick="goToStep(3)">
+                    <div class="progress-circle pending" id="step-circle-3">3</div>
+                    <span class="text-xs font-semibold text-gray-600 hidden sm:block">Academics</span>
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="progress-circle pending" id="step-circle-4"><i class="fas fa-credit-card"></i></div>
+                    <span class="text-xs font-semibold text-gray-600 hidden sm:block">Payment</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 sm:p-10 min-h-[400px]">
+            <form id="admissionForm" autocomplete="off">
+                
+                <div id="step-1" class="step-panel active">
+                    <div class="flex flex-col md:flex-row gap-8">
+                        <div class="md:w-1/3 flex flex-col items-center">
+                            <label class="form-label mb-2">Passport Photo</label>
+                            <div class="relative w-40 h-40 rounded-full border-4 border-dashed border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50 group hover:border-blue-400 transition-colors cursor-pointer" onclick="document.getElementById('passport').click()">
+                                <img id="passportPreview" src="" class="absolute inset-0 w-full h-full object-cover hidden">
+                                <div class="text-center p-4 text-gray-400 group-hover:text-blue-500 transition-colors" id="passportPlaceholder">
+                                    <i class="fas fa-camera text-2xl mb-1"></i>
+                                    <p class="text-[10px] uppercase font-bold">Click to Upload</p>
+                                </div>
+                            </div>
+                            <input type="file" id="passport" accept="image/*" class="hidden" required>
+                            <input type="hidden" id="passportBase64">
+                            <p class="text-xs text-center text-gray-400 mt-2">Face only. Max 2MB.</p>
+                        </div>
+
+                        <div class="md:w-2/3 space-y-5">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="form-label">First Name</label><input type="text" id="firstName" class="form-input" placeholder="e.g. John" required></div>
+                                <div><label class="form-label">Last Name</label><input type="text" id="lastName" class="form-input" placeholder="e.g. Doe" required></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="form-label">Date of Birth</label><input type="date" id="dob" class="form-input" required></div>
+                                <div>
+                                    <label class="form-label">Gender</label>
+                                    <select id="gender" class="form-input" required>
+                                        <option value="">Select</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="step-2" class="step-panel">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="form-label">Home Address</label>
+                            <textarea id="address" rows="2" class="form-input" placeholder="Full residential address" required></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="form-label">Email Address</label>
+                                <div class="relative">
+                                    <i class="fas fa-envelope absolute left-4 top-3.5 text-gray-400"></i>
+                                    <input type="email" id="email" class="form-input pl-10" placeholder="student@email.com" required>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label">Phone Number</label>
+                                <div class="relative">
+                                    <i class="fas fa-phone absolute left-4 top-3.5 text-gray-400"></i>
+                                    <input type="tel" id="phone" class="form-input pl-10" placeholder="080..." required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                            <label class="form-label text-blue-800">Create Portal Password</label>
+                            <div class="relative mt-1">
+                                <input type="password" id="password" class="form-input bg-white border-blue-200" placeholder="••••••••" required>
+                                <i class="fas fa-lock absolute right-4 top-3.5 text-blue-300"></i>
+                            </div>
+                            <p class="text-xs text-blue-600 mt-2 flex items-center"><i class="fas fa-info-circle mr-1"></i> You will use this to log in later.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="step-3" class="step-panel">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="form-label">Course of Choice</label>
+                            <select id="course" class="form-input font-medium" required>
+                                <option value="">-- Select Course --</option>
+                                <option value="Community Health Extension Workers">Community Health Extension Workers</option>
+                                <option value="Public Health">Public Health</option>
+                                <option value="Pharmacy Technician">Pharmacy Technician</option>
+                                <option value="Medical Laboratory Technician">Medical Laboratory Technician</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="file-upload-wrapper" onclick="document.getElementById('birthCert').click()">
+                                <i class="fas fa-file-pdf text-3xl text-gray-300 mb-2 group-hover:text-blue-500 transition-colors"></i>
+                                <p class="text-sm font-bold text-gray-700">Upload Birth Cert</p>
+                                <p class="text-xs text-gray-400" id="birthCertName">Click to browse (PDF/Img)</p>
+                                <input type="file" id="birthCert" accept=".pdf, image/*" class="hidden">
+                                <input type="hidden" id="birthCertBase64">
+                            </div>
+
+                            <div class="file-upload-wrapper" onclick="document.getElementById('olevel').click()">
+                                <i class="fas fa-file-certificate text-3xl text-gray-300 mb-2 group-hover:text-blue-500 transition-colors"></i>
+                                <p class="text-sm font-bold text-gray-700">Upload O'Level</p>
+                                <p class="text-xs text-gray-400" id="olevelName">Click to browse (PDF/Img)</p>
+                                <input type="file" id="olevel" accept=".pdf, image/*" class="hidden">
+                                <input type="hidden" id="olevelBase64">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="form-label">Sponsor Name</label><input type="text" id="sponsor" class="form-input" required></div>
+                            <div><label class="form-label">Next of Kin Phone</label><input type="tel" id="nokPhone" class="form-input" required></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="step-4" class="step-panel text-center">
+                    <div class="bg-gray-50 rounded-2xl p-8 border border-gray-100 max-w-sm mx-auto mb-8 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-green-500"></div>
+                        <p class="text-gray-500 text-sm uppercase tracking-widest mb-1">Total Fee</p>
+                        <h2 class="text-4xl font-extrabold text-gray-900 mb-4">₦7,500<span class="text-lg text-gray-400 font-normal">.00</span></h2>
+                        <ul class="text-left text-sm text-gray-600 space-y-2 mb-6 border-t border-gray-200 pt-4">
+                            <li class="flex justify-between"><span>Application Form</span> <span class="font-bold">₦7,500</span></li>
+                            <li class="flex justify-between"><span>Processing</span> <span class="font-bold">Free</span></li>
+                        </ul>
+                        <button type="button" id="payBtn" class="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition shadow-lg flex items-center justify-center gap-2">
+                            <i class="fas fa-lock"></i> Pay Securely
+                        </button>
+                    </div>
+                    
+                    <div id="payment-success-msg" class="hidden animate-bounce">
+                        <div class="inline-flex items-center gap-2 px-6 py-3 bg-green-100 text-green-700 rounded-full font-bold text-sm">
+                            <i class="fas fa-check-circle"></i> Payment Successful! Click Submit.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-10 pt-6 border-t border-gray-100 flex justify-between items-center">
+                    <button type="button" id="prevBtn" class="hidden px-6 py-2.5 rounded-xl text-gray-500 font-bold hover:bg-gray-100 transition">
+                        <i class="fas fa-arrow-left mr-2"></i> Back
+                    </button>
+                    <div class="flex-1"></div> <button type="button" id="nextBtn" class="btn-primary px-8 py-3 rounded-xl font-bold flex items-center">
+                        Next Step <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                    <button type="submit" id="submitBtn" class="hidden btn-primary bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 px-10 py-3 rounded-xl font-bold shadow-green-200" disabled>
+                        Submit Application
+                    </button>
+                </div>
+
+            </form>
+        </div>
     </div>
-</div>
 
-<script src="https://js.paystack.co/v1/inline.js"></script>
-<script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
-    const PAYSTACK_PUBLIC_KEY = "pk_test_29f23a0e0bde6c074ae9efb019002a8d95e721b4"; 
-    const APPLICATION_FEE_NAIRA = 7500;
-    const APPLICATION_FEE_KOBO = APPLICATION_FEE_NAIRA * 100;
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/90 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="text-center">
+            <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <h3 class="text-lg font-bold text-gray-800">Processing...</h3>
+            <p class="text-sm text-gray-500">Please do not close this window.</p>
+        </div>
+    </div>
 
-    const popupElement = document.getElementById('customPopup');
-    const popupTitle = document.getElementById('popupTitle');
-    const popupMessage = document.getElementById('popupMessage');
-    const popupIconContainer = document.getElementById('popupIcon');
-    const popupActionsContainer = document.getElementById('popupActions');
-    const mainContainer = document.querySelector('.max-w-3xl.mx-auto');
-    let lastSubmittedData = null;
+    <div id="popupModal" class="fixed inset-0 modal-overlay hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full glass-modal transform scale-100 transition-all">
+            <div id="popupIcon" class="flex justify-center mb-4 text-4xl"></div>
+            <h3 id="popupTitle" class="text-xl font-bold text-center text-gray-900 mb-2"></h3>
+            <p id="popupMessage" class="text-center text-gray-600 mb-6 text-sm"></p>
+            <div id="popupActions" class="flex justify-center gap-3"></div>
+        </div>
+    </div>
 
-    const errorIcon = `<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
-    const successIcon = `<svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
+        const PAYSTACK_KEY = "pk_test_29f23a0e0bde6c074ae9efb019002a8d95e721b4";
+        const FEE_KOBO = 750000;
 
-    function restoreFormContent(encodedContent) {
-        mainContainer.innerHTML = decodeURIComponent(encodedContent);
-        window.location.reload();
-    }
-
-    function showCustomPopup(message, type = 'error', title = 'Notification', actions = []) {
-        popupTitle.textContent = title;
-        popupMessage.textContent = message;
-        popupIconContainer.innerHTML = type === 'success' ? successIcon : errorIcon;
-        popupActionsContainer.innerHTML = '';
-        if (actions.length === 0) actions.push({ text: 'OK', handler: closeCustomPopup, isPrimary: true });
-        actions.forEach(action => {
-            const button = document.createElement('button');
-            button.textContent = action.text;
-            const baseClasses = 'px-5 py-2 font-medium rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2';
-            button.className = action.isPrimary ? `${baseClasses} bg-blue-600 text-white hover:bg-blue-700` : `${baseClasses} bg-gray-200 text-gray-800 hover:bg-gray-300`;
-            if (actions.length > 1) button.classList.add('mx-1');
-            button.addEventListener('click', action.handler);
-            popupActionsContainer.appendChild(button);
-        });
-        popupElement.classList.remove('hidden');
-        popupElement.classList.add('flex');
-    }
-    function closeCustomPopup() {
-        popupElement.classList.add('hidden');
-        popupElement.classList.remove('flex');
-        popupActionsContainer.innerHTML = '';
-    }
-
-    function printSummary(admNo) {
-        if (!lastSubmittedData) return;
-        closeCustomPopup();
-        const data = lastSubmittedData;
-        const today = new Date().toLocaleDateString();
-        const originalContent = mainContainer.innerHTML; 
-        const printContent = `<div class="p-6"><div class="text-center mb-8 border-b pb-4"><h2 class="text-3xl font-extrabold text-blue-800">Student Application Summary</h2><p class="text-lg text-gray-500 mt-2">Admission Number: <strong class="text-blue-600">${admNo}</strong></p><p class="text-sm text-gray-500">Date: ${today}</p></div><div class="flex justify-between items-start mb-6"><div class="space-y-1 text-sm"><p class="font-bold text-gray-800">${data.firstName} ${data.lastName}</p><p class="text-gray-600">Email: ${data.email}</p><p class="text-gray-600">DOB: ${data.dob} (${data.gender})</p></div><img src="${data.passportBase64}" alt="Passport" class="w-24 h-24 object-cover border-4 border-blue-200 shadow-lg rounded-lg"></div><div class="space-y-4"><h3 class="text-xl font-semibold text-blue-700 border-b pb-1">Application Details</h3><p class="text-sm"><strong>Course:</strong> ${data.course}</p><p class="text-sm"><strong>Address:</strong> ${data.address}</p><p class="text-sm text-green-700 font-bold">Fee Paid: ₦${APPLICATION_FEE_NAIRA}.00 (Ref: ${data.paymentRef})</p></div><div class="text-center mt-10 p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 print-hidden"><button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">Start New Application</button></div></div>`;
-        mainContainer.innerHTML = printContent;
-        window.print();
-    }
-
-    // --- SMART COMPRESSION LOGIC ---
-    function compressImage(file, maxWidth, quality, callback) {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = event => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const elem = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
-                elem.width = width;
-                elem.height = height;
-                const ctx = elem.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                // Compress to JPEG to reduce size significantly
-                const dataUrl = elem.toDataURL('image/jpeg', quality);
-                callback(dataUrl);
-            };
-        };
-    }
-
-    function handleFileUpload(input, hiddenField, previewEl = null) {
-        input.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            
-            // If image, compress it. If PDF, read as-is (but beware size limits)
-            if(file.type.startsWith('image/')) {
-                // Compress to 800px width, 0.6 quality (High compression)
-                compressImage(file, 800, 0.6, (base64) => {
-                    hiddenField.value = base64;
-                    if(previewEl) previewEl.innerHTML = `<img src="${base64}" class="max-w-[150px] mt-2 rounded-md border-4 border-blue-200 shadow-lg">`;
-                });
-            } else {
-                // For PDFs, just read them (User must ensure they are small < 2MB)
-                const reader = new FileReader();
-                reader.onload = (e) => hiddenField.value = e.target.result;
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const payBtn = document.getElementById('payBtn');
-        const submitBtn = document.getElementById('submitBtn');
-        const paymentStatus = document.getElementById('payment-status');
-        const form = document.getElementById('admissionForm');
-        
-        // Element references
-        const passportInput = document.getElementById('passport');
-        const passportBase64Field = document.getElementById('passportBase64');
-        const previewContainer = document.getElementById('preview-container');
-        
-        const birthCertInput = document.getElementById('birthCert');
-        const birthCertBase64Field = document.getElementById('birthCertBase64');
-        
-        const olevelInput = document.getElementById('olevel');
-        const olevelBase64Field = document.getElementById('olevelBase64');
-        
+        let currentStep = 1;
         let transactionReference = null;
+        let lastData = null;
 
-        // Apply compression handlers
-        handleFileUpload(passportInput, passportBase64Field, previewContainer);
-        handleFileUpload(birthCertInput, birthCertBase64Field);
-        handleFileUpload(olevelInput, olevelBase64Field);
+        // UI Helpers
+        const dom = {
+            form: document.getElementById('admissionForm'),
+            nextBtn: document.getElementById('nextBtn'),
+            prevBtn: document.getElementById('prevBtn'),
+            submitBtn: document.getElementById('submitBtn'),
+            progressBar: document.getElementById('progressBar'),
+            popup: document.getElementById('popupModal'),
+            loading: document.getElementById('loadingOverlay')
+        };
 
-        payBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value.trim();
-            const fname = document.getElementById('firstName').value.trim();
-            const lname = document.getElementById('lastName').value.trim();
+        function updateSteps() {
+            // Panel Transition
+            document.querySelectorAll('.step-panel').forEach(p => {
+                p.classList.remove('active');
+                if(p.id === `step-${currentStep}`) setTimeout(() => p.classList.add('active'), 50);
+            });
 
-            if (!email || !fname || !lname) {
-                showCustomPopup("Please fill in first name, last name, and email before paying.", 'error', 'Missing Details');
-                return;
+            // Progress Bar
+            dom.progressBar.style.width = `${((currentStep - 1) / 3) * 100}%`;
+
+            // Circles
+            for(let i=1; i<=4; i++) {
+                const el = document.getElementById(`step-circle-${i}`);
+                el.className = `progress-circle ${i === currentStep ? 'active' : (i < currentStep ? 'completed' : 'pending')}`;
+                if(i < currentStep) el.innerHTML = '<i class="fas fa-check"></i>';
+                else if (i === 4) el.innerHTML = '<i class="fas fa-credit-card"></i>';
+                else el.textContent = i;
             }
 
+            // Buttons
+            dom.prevBtn.classList.toggle('hidden', currentStep === 1);
+            if(currentStep === 4) {
+                dom.nextBtn.classList.add('hidden');
+                dom.submitBtn.classList.remove('hidden');
+            } else {
+                dom.nextBtn.classList.remove('hidden');
+                dom.submitBtn.classList.add('hidden');
+            }
+        }
+
+        function validateCurrentStep() {
+            const panel = document.getElementById(`step-${currentStep}`);
+            const inputs = panel.querySelectorAll('input, select, textarea');
+            let valid = true;
+            inputs.forEach(input => {
+                if(input.hasAttribute('required') && !input.value.trim()) {
+                    input.classList.add('error');
+                    // Shake animation
+                    input.parentElement.classList.add('animate-pulse');
+                    setTimeout(() => input.parentElement.classList.remove('animate-pulse'), 500);
+                    input.addEventListener('input', () => input.classList.remove('error'), {once:true});
+                    valid = false;
+                }
+            });
+            
+            // Custom checks
+            if(currentStep === 1 && !document.getElementById('passportBase64').value) {
+                showPopup("Upload Passport", "Please upload a passport photograph.", "error");
+                valid = false;
+            }
+            return valid;
+        }
+
+        dom.nextBtn.addEventListener('click', () => {
+            if(validateCurrentStep()) { currentStep++; updateSteps(); }
+        });
+        dom.prevBtn.addEventListener('click', () => {
+            currentStep--; updateSteps();
+        });
+
+        // File Handling (Compressed)
+        function setupFile(inputId, hiddenId, previewId=null, nameId=null) {
+            const input = document.getElementById(inputId);
+            input.addEventListener('change', e => {
+                const file = e.target.files[0];
+                if(!file) return;
+                if(file.size > 2*1024*1024) { showPopup("Error", "File too large (>2MB).", "error"); input.value=""; return; }
+                
+                // Show Name
+                if(nameId) document.getElementById(nameId).innerText = file.name;
+
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = ev => {
+                    if(file.type.startsWith('image/')) {
+                        const img = new Image();
+                        img.src = ev.target.result;
+                        img.onload = () => {
+                            const cvs = document.createElement('canvas');
+                            const scale = inputId === 'passport' ? 300 : 900;
+                            let w = img.width, h = img.height;
+                            if(w > scale) { h *= scale/w; w = scale; }
+                            cvs.width = w; cvs.height = h;
+                            cvs.getContext('2d').drawImage(img,0,0,w,h);
+                            const b64 = cvs.toDataURL('image/jpeg', 0.6);
+                            document.getElementById(hiddenId).value = b64;
+                            if(previewId) {
+                                document.getElementById(previewId).src = b64;
+                                document.getElementById(previewId).classList.remove('hidden');
+                                document.getElementById('passportPlaceholder').classList.add('hidden');
+                            }
+                        }
+                    } else {
+                        // PDF
+                        document.getElementById(hiddenId).value = ev.target.result;
+                    }
+                }
+            });
+        }
+
+        setupFile('passport', 'passportBase64', 'passportPreview');
+        setupFile('birthCert', 'birthCertBase64', null, 'birthCertName');
+        setupFile('olevel', 'olevelBase64', null, 'olevelName');
+
+        // Paystack
+        document.getElementById('payBtn').addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            if(!email) { showPopup("Missing Email", "Please go back and fill in your email.", "error"); return; }
+            
             const handler = PaystackPop.setup({
-                key: PAYSTACK_PUBLIC_KEY,
+                key: PAYSTACK_KEY,
                 email: email,
-                amount: APPLICATION_FEE_KOBO,
+                amount: FEE_KOBO,
                 currency: 'NGN',
                 ref: ''+Math.floor((Math.random() * 1000000000) + 1),
-                callback: function(response){
-                    transactionReference = response.reference;
-                    payBtn.classList.add('hidden');
-                    paymentStatus.classList.remove('hidden');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = "Submit Application (Payment Confirmed)";
-                    showCustomPopup("Payment Successful! Ref: " + transactionReference, 'success', 'Payment Confirmed');
+                callback: function(res) {
+                    transactionReference = res.reference;
+                    document.getElementById('payBtn').classList.add('hidden');
+                    document.getElementById('payment-success-msg').classList.remove('hidden');
+                    dom.submitBtn.disabled = false;
+                    dom.submitBtn.classList.remove('from-green-600', 'to-green-700'); // Reset style if needed
+                    showPopup("Payment Confirmed", "Payment successful! Please click 'Submit Application' to finish.", "success");
                 },
-                onClose: function(){ showCustomPopup('Payment cancelled.', 'error', 'Payment Required'); }
+                onClose: () => showPopup("Cancelled", "Payment cancelled.", "error")
             });
             handler.openIframe();
         });
 
-        // --- SUBMISSION LOGIC ---
-        form.addEventListener('submit', function(e) {
-            e.preventDefault(); 
+        // Submit
+        dom.form.addEventListener('submit', e => {
+            e.preventDefault();
+            if(!transactionReference) { showPopup("Payment Required", "Please pay the application fee first.", "error"); return; }
             
-            if (!transactionReference) {
-                showCustomPopup("Please complete payment first.", 'error', 'Payment Required');
-                return; 
-            }
-
-            if (!form.checkValidity()) {
-                showCustomPopup("Please fill in all required fields.", 'error', 'Incomplete Form');
-                return;
-            }
-
-            document.getElementById('loading').classList.remove('hidden');
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Sending Data...";
-
-            const formData = new FormData(form);
-            const dataObject = {};
-            formData.forEach((value, key) => dataObject[key] = value);
-
-            dataObject['passportBase64'] = passportBase64Field.value;
-            dataObject['birthCertBase64'] = birthCertBase64Field.value;
-            dataObject['olevelBase64'] = olevelBase64Field.value;
-            dataObject['paymentRef'] = transactionReference;
-            dataObject['action'] = 'submitApplication'; 
-
-            // Convert to URLSearchParams for Apps Script compatibility (This handles large payloads better for POST)
-            // But if files are huge (PDFs), this might still hit limits. 
-            // The compression logic added above minimizes this risk for images.
-            // Sending as JSON string for maximum compatibility with the new backend logic.
+            dom.loading.classList.remove('hidden');
+            dom.loading.classList.add('flex');
             
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                // Using JSON.stringify here because the backend now robustly handles JSON input.
-                // JSON is generally safer for large base64 strings than URL params.
-                body: JSON.stringify(dataObject) 
-            })
-            .then(res => { if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
-            .then(data => {
-                document.getElementById('loading').classList.add('hidden');
-                if(data.result === "success") {
-                    lastSubmittedData = { ...dataObject };
-                    delete lastSubmittedData.birthCertBase64; 
-                    delete lastSubmittedData.olevelBase64;      
-                    showCustomPopup("Success! Your Admission Number is: " + data.admNo, 'success', 'Submitted!', [{ text: 'Close', handler: closeCustomPopup }, { text: 'Print', handler: () => printSummary(data.admNo), isPrimary: true }]);
-                    form.reset();
-                    submitBtn.textContent = "Submit Application";
-                    payBtn.classList.remove('hidden');
-                    paymentStatus.classList.add('hidden');
-                    previewContainer.innerHTML = '';
-                    transactionReference = null;
+            const fd = new FormData(dom.form);
+            const obj = {};
+            fd.forEach((v,k) => obj[k] = v);
+            obj['passportBase64'] = document.getElementById('passportBase64').value;
+            obj['birthCertBase64'] = document.getElementById('birthCertBase64').value;
+            obj['olevelBase64'] = document.getElementById('olevelBase64').value;
+            obj['paymentRef'] = transactionReference;
+            obj['action'] = 'submitApplication';
+
+            fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(obj) })
+            .then(r => r.json())
+            .then(d => {
+                dom.loading.classList.remove('flex');
+                dom.loading.classList.add('hidden');
+                if(d.result === 'success') {
+                    lastData = obj;
+                    showPopup(`Success! ID: ${d.admNo}`, "success", "Application Submitted", [
+                        { text: "Print Slip", handler: () => printSlip(d.admNo), primary: true },
+                        { text: "Close", handler: () => location.reload(), primary: false }
+                    ]);
                 } else {
-                    showCustomPopup("Error: " + data.message, 'error', 'Failed');
-                    submitBtn.disabled = false;
+                    showPopup("Submission Failed", d.message, "error");
                 }
             })
-            .catch(err => {
-                showCustomPopup("Network error.", 'error', 'Failed');
-                document.getElementById('loading').classList.add('hidden');
-                submitBtn.disabled = false;
+            .catch(() => {
+                dom.loading.classList.add('hidden');
+                showPopup("Network Error", "Please try again.", "error");
             });
         });
-    });
-</script>
+
+        // Print Slip
+        function printSlip(id) {
+            document.getElementById('popupModal').classList.add('hidden');
+            const d = lastData;
+            document.body.innerHTML = `
+                <div class="max-w-2xl mx-auto p-10 bg-white border mt-10">
+                    <div class="text-center border-b pb-6 mb-6">
+                        <h1 class="text-3xl font-bold text-blue-900">Application Acknowledgement</h1>
+                        <p class="text-gray-500">Keep this slip safe</p>
+                    </div>
+                    <div class="flex justify-between mb-8">
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase">Applicant</p>
+                            <h2 class="text-2xl font-bold">${d.firstName} ${d.lastName}</h2>
+                            <p>${d.email}</p>
+                            <p>${d.phone}</p>
+                        </div>
+                        <img src="${d.passportBase64}" class="w-32 h-32 object-cover border-4 border-gray-100 rounded-lg">
+                    </div>
+                    <div class="grid grid-cols-2 gap-6 bg-gray-50 p-6 rounded-xl">
+                        <div><p class="text-xs text-gray-400">Admission No</p><p class="font-bold font-mono text-lg">${id}</p></div>
+                        <div><p class="text-xs text-gray-400">Course</p><p class="font-bold">${d.course}</p></div>
+                        <div><p class="text-xs text-gray-400">Payment Ref</p><p class="font-mono">${d.paymentRef}</p></div>
+                        <div><p class="text-xs text-gray-400">Date</p><p>${new Date().toLocaleDateString()}</p></div>
+                    </div>
+                    <div class="mt-10 text-center print:hidden"><button onclick="window.print()" class="px-6 py-2 bg-blue-600 text-white rounded-lg">Print</button></div>
+                </div>
+            `;
+        }
+
+        // Popup System
+        function showPopup(title, msg, type='success', actions=[]) {
+            const p = dom.popup;
+            document.getElementById('popupTitle').innerText = title;
+            document.getElementById('popupMessage').innerText = msg;
+            document.getElementById('popupIcon').innerHTML = type==='success' 
+                ? '<i class="fas fa-check-circle text-green-500"></i>' 
+                : '<i class="fas fa-times-circle text-red-500"></i>';
+            
+            const actDiv = document.getElementById('popupActions');
+            actDiv.innerHTML = '';
+            if(actions.length === 0) actions.push({ text: 'OK', handler: () => p.classList.remove('flex', 'hidden') || p.classList.add('hidden'), primary: true});
+            
+            actions.forEach(a => {
+                const btn = document.createElement('button');
+                btn.innerText = a.text;
+                btn.className = `px-4 py-2 rounded-lg text-sm font-bold ${a.primary ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}`;
+                btn.onclick = a.handler;
+                actDiv.appendChild(btn);
+            });
+
+            p.classList.remove('hidden');
+            p.classList.add('flex');
+        }
+
+        updateSteps();
+    </script>
 </body>
 </html>

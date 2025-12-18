@@ -68,6 +68,7 @@
         let currentTab = 'profile';
         let isSidebarOpen = false;
         let confirmCallback = null;
+        let pollInterval = null;
 
         // --- UTILS ---
         function showMessage(title, message, isSuccess = true) {
@@ -141,6 +142,7 @@
                     studentData = JSON.parse(storedData); 
                     renderDashboard(); 
                     syncPaymentStatus();
+                    startPolling(); // Start live updates
                 } else { 
                     renderLogin(); 
                 }
@@ -163,10 +165,29 @@
         }
 
         function handleLogout() { 
+            stopPolling();
             localStorage.removeItem('studentData'); 
             studentData = {}; 
             isSidebarOpen = false; 
             renderLogin(); 
+        }
+
+        // --- POLLING FOR LIVE UPDATES ---
+        function startPolling() {
+            if(pollInterval) clearInterval(pollInterval);
+            // OPTIMIZATION: Poll every 30 seconds to respect Google Quotas
+            pollInterval = setInterval(() => {
+                if(currentTab === 'announcements') {
+                    // Only fetch if user is NOT typing
+                    if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                        fetchAndRenderAnnouncements(true); // true = silent mode
+                    }
+                }
+            }, 30000); 
+        }
+
+        function stopPolling() {
+            if(pollInterval) clearInterval(pollInterval);
         }
 
         async function handleStudentLogin(event) {
@@ -190,6 +211,7 @@
                     localStorage.setItem('studentData', JSON.stringify(studentData));
                     showMessage('Success', `Welcome back, ${studentData.firstName}!`, true);
                     renderDashboard();
+                    startPolling();
                 } else { 
                     showMessage('Login Failed', response.message || 'Invalid Credentials.', false); 
                 }
@@ -415,13 +437,10 @@
             }
         }
 
-        // --- UPDATED: NO POPUP LOADING ANIMATION ---
+        // --- COURSE REGISTRATION ---
         async function renderCourseRegTab() {
             const content = document.getElementById('portalContent');
-            // NO setLoading(true) here anymore. Relies on loadTabContent's inline loader.
-            
             try {
-                // Fetch available subjects and registered subjects
                 const [availRes, regRes] = await Promise.all([
                     makeApiCall({ action: 'getSubjectsByProgram', program: studentData.course }),
                     makeApiCall({ action: 'getRegisteredCourses', admNo: studentData.admNo })
@@ -431,7 +450,6 @@
                 const registeredCourses = regRes.data || [];
 
                 if (registeredCourses.length > 0) {
-                    // Already Registered View
                     const rows = registeredCourses.map(c => `
                         <tr class="border-b">
                             <td class="p-4 font-bold text-gray-700">${c.code}</td>
@@ -450,25 +468,16 @@
                             <div class="card overflow-hidden">
                                 <h3 class="font-bold text-gray-800 mb-4 px-4 pt-4">Registered Courses</h3>
                                 <table class="w-full text-left">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="p-4">Code</th>
-                                            <th class="p-4">Title</th>
-                                            <th class="p-4 text-center">Unit</th>
-                                        </tr>
-                                    </thead>
+                                    <thead class="bg-gray-50"><tr><th class="p-4">Code</th><th class="p-4">Title</th><th class="p-4 text-center">Unit</th></tr></thead>
                                     <tbody>${rows}</tbody>
                                 </table>
                             </div>
                         </div>
                     `;
                 } else if (availableSubjects.length > 0) {
-                    // Registration Form
                     const rows = availableSubjects.map(s => `
                         <tr class="border-b hover:bg-gray-50 transition">
-                            <td class="p-4">
-                                <input type="checkbox" name="courseRegItem" value="${s.code}" data-unit="${s.unit}" onchange="updateTotalUnits()" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                            </td>
+                            <td class="p-4"><input type="checkbox" name="courseRegItem" value="${s.code}" data-unit="${s.unit}" onchange="updateTotalUnits()" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"></td>
                             <td class="p-4 font-bold text-gray-700">${s.code}</td>
                             <td class="p-4 text-gray-600">${s.title}</td>
                             <td class="p-4 text-center font-mono">${s.unit}</td>
@@ -480,38 +489,16 @@
                             <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-xl">
                                 <div class="flex">
                                     <div class="flex-shrink-0"><i class="fas fa-info-circle text-blue-500"></i></div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-blue-700">Select your courses for the session below. Ensure you do not exceed the maximum unit load (24).</p>
-                                    </div>
+                                    <div class="ml-3"><p class="text-sm text-blue-700">Select your courses for the session below. Ensure you do not exceed the maximum unit load (24).</p></div>
                                 </div>
                             </div>
-                            
                             <form id="courseRegForm" onsubmit="submitCourseReg(event)" class="card overflow-hidden">
                                 <div class="flex justify-between items-center mb-4 border-b pb-4">
                                     <h3 class="font-bold text-lg text-gray-800">Available Courses</h3>
-                                    <div class="bg-gray-100 px-4 py-2 rounded-lg">
-                                        <span class="text-xs text-gray-500 uppercase font-bold">Total Units:</span>
-                                        <span id="totalUnitDisplay" class="font-bold text-blue-600 text-lg ml-1">0</span>
-                                    </div>
+                                    <div class="bg-gray-100 px-4 py-2 rounded-lg"><span class="text-xs text-gray-500 uppercase font-bold">Total Units:</span><span id="totalUnitDisplay" class="font-bold text-blue-600 text-lg ml-1">0</span></div>
                                 </div>
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-left">
-                                        <thead class="bg-gray-50 text-xs uppercase text-gray-500 font-bold">
-                                            <tr>
-                                                <th class="p-4 w-10">Select</th>
-                                                <th class="p-4">Code</th>
-                                                <th class="p-4">Title</th>
-                                                <th class="p-4 text-center">Unit</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>${rows}</tbody>
-                                    </table>
-                                </div>
-                                <div class="mt-6 pt-4 border-t">
-                                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 shadow-lg transition transform hover:-translate-y-0.5">
-                                        Register Selected Courses
-                                    </button>
-                                </div>
+                                <div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50 text-xs uppercase text-gray-500 font-bold"><tr><th class="p-4 w-10">Select</th><th class="p-4">Code</th><th class="p-4">Title</th><th class="p-4 text-center">Unit</th></tr></thead><tbody>${rows}</tbody></table></div>
+                                <div class="mt-6 pt-4 border-t"><button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 shadow-lg transition transform hover:-translate-y-0.5">Register Selected Courses</button></div>
                             </form>
                         </div>
                     `;
@@ -519,7 +506,6 @@
                     content.innerHTML = `<div class="card text-center p-10 text-gray-500">No courses available for your department yet. Contact Admin.</div>`;
                 }
             } catch (err) {
-                // Remove loading here in case makeApiCall threw an error
                 content.innerHTML = `<div class="text-center text-red-500 p-10">Error loading courses.</div>`;
             }
         }
@@ -527,44 +513,23 @@
         function updateTotalUnits() {
             let total = 0;
             const checkboxes = document.querySelectorAll('input[name="courseRegItem"]:checked');
-            checkboxes.forEach(cb => {
-                total += parseInt(cb.getAttribute('data-unit'));
-            });
+            checkboxes.forEach(cb => { total += parseInt(cb.getAttribute('data-unit')); });
             document.getElementById('totalUnitDisplay').innerText = total;
         }
 
         async function submitCourseReg(e) {
             e.preventDefault();
             const checkboxes = document.querySelectorAll('input[name="courseRegItem"]:checked');
-            
-            if(checkboxes.length === 0) {
-                showMessage('Error', 'Please select at least one course.', false);
-                return;
-            }
-
+            if(checkboxes.length === 0) { showMessage('Error', 'Please select at least one course.', false); return; }
             const selectedCourses = Array.from(checkboxes).map(cb => cb.value);
-
             showConfirm('Confirm Registration', `Are you sure you want to register ${selectedCourses.length} courses?`, async () => {
                 setLoading(true, 'Submitting Registration...');
-                
                 try {
-                    const res = await makeApiCall({ 
-                        action: 'registerStudentCourses', 
-                        admNo: studentData.admNo, 
-                        courses: JSON.stringify(selectedCourses) 
-                    });
-                    
+                    const res = await makeApiCall({ action: 'registerStudentCourses', admNo: studentData.admNo, courses: JSON.stringify(selectedCourses) });
                     setLoading(false);
-                    if(res.result === 'success') {
-                        showMessage('Success', 'Courses registered successfully!');
-                        renderCourseRegTab(); 
-                    } else {
-                        showMessage('Error', 'Registration failed.', false);
-                    }
-                } catch(err) {
-                    setLoading(false);
-                    showMessage('Error', 'Registration failed.', false);
-                }
+                    if(res.result === 'success') { showMessage('Success', 'Courses registered successfully!'); renderCourseRegTab(); } 
+                    else { showMessage('Error', 'Registration failed.', false); }
+                } catch(err) { setLoading(false); showMessage('Error', 'Registration failed.', false); }
             });
         }
 
@@ -572,7 +537,6 @@
         async function renderExamsTab() {
              const content = document.getElementById('portalContent');
              const res = await makeApiCall({ action: 'getAvailableExams', course: studentData.course, admNo: studentData.admNo });
-             
              if(res.data.length === 0) {
                 content.innerHTML = `<div class="card text-center p-10"><i class="fas fa-coffee text-4xl mb-4 text-gray-300"></i><p>No exams available right now.</p></div>`;
              } else {
@@ -591,19 +555,15 @@
             const res = await makeApiCall({ action: 'getExamQuestions', examId: id });
             setLoading(false);
             if(res.data.length === 0) { showMessage("Error", "No questions found.", false); return; }
-            
             const content = document.getElementById('portalContent');
             let qHtml = res.data.map((q, i) => `<div class="mb-6 pb-4 border-b"><p class="font-bold text-gray-800 mb-3">${i+1}. ${q.text}</p><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${['A','B','C','D'].map(opt => `<label class="flex items-center p-3 border rounded cursor-pointer hover:bg-blue-50"><input type="radio" name="q_${q.id}" value="${q.options[opt]}" class="mr-3"><span>${q.options[opt]}</span></label>`).join('')}</div></div>`).join('');
-            
             content.innerHTML = `<div class="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-lg"><div class="flex justify-between items-center border-b pb-4 mb-6"><h2 class="text-2xl font-bold">${title}</h2><span class="bg-red-100 text-red-600 px-3 py-1 rounded font-mono font-bold"><i class="far fa-clock"></i> ${duration}m</span></div><form id="examForm">${qHtml}<button type="submit" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 mt-4">Submit Exam</button></form></div>`;
-            
             document.getElementById('examForm').onsubmit = async (e) => {
                 e.preventDefault();
                 showConfirm("Submit Exam?", "Are you sure? You cannot undo this.", async () => {
                     const formData = new FormData(document.getElementById('examForm'));
                     const answers = {};
                     res.data.forEach(q => { const val = formData.get(`q_${q.id}`); if(val) answers[q.id] = val; });
-                    
                     setLoading(true, "Submitting...");
                     const subRes = await makeApiCall({ action: 'submitExam', admNo: studentData.admNo, examId: id, answers: JSON.stringify(answers) });
                     setLoading(false);
@@ -633,11 +593,11 @@
              }).catch(e => { setLoading(false); showMessage('Error', 'Network error.', false); });
         }
 
-        async function fetchAndRenderAnnouncements() {
+        async function fetchAndRenderAnnouncements(silent = false) {
             const data = { action: 'getAnnouncementsByCourse', course: studentData.course, currentUser: studentData.admNo };
             const content = document.getElementById('portalContent');
             try {
-                const res = await makeApiCall(data);
+                const res = await makeApiCall(data, silent);
                 if(res.result === 'success' && res.data.length > 0) {
                     let html = `<div class="max-w-2xl mx-auto space-y-6">`;
                     res.data.forEach((ann, i) => {
@@ -651,10 +611,7 @@
                         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 transition hover:shadow-md">
                             <div class="flex items-center space-x-3 mb-3">
                                 <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">AD</div>
-                                <div>
-                                    <p class="text-sm font-bold text-gray-900">Admin</p>
-                                    <p class="text-xs text-gray-500">${ann.date}</p>
-                                </div>
+                                <div><p class="text-sm font-bold text-gray-900">Admin</p><p class="text-xs text-gray-500">${ann.date}</p></div>
                             </div>
                             <h3 class="font-bold text-lg text-gray-900 mb-2">${ann.title}</h3>
                             <div class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed mb-4">${ann.content}</div>
@@ -672,9 +629,7 @@
                                 <div id="comment-list-${ann.id}" class="space-y-3 mb-4 max-h-60 overflow-y-auto custom-scrollbar">
                                     ${comments.length ? comments.map(c => `
                                         <div class="flex gap-3">
-                                            <div class="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs font-bold text-gray-600">
-                                                ${c.user.substring(0,2).toUpperCase()}
-                                            </div>
+                                            <div class="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-xs font-bold text-gray-600">${c.user.substring(0,2).toUpperCase()}</div>
                                             <div class="flex-1 bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm">
                                                 <div class="flex justify-between items-baseline mb-1">
                                                     <span class="font-bold text-gray-900">${c.user}</span>
@@ -682,21 +637,18 @@
                                                 </div>
                                                 <p class="text-gray-700">${c.text}</p>
                                             </div>
-                                        </div>
-                                    `).join('') : '<p class="text-center text-gray-400 italic text-sm py-2">No comments yet.</p>'}
+                                        </div>`).join('') : '<p class="text-center text-gray-400 italic text-sm py-2">No comments yet.</p>'}
                                 </div>
                                 <form onsubmit="postComment(event, '${ann.id}')" class="flex gap-2 relative">
                                     <input name="comment" class="w-full bg-white border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" placeholder="Write a comment..." autocomplete="off">
-                                    <button type="submit" class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-blue-700 transition shadow-sm flex-shrink-0">
-                                        <i class="fas fa-paper-plane text-sm"></i>
-                                    </button>
+                                    <button type="submit" class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-blue-700 transition shadow-sm flex-shrink-0"><i class="fas fa-paper-plane text-sm"></i></button>
                                 </form>
                             </div>
                         </div>`;
                     });
                     content.innerHTML = html + `</div>`;
-                } else { content.innerHTML = `<div class="card text-center p-10 text-gray-500">No announcements.</div>`; }
-            } catch(e){ content.innerHTML = `<div class="text-center text-red-500 p-10">Failed to load feed.</div>`; }
+                } else { if(!silent) content.innerHTML = `<div class="card text-center p-10 text-gray-500">No announcements.</div>`; }
+            } catch(e){ if(!silent) content.innerHTML = `<div class="text-center text-red-500 p-10">Failed to load feed.</div>`; }
         }
 
         async function fetchAndRenderAssignments() {
@@ -714,17 +666,15 @@
                     });
                     content.innerHTML = html + `</div>`;
                 } else { content.innerHTML = `<div class="card text-center p-10 text-gray-500">No active assignments.</div>`; }
-            } catch(e){}
+             } catch(e){}
         }
         
         function toggleComments(id) {
             const section = document.getElementById(id);
             if(section.classList.contains('hidden')) {
-                section.classList.remove('hidden');
-                section.classList.add('fade-in');
+                section.classList.remove('hidden'); section.classList.add('fade-in');
             } else {
-                section.classList.add('hidden');
-                section.classList.remove('fade-in');
+                section.classList.add('hidden'); section.classList.remove('fade-in');
             }
         }
 
@@ -734,6 +684,7 @@
             let currentCount = parseInt(countSpan.innerText) || 0; 
             const isLiked = icon.classList.contains('fas') && icon.classList.contains('text-red-500'); 
             
+            // Optimistic update
             if (isLiked) { 
                 icon.classList.remove('fas', 'text-red-500'); 
                 icon.classList.add('far', 'text-gray-500'); 
@@ -770,14 +721,9 @@
 
             const temp = `
                 <div class="flex gap-3 fade-in">
-                    <div class="w-8 h-8 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-xs font-bold text-blue-600">
-                        ${studentData.firstName.charAt(0)}
-                    </div>
+                    <div class="w-8 h-8 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-xs font-bold text-blue-600">${studentData.firstName.charAt(0)}</div>
                     <div class="flex-1 bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm border border-blue-50">
-                        <div class="flex justify-between items-baseline mb-1">
-                            <span class="font-bold text-gray-900">Me</span>
-                            <span class="text-xs text-gray-400">Just now</span>
-                        </div>
+                        <div class="flex justify-between items-baseline mb-1"><span class="font-bold text-gray-900">Me</span><span class="text-xs text-gray-400">Just now</span></div>
                         <p class="text-gray-700">${text}</p>
                     </div>
                 </div>`; 

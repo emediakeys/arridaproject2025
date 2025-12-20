@@ -12,27 +12,27 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         
-        /* Wizard Transitions */
         .step-panel { display: none; }
         .step-panel.active { display: block; animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Custom Inputs */
         .form-input { @apply mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 transition-all duration-200 outline-none; }
         .form-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
         .form-input.error { border-color: #ef4444; background-color: #fef2f2; }
 
-        /* Progress Dots */
         .step-dot { @apply w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 z-10 border-2; }
         .step-dot.active { @apply bg-blue-600 text-white border-blue-600 shadow-md; }
         .step-dot.completed { @apply bg-green-500 text-white border-green-500; }
         .step-dot.pending { @apply bg-white text-gray-400 border-gray-200; }
 
-        /* Modal Blur */
         .modal-overlay { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 50; }
         @media print { .print-hidden { display: none !important; } }
     </style>
@@ -41,25 +41,20 @@
 
 <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden relative">
     
-    <!-- EXIT BUTTON -->
     <a href="index.html" class="absolute top-4 right-4 z-40 bg-white border border-gray-200 text-gray-400 hover:text-red-600 hover:border-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1 print-hidden">
         <i class="fas fa-times-circle"></i> EXIT
     </a>
 
-    <!-- HEADER -->
     <header class="bg-blue-800 p-8 text-center text-white print-hidden">
         <h1 class="text-3xl font-extrabold">Student Application</h1>
         <p class="text-blue-200 text-sm mt-1">Complete your registration in 4 easy steps</p>
     </header>
 
-    <!-- PROGRESS BAR -->
     <div class="px-8 pt-8 pb-4 print-hidden">
         <div class="relative flex justify-between items-center max-w-lg mx-auto">
-            <!-- Connecting Lines -->
             <div class="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -z-0 rounded-full"></div>
             <div id="progressLine" class="absolute top-1/2 left-0 h-1 bg-blue-600 -z-0 rounded-full transition-all duration-500" style="width: 0%"></div>
 
-            <!-- Dots -->
             <div class="flex flex-col items-center gap-2">
                 <div class="step-dot active" id="dot-1">1</div>
                 <span class="text-[10px] font-bold text-blue-600 uppercase">Biodata</span>
@@ -82,7 +77,6 @@
     <div class="p-6 sm:p-10">
         <form id="admissionForm">
             
-            <!-- STEP 1: BIODATA -->
             <div id="step-1" class="step-panel active">
                 <h3 class="text-lg font-bold text-gray-800 mb-6 border-b pb-2 flex items-center gap-2">
                     <i class="fas fa-user-circle text-blue-600"></i> Biodata & Passport
@@ -94,15 +88,14 @@
                             <img id="passportPreview" src="" class="w-full h-full object-cover hidden">
                             <i class="fas fa-camera text-gray-300 text-3xl" id="cameraIcon"></i>
                         </div>
-                        <input type="file" id="passport" accept="image/*" class="hidden" required>
+                        <input type="file" id="passport" accept="image/*" class="hidden">
                         <button type="button" onclick="document.getElementById('passport').click()" class="absolute bottom-0 right-0 bg-blue-600 text-white w-8 h-8 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition">
                             <i class="fas fa-plus text-xs"></i>
                         </button>
-                        <input type="hidden" id="passportBase64">
                     </div>
                     <div class="flex-1 w-full text-center md:text-left">
                         <p class="text-sm font-bold text-gray-700">Upload Passport Photo</p>
-                        <p class="text-xs text-gray-400 mt-1">Ensure your face is clearly visible. System will compress image automatically.</p>
+                        <p class="text-xs text-gray-400 mt-1">Ensure your face is clearly visible. Max 2MB.</p>
                     </div>
                 </div>
 
@@ -130,7 +123,6 @@
                 </div>
             </div>
 
-            <!-- STEP 2: CONTACT -->
             <div id="step-2" class="step-panel">
                 <h3 class="text-lg font-bold text-gray-800 mb-6 border-b pb-2 flex items-center gap-2">
                     <i class="fas fa-address-book text-blue-600"></i> Contact & Login
@@ -154,7 +146,6 @@
                 </div>
             </div>
 
-            <!-- STEP 3: ACADEMICS -->
             <div id="step-3" class="step-panel">
                 <h3 class="text-lg font-bold text-gray-800 mb-6 border-b pb-2 flex items-center gap-2">
                     <i class="fas fa-graduation-cap text-blue-600"></i> Course & Background
@@ -174,13 +165,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
                     <div class="bg-gray-50 p-4 rounded-xl border-2 border-dashed border-gray-200">
                         <label class="block text-sm font-bold text-gray-700 mb-1">Birth Certificate</label>
-                        <input type="file" id="birthCert" accept=".pdf, image/*" required class="text-xs">
-                        <input type="hidden" id="birthCertBase64">
+                        <input type="file" id="birthCert" accept=".pdf, image/*" required class="text-xs w-full">
                     </div>
                     <div class="bg-gray-50 p-4 rounded-xl border-2 border-dashed border-gray-200">
                         <label class="block text-sm font-bold text-gray-700 mb-1">O'Level Result</label>
-                        <input type="file" id="olevel" accept=".pdf, image/*" required class="text-xs">
-                        <input type="hidden" id="olevelBase64">
+                        <input type="file" id="olevel" accept=".pdf, image/*" required class="text-xs w-full">
                     </div>
                 </div>
 
@@ -195,7 +184,6 @@
                 </div>
             </div>
 
-            <!-- STEP 4: PAYMENT -->
             <div id="step-4" class="step-panel text-center">
                 <div class="py-8 px-4 bg-yellow-50 rounded-2xl border border-yellow-100 max-w-sm mx-auto">
                     <div class="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl">
@@ -215,7 +203,6 @@
                 </div>
             </div>
 
-            <!-- BUTTONS -->
             <div class="mt-12 flex justify-between items-center print-hidden">
                 <button type="button" id="prevBtn" class="px-8 py-3 rounded-xl border border-gray-300 text-gray-500 font-bold hover:bg-gray-50 transition hidden">
                     <i class="fas fa-arrow-left mr-2"></i> Previous
@@ -232,7 +219,6 @@
         </form>
     </div>
 
-    <!-- LOADING OVERLAY -->
     <div id="loading" class="hidden fixed inset-0 modal-overlay flex flex-col items-center justify-center text-white">
         <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
         <p class="font-bold text-lg">Processing Application...</p>
@@ -240,7 +226,6 @@
     </div>
 </div>
 
-<!-- POPUP MODAL -->
 <div id="customPopup" class="modal-overlay fixed inset-0 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center">
         <div id="popupIcon" class="mb-4"></div>
@@ -250,22 +235,24 @@
     </div>
 </div>
 
-<script src="https://js.paystack.co/v1/inline.js"></script>
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
-    const PAYSTACK_PUBLIC_KEY = "pk_test_29f23a0e0bde6c074ae9efb019002a8d95e721b4"; 
-    const FEE_KOBO = 750000;
+    // --- 1. CONFIGURATION ---
+    const SUPABASE_URL = 'https://adhbsmbmeigfcieofrkq.supabase.co'; 
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaGJzbWJtZWlnZmNpZW9mcmtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODc1ODcsImV4cCI6MjA4MTI2MzU4N30.wpOMUUJ2PcEJbuHHFbG-gUjVoxttnxA5UxZJttChJ1s'; // <--- PASTE KEY
+    const PAYSTACK_PUBLIC_KEY = "pk_test_34033a8e8865add5341146621b171d687d606024"; 
+
+    // Initialize Supabase (Renamed 'db' to prevent conflicts)
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const FEE_KOBO = 750000; // 7,500 NGN
 
     let currentStep = 1;
     let transactionReference = null;
-    let lastSubmittedData = null;
 
-    // --- NAVIGATION LOGIC ---
+    // --- 2. NAVIGATION & VALIDATION ---
     function updateWizard() {
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
         document.getElementById(`step-${currentStep}`).classList.add('active');
 
-        // Buttons
         document.getElementById('prevBtn').classList.toggle('hidden', currentStep === 1);
         if (currentStep === 4) {
             document.getElementById('nextBtn').classList.add('hidden');
@@ -275,226 +262,244 @@
             document.getElementById('submitBtn').classList.add('hidden');
         }
 
-        // Progress Fill
         document.getElementById('progressLine').style.width = `${((currentStep - 1) / 3) * 100}%`;
-
-        // Update Dots
         for (let i = 1; i <= 4; i++) {
             const dot = document.getElementById(`dot-${i}`);
-            const label = dot.nextElementSibling;
             if (i < currentStep) {
                 dot.className = 'step-dot completed';
                 dot.innerHTML = '<i class="fas fa-check text-xs"></i>';
-                label.className = 'text-[10px] font-bold text-green-600 uppercase';
             } else if (i === currentStep) {
                 dot.className = 'step-dot active';
-                dot.innerHTML = i === 4 ? '<i class="fas fa-credit-card text-xs"></i>' : i;
-                label.className = 'text-[10px] font-bold text-blue-600 uppercase';
+                dot.innerHTML = i;
             } else {
                 dot.className = 'step-dot pending';
-                dot.innerHTML = i === 4 ? '<i class="fas fa-credit-card text-xs"></i>' : i;
-                label.className = 'text-[10px] font-bold text-gray-400 uppercase';
+                dot.innerHTML = i;
             }
         }
     }
 
     function validateStep() {
-        const stepPanel = document.getElementById(`step-${currentStep}`);
-        const fields = stepPanel.querySelectorAll('input, select, textarea');
-        let isValid = true;
-
-        fields.forEach(f => {
-            if (f.hasAttribute('required') && !f.value.trim()) {
-                f.classList.add('error');
-                isValid = false;
+        const panel = document.getElementById(`step-${currentStep}`);
+        const inputs = panel.querySelectorAll('input[required], select[required], textarea[required]');
+        let valid = true;
+        inputs.forEach(input => {
+            if (!input.value.trim()) {
+                input.classList.add('error');
+                valid = false;
             } else {
-                f.classList.remove('error');
+                input.classList.remove('error');
             }
         });
 
-        // Passport check on Step 1
-        if (currentStep === 1 && !document.getElementById('passportBase64').value) {
-            showCustomPopup("Please upload a passport photograph.", 'error', 'Missing File');
-            return false;
+        // Specific Check for Passport (Step 1)
+        if(currentStep === 1) {
+            const passportInput = document.getElementById('passport');
+            if(!passportInput.files[0]) {
+                showCustomPopup("Please upload a passport photo.", 'error');
+                return false; 
+            }
         }
-
-        if (!isValid) showCustomPopup("Please fill in all required fields marked in red.", 'error', 'Incomplete Section');
-        return isValid;
-    }
-
-    document.getElementById('nextBtn').onclick = () => {
-        if (validateStep()) { currentStep++; updateWizard(); }
-    };
-    document.getElementById('prevBtn').onclick = () => {
-        currentStep--; updateWizard();
-    };
-
-    // --- AGGRESSIVE COMPRESSION ---
-    function compressImage(file, maxWidth, quality, callback) {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = event => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const cvs = document.createElement('canvas');
-                let w = img.width, h = img.height;
-                if (w > maxWidth) { h *= maxWidth / w; w = maxWidth; }
-                cvs.width = w; cvs.height = h;
-                const ctx = cvs.getContext('2d');
-                ctx.drawImage(img, 0, 0, w, h);
-                callback(cvs.toDataURL('image/jpeg', quality));
-            };
-        };
-    }
-
-    function bindFileUpload(id, hiddenId, type='doc') {
-        const input = document.getElementById(id);
-        const preview = document.getElementById('passportPreview');
-        const icon = document.getElementById('cameraIcon');
         
-        input.addEventListener('change', (e) => {
-            const f = e.target.files[0];
-            if (!f) return;
-
-            if (f.type.startsWith('image/')) {
-                // High compression for Docs (900px), Higher for Passports (300px)
-                const width = type === 'passport' ? 300 : 900;
-                compressImage(f, width, 0.5, (b64) => {
-                    document.getElementById(hiddenId).value = b64;
-                    if (id === 'passport') {
-                        preview.src = b64;
-                        preview.classList.remove('hidden');
-                        icon.classList.add('hidden');
-                    }
-                });
-            } else if (f.type === 'application/pdf') {
-                if (f.size > 1024 * 1024) {
-                    showCustomPopup("PDF must be under 1MB.", 'error', 'File Too Large');
-                    input.value = "";
-                    return;
-                }
-                const r = new FileReader();
-                r.onload = (ev) => document.getElementById(hiddenId).value = ev.target.result;
-                r.readAsDataURL(f);
-            }
-        });
+        return valid;
     }
 
-    bindFileUpload('passport', 'passportBase64', 'passport');
-    bindFileUpload('birthCert', 'birthCertBase64');
-    bindFileUpload('olevel', 'olevelBase64');
+    document.getElementById('nextBtn').onclick = () => { if(validateStep()) { currentStep++; updateWizard(); } };
+    document.getElementById('prevBtn').onclick = () => { currentStep--; updateWizard(); };
 
-    // --- PAYSTACK & SUBMISSION ---
+    // --- 3. FILE UPLOAD LOGIC ---
+    document.getElementById('passport').addEventListener('change', function(e) {
+        if(e.target.files[0]) {
+            const url = URL.createObjectURL(e.target.files[0]);
+            document.getElementById('passportPreview').src = url;
+            document.getElementById('passportPreview').classList.remove('hidden');
+            document.getElementById('cameraIcon').classList.add('hidden');
+        }
+    });
+
+    async function uploadFile(file, folder) {
+        if(!file) return null;
+        const ext = file.name.split('.').pop();
+        const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(2)}.${ext}`;
+        
+        const { data, error } = await db.storage
+            .from('documents')
+            .upload(fileName, file);
+
+        if(error) throw error;
+        
+        const { data: { publicUrl } } = db.storage
+            .from('documents')
+            .getPublicUrl(fileName);
+            
+        return publicUrl;
+    }
+
+    // --- 4. PAYSTACK LOGIC ---
     document.getElementById('payBtn').onclick = () => {
-        const email = document.getElementById('email').value.trim();
-        if (!email) { showCustomPopup("Please provide an email on Step 2.", 'error', 'Error'); return; }
+        const email = document.getElementById('email').value;
+        if(!email) return showCustomPopup("Please enter email in Step 2", 'error');
 
         const handler = PaystackPop.setup({
             key: PAYSTACK_PUBLIC_KEY,
             email: email,
             amount: FEE_KOBO,
-            currency: 'NGN',
-            ref: 'ADM-' + Date.now(),
-            callback: (response) => {
+            ref: 'APP-' + Date.now(),
+            callback: function(response) {
                 transactionReference = response.reference;
                 document.getElementById('payBtn').classList.add('hidden');
                 document.getElementById('payment-status').classList.remove('hidden');
                 document.getElementById('submitBtn').disabled = false;
-                showCustomPopup("Payment Confirmed! Click 'Submit Application' to complete.", 'success', 'Done');
+                showCustomPopup("Payment Captured! Click Submit to finish.", 'success');
             }
         });
         handler.openIframe();
     };
 
-    document.getElementById('admissionForm').onsubmit = function(e) {
+    // --- 5. SUBMISSION LOGIC (Corrected) ---
+    document.getElementById('admissionForm').onsubmit = async function(e) {
         e.preventDefault();
-        if (!transactionReference) { showCustomPopup("Payment required.", 'error', 'Error'); return; }
+        if(!transactionReference) return showCustomPopup("Payment required.", 'error');
 
         document.getElementById('loading').classList.remove('hidden');
-        
-        const fd = new FormData(this);
-        const data = {};
-        fd.forEach((v, k) => data[k] = v);
-        
-        data.passportBase64 = document.getElementById('passportBase64').value;
-        data.birthCertBase64 = document.getElementById('birthCertBase64').value;
-        data.olevelBase64 = document.getElementById('olevelBase64').value;
-        data.paymentRef = transactionReference;
-        data.action = 'submitApplication';
 
-        fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data) })
-        .then(res => res.json())
-        .then(res => {
-            document.getElementById('loading').classList.add('hidden');
-            if (res.result === 'success') {
-                lastSubmittedData = data;
-                showCustomPopup("ID: " + res.admNo, 'success', 'Application Successful!', [
-                    { text: 'Print Slip', handler: () => printSummary(res.admNo), primary: true },
-                    { text: 'Finish', handler: () => location.reload(), primary: false }
-                ]);
-            } else {
-                showCustomPopup(res.message, 'error', 'Submission Failed');
+        try {
+            const formData = new FormData(this);
+            const email = formData.get('email');
+            const password = formData.get('password');
+
+            // 1. Create Auth User
+            const { data: authData, error: authError } = await db.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: { full_name: `${formData.get('firstName')} ${formData.get('lastName')}` }
+                }
+            });
+
+            if (authError) {
+                // Handle Duplicate Email specifically
+                if(authError.message.includes("already registered")) {
+                    throw new Error("This email is already registered. Please Login instead.");
+                }
+                throw authError;
             }
-        })
-        .catch(() => {
+
+            // 2. Upload Files (Only after auth success)
+            const passportUrl = await uploadFile(document.getElementById('passport').files[0], 'passports');
+            const birthUrl = await uploadFile(document.getElementById('birthCert').files[0], 'birth_certs');
+            const olevelUrl = await uploadFile(document.getElementById('olevel').files[0], 'olevels');
+
+            // 3. Insert Student Record
+            const { data: student, error: dbError } = await db
+                .from('students')
+                .insert([{
+                    user_id: authData.user.id, // Link to Auth ID
+                    first_name: formData.get('firstName'),
+                    last_name: formData.get('lastName'),
+                    email: email,
+                    dob: formData.get('dob'),
+                    gender: formData.get('gender'),
+                    address: formData.get('address'),
+                    phone: formData.get('nokPhone'),
+                    course_applied: formData.get('course'),
+                    passport_url: passportUrl,
+                    birth_cert_url: birthUrl,
+                    olevel_url: olevelUrl,
+                    payment_ref: transactionReference,
+                    payment_status: 'PAID'
+                }])
+                .select()
+                .single();
+
+            if (dbError) throw dbError;
+
+            // 4. Insert Profile Details
+            await db.from('student_profiles').insert({
+                admission_no: student.admission_no,
+                nok_name: formData.get('nokName'),
+                nok_phone: formData.get('nokPhone'),
+                primary_school: formData.get('prevSchool'),
+                permanent_address: formData.get('address')
+            });
+
+            // 5. Verify Payment on Server
+            await db.functions.invoke('paystack-verify', {
+                body: { reference: transactionReference, admNo: student.admission_no, amount: 7500, feeType: 'Application' }
+            });
+
             document.getElementById('loading').classList.add('hidden');
-            showCustomPopup("Network error.", 'error', 'Failed');
-        });
+            
+            showCustomPopup(`Admission No: ${student.admission_no}`, 'success', 'Application Successful!', [
+                { text: 'Download Slip', handler: () => generatePDF(student), primary: true },
+                { text: 'Go to Portal', handler: () => window.location.href = 'index.html', primary: false }
+            ]);
+
+        } catch (err) {
+            document.getElementById('loading').classList.add('hidden');
+            console.error(err);
+            showCustomPopup("Error: " + err.message, 'error');
+        }
     };
 
-    // --- UI POPUP SYSTEM ---
-    function showCustomPopup(msg, type='error', title='Notice', actions=[]) {
-        document.getElementById('popupTitle').textContent = title;
-        document.getElementById('popupMessage').textContent = msg;
+    // --- 6. UI HELPERS ---
+    function showCustomPopup(msg, type, title='Notice', actions=[]) {
+        document.getElementById('popupTitle').innerText = title;
+        document.getElementById('popupMessage').innerText = msg;
         document.getElementById('popupIcon').innerHTML = type === 'success' ? 
             '<div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto"><i class="fas fa-check text-2xl"></i></div>' : 
             '<div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto"><i class="fas fa-exclamation text-2xl"></i></div>';
         
         const container = document.getElementById('popupActions');
         container.innerHTML = '';
-        if (actions.length === 0) actions.push({ text: 'OK', handler: closeCustomPopup, primary: true });
         
+        if(actions.length === 0) actions.push({ text: 'OK', handler: () => document.getElementById('customPopup').classList.replace('flex', 'hidden'), primary: true });
+
         actions.forEach(a => {
             const btn = document.createElement('button');
-            btn.textContent = a.text;
             btn.className = a.primary ? 'w-full py-3 bg-blue-600 text-white font-bold rounded-xl' : 'w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl';
+            btn.innerText = a.text;
             btn.onclick = a.handler;
             container.appendChild(btn);
         });
+
         document.getElementById('customPopup').classList.replace('hidden', 'flex');
     }
 
-    function closeCustomPopup() { document.getElementById('customPopup').classList.replace('flex', 'hidden'); }
+    function generatePDF(data) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFillColor(30, 58, 138); 
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text("School of Health Technology", 105, 20, null, null, "center");
+        doc.setFontSize(14);
+        doc.text("Application Slip", 105, 30, null, null, "center");
+        
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        
+        let y = 60;
+        const addLine = (label, value) => {
+            doc.setFont(undefined, 'bold');
+            doc.text(label, 20, y);
+            doc.setFont(undefined, 'normal');
+            doc.text(String(value), 80, y);
+            y += 10;
+        };
 
-    function printSummary(admNo) {
-        closeCustomPopup();
-        const d = lastSubmittedData;
-        const printArea = `
-            <div class="max-w-2xl mx-auto p-10 bg-white border mt-10">
-                <div class="text-center mb-8 border-b-4 border-blue-900 pb-4">
-                    <h1 class="text-4xl font-black text-blue-900 uppercase">Application Slip</h1>
-                    <p class="text-gray-500">Academic Session: ${new Date().getFullYear()}/${new Date().getFullYear()+1}</p>
-                </div>
-                <div class="flex justify-between items-start mb-10">
-                    <div class="space-y-2">
-                        <p class="text-xs font-bold text-gray-400 uppercase">Applicant</p>
-                        <h2 class="text-2xl font-bold text-gray-800">${d.firstName} ${d.lastName}</h2>
-                        <p class="text-gray-600">${d.email}</p>
-                        <p class="text-blue-600 font-bold">${d.course}</p>
-                    </div>
-                    <img src="${d.passportBase64}" class="w-32 h-32 object-cover border-4 border-gray-100 rounded-xl shadow-lg">
-                </div>
-                <div class="grid grid-cols-2 gap-8 bg-gray-50 p-6 rounded-2xl">
-                    <div><p class="text-[10px] text-gray-400 font-bold uppercase">Admission ID</p><p class="font-mono text-xl font-bold text-blue-800">${admNo}</p></div>
-                    <div><p class="text-[10px] text-gray-400 font-bold uppercase">Payment Ref</p><p class="font-mono text-sm">${d.paymentRef}</p></div>
-                </div>
-                <div class="mt-10 text-center print-hidden">
-                    <button onclick="window.print()" class="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold">Print Now</button>
-                    <button onclick="location.reload()" class="ml-4 text-gray-400">Close</button>
-                </div>
-            </div>`;
-        document.body.innerHTML = printArea;
+        addLine("Full Name:", `${data.first_name} ${data.last_name}`);
+        addLine("Admission No:", data.admission_no);
+        addLine("Course:", data.course_applied);
+        addLine("Email:", data.email);
+        addLine("Payment Ref:", data.payment_ref);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text("Please print this slip and bring it to the screening.", 105, y + 20, null, null, "center");
+
+        doc.save(`Application_${data.admission_no}.pdf`);
     }
 </script>
 </body>

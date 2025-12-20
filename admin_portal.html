@@ -10,951 +10,518 @@
     <link rel="apple-touch-icon" href="icon.jpg">
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        /* Custom styles for better dashboard aesthetics */
-        :root {
-            --primary-color: #10b981; /* Emerald 500 */
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-            transition: all 0.2s;
-        }
-        .nav-item:hover, .nav-item.active {
-            background-color: var(--primary-color);
-            color: white;
-            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -2px rgba(16, 185, 129, 0.3);
-        }
-        /* Style for the action buttons */
-        .action-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        /* Scrollable container for tables/lists */
-        .data-container {
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-        /* Hide scrollbar for clean look in comments but allow scroll */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: #e5e7eb;
-            border-radius: 4px;
-        }
+        :root { --primary-color: #10b981; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .nav-item { display: flex; align-items: center; padding: 0.75rem 1rem; cursor: pointer; border-radius: 0.5rem; margin-bottom: 0.5rem; transition: all 0.2s; }
+        .nav-item:hover, .nav-item.active { background-color: var(--primary-color); color: white; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3); }
+        .data-container { max-height: 70vh; overflow-y: auto; }
+        .sidebar { transition: transform 0.3s ease-in-out; }
+        .chat-bubble { position: relative; padding: 10px; border-radius: 10px; max-width: 80%; font-size: 0.85rem; }
+        .chat-admin { background-color: #d1fae5; color: #065f46; margin-left: auto; border-bottom-right-radius: 0; }
+        .chat-student { background-color: #f3f4f6; color: #1f2937; margin-right: auto; border-bottom-left-radius: 0; }
         
-        /* Mobile Sidebar Transitions */
-        .sidebar {
-            transition: transform 0.3s ease-in-out;
-        }
-        
-        /* Smooth fade for elements */
-        .fade-enter {
-            opacity: 0;
-            transform: translateY(10px);
-            animation: fadeIn 0.3s forwards;
-        }
-        @keyframes fadeIn {
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* Toggle Switch Styles */
+        .toggle-checkbox:checked { right: 0; border-color: #10b981; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
     </style>
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
     <div id="app"></div>
 
     <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100">
-            <div class="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-                <svg class="animate-spin h-8 w-8 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900">Please Wait</h3>
-            <p class="mt-2 text-gray-500 font-medium" id="loadingText">Processing request...</p>
+        <div class="bg-white rounded-xl p-8 text-center shadow-2xl">
+            <svg class="animate-spin h-8 w-8 text-emerald-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-500 font-medium" id="loadingText">Processing...</p>
         </div>
     </div>
 
     <div id="messageModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
-            <h3 id="modalTitle" class="text-xl font-semibold text-gray-900 mb-2">Message</h3>
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100">
+            <div id="modalIcon" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4"></div>
+            <h3 id="modalTitle" class="text-xl font-bold text-gray-900 mb-2">Message</h3>
             <p id="modalMessage" class="text-gray-600 mb-6"></p>
-            <button onclick="closeModal()" class="w-full py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition shadow-md">
-                Close
-            </button>
-        </div>
-    </div>
-
-    <div id="confirmModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 transform transition-all scale-100">
-            <div class="mb-4">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                </div>
-                <h3 id="confirmTitle" class="text-lg leading-6 font-medium text-gray-900 text-center">Delete Item</h3>
-                <div class="mt-2">
-                    <p id="confirmMessage" class="text-sm text-gray-500 text-center">Are you sure you want to delete this? This action cannot be undone.</p>
-                </div>
-            </div>
-            <div class="flex space-x-3">
-                <button onclick="closeConfirm()" class="flex-1 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none transition">
-                    Cancel
-                </button>
-                <button onclick="executeConfirm()" class="flex-1 py-2.5 px-4 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 focus:outline-none transition shadow-md">
-                    Delete
-                </button>
-            </div>
+            <button onclick="closeModal()" class="w-full py-2.5 bg-gray-800 text-white font-medium rounded-lg hover:bg-gray-900 transition shadow-md">Close</button>
         </div>
     </div>
 
     <div id="questionModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-4">Add Question</h3>
-            <form id="addQuestionForm" class="space-y-4">
+            <form id="addQuestionForm" onsubmit="window.handleAddQuestion(event)">
                 <input type="hidden" id="q_examId">
-                <textarea id="q_text" placeholder="Question Text" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-emerald-500 focus:border-emerald-500" rows="3" required></textarea>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="q_optA" placeholder="Option A" class="p-3 border border-gray-300 rounded-lg" required>
-                    <input type="text" id="q_optB" placeholder="Option B" class="p-3 border border-gray-300 rounded-lg" required>
-                    <input type="text" id="q_optC" placeholder="Option C" class="p-3 border border-gray-300 rounded-lg" required>
-                    <input type="text" id="q_optD" placeholder="Option D" class="p-3 border border-gray-300 rounded-lg" required>
+                <textarea id="q_text" placeholder="Question Text" class="w-full p-3 border rounded-lg bg-gray-50 mb-4" rows="3" required></textarea>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <input id="q_optA" placeholder="Option A" class="p-2 border rounded" required>
+                    <input id="q_optB" placeholder="Option B" class="p-2 border rounded" required>
+                    <input id="q_optC" placeholder="Option C" class="p-2 border rounded" required>
+                    <input id="q_optD" placeholder="Option D" class="p-2 border rounded" required>
                 </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Correct Answer</label>
-                    <select id="q_answer" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50" required>
-                        <option value="">Select Correct Option</option>
-                        <option value="A">Option A</option>
-                        <option value="B">Option B</option>
-                        <option value="C">Option C</option>
-                        <option value="D">Option D</option>
-                    </select>
-                </div>
-                <div class="flex space-x-3 pt-4">
-                    <button type="button" onclick="document.getElementById('questionModal').classList.add('hidden'); document.getElementById('questionModal').classList.remove('flex');" class="flex-1 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">Cancel</button>
-                    <button type="submit" class="flex-1 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium shadow-md">Save Question</button>
+                <label class="block text-sm font-bold mb-2">Correct Answer</label>
+                <select id="q_answer" class="w-full p-2 border rounded mb-6" required>
+                    <option value="A">Option A</option>
+                    <option value="B">Option B</option>
+                    <option value="C">Option C</option>
+                    <option value="D">Option D</option>
+                </select>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="document.getElementById('questionModal').classList.add('hidden'); document.getElementById('questionModal').classList.remove('flex');" class="flex-1 py-3 border rounded hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="flex-1 py-3 bg-emerald-600 text-white rounded hover:bg-emerald-700">Save</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <div id="confirmModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <h3 id="confirmTitle" class="text-lg font-bold text-gray-900">Confirmation</h3>
+            <p id="confirmMessage" class="text-sm text-gray-500 mt-2 mb-4">Are you sure?</p>
+            <div class="flex space-x-3">
+                <button onclick="closeConfirm()" class="flex-1 py-2 border rounded hover:bg-gray-50">Cancel</button>
+                <button onclick="executeConfirm()" class="flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- APP CONFIGURATION ---
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec"; 
-        
-        // --- STATE MANAGEMENT ---
-        let adminState = {
-            isLoggedIn: false,
-            username: '',
-            assignedCourse: '',
+        // --- CONFIGURATION ---
+        const SUPABASE_URL = 'https://adhbsmbmeigfcieofrkq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaGJzbWJtZWlnZmNpZW9mcmtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODc1ODcsImV4cCI6MjA4MTI2MzU4N30.wpOMUUJ2PcEJbuHHFbG-gUjVoxttnxA5UxZJttChJ1s';
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let adminState = { 
+            isLoggedIn: false, 
+            username: '', 
+            assignedCourse: '', 
             activeTab: 'dashboard', 
-            students: [],
-            announcements: [],
-            assignments: [],
-            attendance: [],
-            exams: [], 
-            isSidebarOpen: false 
+            isSidebarOpen: false,
+            currentWeekStart: getMonday(new Date()), 
+            weekIsActive: true
         };
 
         let confirmCallback = null;
-        let pollInterval = null; // Timer for live updates
 
-        // --- UI UTILITIES (unchanged) ---
-        function setLoading(active, text = 'Processing...') {
-            const overlay = document.getElementById('loadingOverlay');
-            const txt = document.getElementById('loadingText');
-            if (active) {
-                txt.innerText = text;
-                overlay.classList.remove('hidden');
-                overlay.classList.add('flex');
+        // --- AUTH ---
+        document.addEventListener('DOMContentLoaded', checkAuth);
+
+        async function checkAuth() {
+            const { data: { session } } = await db.auth.getSession();
+            if (session) {
+                const { data } = await db.from('admins').select('*').eq('id', session.user.id).single();
+                if (data) {
+                    adminState = { ...adminState, isLoggedIn: true, username: data.username, assignedCourse: data.assigned_course };
+                    render(AdminDashboard);
+                    lucide.createIcons();
+                    loadDashboardData();
+                } else {
+                    showModal("Access Denied", "You do not have Admin privileges.", true);
+                    await db.auth.signOut(); 
+                    render(AdminLogin);
+                }
             } else {
-                overlay.classList.add('hidden');
-                overlay.classList.remove('flex');
+                render(AdminLogin);
             }
         }
 
-        function showModal(title, message, isError = false) {
-            setLoading(false);
-            const modal = document.getElementById('messageModal');
-            const titleEl = document.getElementById('modalTitle');
-            const msgEl = document.getElementById('modalMessage');
-            titleEl.innerText = title;
-            titleEl.className = isError ? "text-xl font-bold text-red-600 mb-2" : "text-xl font-bold text-emerald-600 mb-2";
-            msgEl.innerText = message;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('messageModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function showConfirm(title, message, callback) {
-            const modal = document.getElementById('confirmModal');
-            document.getElementById('confirmTitle').innerText = title;
-            document.getElementById('confirmMessage').innerText = message;
-            confirmCallback = callback;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeConfirm() {
-            const modal = document.getElementById('confirmModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            confirmCallback = null;
-        }
-
-        function executeConfirm() {
-            if (confirmCallback) {
-                confirmCallback();
-            }
-            closeConfirm();
-        }
-
-        // --- CORE FUNCTIONS ---
-        function render(component) {
-            const app = document.getElementById('app');
-            app.innerHTML = component();
-            lucide.createIcons();
-            if (adminState.isLoggedIn) {
-                bindDashboardEvents();
-                startPolling(); // Start Checking for updates
-            } else {
-                bindLoginEvents();
-                stopPolling();
-            }
-        }
-
-        function jsonToUrlParams(data) {
-            const params = new URLSearchParams();
-            for (const key in data) {
-                if (data.hasOwnProperty(key)) {
-                    params.append(key, data[key]);
-                }
-            }
-            return params;
-        }
-
-        async function fetchAppsScript(action, payload = {}, silent = false) {
-            if(!silent && action !== 'toggleLike' && action !== 'addComment' && action !== 'adminLogin') {
-                 setLoading(true, 'Loading data...'); 
-            }
-            const dataToSend = { action, ...payload };
-            const formBody = jsonToUrlParams(dataToSend);
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: formBody 
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const responseText = await response.text();
-                const result = responseText ? JSON.parse(responseText) : {};
-                if(!silent) setLoading(false);
-                return result;
-            } catch (error) {
-                console.error('API Fetch Error:', error);
-                if(!silent) setLoading(false);
-                return { result: 'error', message: 'Network error. Check console.' };
-            }
-        }
-
-        // --- AUTHENTICATION ---
-        function checkAuth() {
-            const storedState = localStorage.getItem('adminState');
-            if (storedState) {
-                const state = JSON.parse(storedState);
-                if (state.isLoggedIn && state.assignedCourse) {
-                    adminState = { ...adminState, ...state, isLoggedIn: true };
-                    loadInitialData();
-                    return;
-                }
-            }
-            adminState.isLoggedIn = false;
-            render(AdminLogin);
-        }
-
-        function saveAdminState() {
-            localStorage.setItem('adminState', JSON.stringify({
-                isLoggedIn: adminState.isLoggedIn,
-                username: adminState.username,
-                assignedCourse: adminState.assignedCourse
-            }));
-        }
-
-        async function handleAdminLogin(e) {
+        window.handleAdminLogin = async function(e) {
             e.preventDefault();
-            const form = e.target;
-            const username = form.username.value.trim();
-            const password = form.password.value;
-            setLoading(true, 'Authenticating credentials...');
-            const result = await fetchAppsScript('adminLogin', { username, password });
-            if (result && result.result === 'success') {
-                adminState.isLoggedIn = true;
-                adminState.username = username;
-                adminState.assignedCourse = result.assignedCourse;
-                saveAdminState();
-                setLoading(true, 'Login successful! Setting up dashboard...');
-                setTimeout(() => {
-                    setLoading(false);
-                    loadInitialData();
-                }, 800); 
-            } else {
-                setLoading(false);
-                const errMsg = result ? result.message : 'Unknown login error';
-                showModal('Login Failed', errMsg, true);
-            }
-        }
+            setLoading(true, "Logging in...");
+            const { error } = await db.auth.signInWithPassword({
+                email: e.target.username.value.trim(),
+                password: e.target.password.value
+            });
+            setLoading(false);
+            if(error) showModal("Login Failed", error.message, true); else checkAuth();
+        };
 
-        function handleLogout() {
-            localStorage.removeItem('adminState');
-            stopPolling();
-            adminState = { isLoggedIn: false, username: '', assignedCourse: '', activeTab: 'dashboard', students: [], announcements: [], assignments: [], attendance: [], exams: [], isSidebarOpen: false };
-            render(AdminLogin);
-        }
+        window.handleLogout = async function() {
+            await db.auth.signOut();
+            location.reload();
+        };
 
-        function bindLoginEvents() {
-            const loginForm = document.getElementById('adminLoginForm');
-            if (loginForm) {
-                loginForm.addEventListener('submit', handleAdminLogin);
-            }
-        }
-
-        // --- DATA LOADING & LIVE POLLING ---
-        async function loadInitialData(silent = false) {
-            if (!adminState.isLoggedIn) return;
-            if(!document.getElementById('sidebar')) {
-                render(AdminDashboard);
-            }
-            if(!silent && adminState.students.length === 0) {
-                setLoading(true, 'Fetching dashboard data...');
-            }
-            const course = adminState.assignedCourse;
-            try {
-                const [studentsResult, announcementsResult, assignmentsResult, examsResult] = await Promise.all([
-                    fetchAppsScript('getStudentsByCourse', { course }, true),
-                    fetchAppsScript('getAnnouncementsByCourse', { course, currentUser: adminState.username }, true),
-                    fetchAppsScript('getAssignmentsByCourse', { course }, true),
-                    fetchAppsScript('getExamsAdmin', { course }, true)
-                ]);
-                if(studentsResult.result === 'success') adminState.students = studentsResult.data;
-                if(announcementsResult.result === 'success') adminState.announcements = announcementsResult.data;
-                if(assignmentsResult.result === 'success') adminState.assignments = assignmentsResult.data;
-                if(examsResult.result === 'success') adminState.exams = examsResult.data;
+        // --- DATA LOADERS ---
+        async function loadDashboardData() {
+            if(adminState.activeTab === 'dashboard') {
+                const { count: sCount } = await db.from('students').select('*', { count: 'exact', head: true });
+                const { count: aCount } = await db.from('announcements').select('*', { count: 'exact', head: true });
+                const { count: qCount } = await db.from('assignments').select('*', { count: 'exact', head: true });
                 
-                // Only re-render if not silent (initial load) OR if the user is not actively typing
-                if(!silent || (document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA")) {
-                   render(AdminDashboard); 
-                }
-            } catch (err) {
-                console.error("Error loading dashboard data", err);
+                document.getElementById('count-students').innerText = sCount || 0;
+                document.getElementById('count-news').innerText = aCount || 0;
+                document.getElementById('count-ass').innerText = qCount || 0;
             }
-            setLoading(false);
-        }
-        
-        function startPolling() {
-            if (pollInterval) clearInterval(pollInterval);
-            // Poll every 30 seconds to fetch new data (Live Updates - Safe Mode)
-            pollInterval = setInterval(() => {
-                if(adminState.isLoggedIn && adminState.activeTab === 'announcements') {
-                    // We only re-fetch announcements frequently as that's where interaction happens
-                    fetchAppsScript('getAnnouncementsByCourse', { course: adminState.assignedCourse, currentUser: adminState.username }, true)
-                    .then(res => {
-                        if(res.result === 'success') {
-                            adminState.announcements = res.data;
-                            // Re-render ONLY if user is not typing a comment to prevent losing focus
-                            if(document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
-                                document.getElementById('announcementListContainer').innerHTML = renderAnnouncementList();
-                                lucide.createIcons();
-                            }
-                        }
-                    });
-                }
-            }, 30000); 
-        }
-        
-        function stopPolling() {
-            if (pollInterval) clearInterval(pollInterval);
+            if(adminState.activeTab === 'subjects') loadSubjects();
+            if(adminState.activeTab === 'announcements') loadAnnouncements();
+            if(adminState.activeTab === 'assignments') loadAssignments();
+            if(adminState.activeTab === 'students') loadStudents();
+            if(adminState.activeTab === 'exams') loadExams();
+            if(adminState.activeTab === 'attendance') loadAttendance();
         }
 
-        function changeTab(tabName) {
-            adminState.activeTab = tabName;
-            if(window.innerWidth < 768) {
-                adminState.isSidebarOpen = false;
-            }
-            render(AdminDashboard);
-        }
+        // --- TAB ACTIONS ---
 
-        function toggleSidebar() {
-            adminState.isSidebarOpen = !adminState.isSidebarOpen;
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            if (adminState.isSidebarOpen) {
-                sidebar.classList.remove('-translate-x-full');
-                sidebar.classList.add('translate-x-0');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                sidebar.classList.remove('translate-x-0');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        // --- EXAM LOGIC ---
-        async function handleCreateExam(e) {
+        // 1. SUBJECTS
+        window.handleAddSubject = async function(e) {
             e.preventDefault();
-            const title = e.target.title.value;
-            const duration = e.target.duration.value;
-            const result = await fetchAppsScript('createExam', { course: adminState.assignedCourse, title, duration });
-            if(result.result === 'success') { showModal('Success', 'Exam created successfully!'); loadInitialData(); } else { showModal('Error', result.message, true); }
+            setLoading(true, "Adding Subject...");
+            const { error } = await db.from('subjects').insert({
+                course_code: e.target.code.value.toUpperCase(),
+                course_title: e.target.title.value,
+                unit: e.target.unit.value,
+                program: adminState.assignedCourse
+            });
+            setLoading(false);
+            if(error) showModal("Error", error.message, true);
+            else { e.target.reset(); loadSubjects(); showModal("Success", "Subject added!"); }
+        };
+
+        window.handleDeleteSubject = async function(id) {
+            showConfirm("Delete Subject?", "This cannot be undone.", async () => {
+                await db.from('subjects').delete().eq('id', id);
+                loadSubjects();
+            });
+        };
+
+        async function loadSubjects() {
+            const el = document.getElementById('subjectList');
+            el.innerHTML = 'Loading...';
+            const { data } = await db.from('subjects').select('*').eq('program', adminState.assignedCourse);
+            el.innerHTML = (data||[]).length ? `<table class="min-w-full text-sm text-left"><thead class="bg-gray-50"><tr><th class="p-3">Code</th><th class="p-3">Title</th><th class="p-3">Unit</th><th class="p-3">Action</th></tr></thead><tbody>${data.map(s => `<tr><td class="p-3 border-b">${s.course_code}</td><td class="p-3 border-b">${s.course_title}</td><td class="p-3 border-b">${s.unit}</td><td class="p-3 border-b"><button onclick="handleDeleteSubject(${s.id})" class="text-red-500 hover:underline">Delete</button></td></tr>`).join('')}</tbody></table>` : '<p class="p-4 text-gray-500">No subjects found.</p>';
         }
 
-        function openAddQuestionModal(examId) {
+        // 2. EXAMS
+        window.handleCreateExam = async function(e) {
+            e.preventDefault();
+            setLoading(true, "Creating Exam...");
+            const { error } = await db.from('exams').insert({ course: adminState.assignedCourse, title: e.target.title.value, duration: e.target.duration.value });
+            setLoading(false); 
+            if(error) showModal("Error", error.message, true); 
+            else { e.target.reset(); loadExams(); showModal("Success", "Exam Created!"); }
+        };
+        window.toggleExamStatus = async function(id, current) {
+            await db.from('exams').update({ status: current === 'Open' ? 'Closed' : 'Open' }).eq('id', id);
+            loadExams();
+        };
+        window.openAddQuestion = function(examId) {
             document.getElementById('q_examId').value = examId;
-            document.getElementById('addQuestionForm').reset();
-            document.getElementById('questionModal').classList.remove('hidden');
-            document.getElementById('questionModal').classList.add('flex');
-        }
-
-        async function handleAddQuestion(e) {
+            const modal = document.getElementById('questionModal'); modal.classList.remove('hidden'); modal.classList.add('flex');
+        };
+        window.handleAddQuestion = async function(e) {
             e.preventDefault();
             const val = (id) => document.getElementById(id).value;
-            const ansKey = val('q_answer');
-            if(!ansKey) { showModal('Error', 'Please select correct answer', true); return; }
-            const ansText = val('q_opt' + ansKey); 
-            const data = {
-                examId: val('q_examId'),
-                question: val('q_text'),
-                optA: val('q_optA'),
-                optB: val('q_optB'),
-                optC: val('q_optC'),
-                optD: val('q_optD'),
-                answer: ansText
-            };
-            const res = await fetchAppsScript('addQuestion', data);
-            if(res.result === 'success') { showModal('Success', 'Question added successfully!'); e.target.reset(); } else { showModal('Error', 'Failed to add question.', true); }
+            const ansKey = val('q_answer'); 
+            const correctText = val('q_opt' + ansKey); 
+            const { error } = await db.from('questions').insert({
+                exam_id: val('q_examId'), question: val('q_text'), option_a: val('q_optA'), option_b: val('q_optB'), option_c: val('q_optC'), option_d: val('q_optD'), correct_answer: correctText
+            });
+            if(!error) { 
+                document.getElementById('addQuestionForm').reset(); 
+                document.getElementById('questionModal').classList.add('hidden'); 
+                document.getElementById('questionModal').classList.remove('flex'); 
+                showModal("Success", "Question Added!"); 
+            } else {
+                showModal("Error", error.message, true);
+            }
+        };
+        async function loadExams() {
+            const { data } = await db.from('exams').select('*').eq('course', adminState.assignedCourse).order('id', {ascending: false});
+            document.getElementById('examList').innerHTML = (data||[]).map(e => `<div class="bg-white p-4 rounded-lg shadow-sm border border-l-4 ${e.status==='Open' ? 'border-l-emerald-500' : 'border-l-gray-400'} mb-3"><div class="flex justify-between items-center"><div><h3 class="font-bold text-gray-800">${e.title}</h3><p class="text-xs text-gray-500">${e.duration} Mins • Status: <strong>${e.status}</strong></p></div><div class="flex gap-2"><button onclick="openAddQuestion('${e.id}')" class="px-3 py-1 bg-blue-50 text-blue-600 rounded text-xs hover:bg-blue-100">+ Question</button><button onclick="toggleExamStatus('${e.id}', '${e.status}')" class="px-3 py-1 border rounded text-xs ${e.status==='Open'?'bg-red-50 text-red-600':'bg-green-50 text-green-600'}">${e.status==='Open'?'Close':'Open'}</button></div></div></div>`).join('');
         }
 
-        async function toggleExamStatus(examId) {
-            const res = await fetchAppsScript('toggleExamStatus', { examId });
-            if(res.result === 'success') loadInitialData();
-        }
+        // 3. ANNOUNCEMENTS
+        window.handleAddPost = async function(e, type) {
+            e.preventDefault(); setLoading(true, "Posting...");
+            const formData = { course: adminState.assignedCourse, title: e.target.title.value };
+            if(type === 'news') {
+                formData.content = e.target.content.value; formData.visibility = e.target.visibility.value; formData.author_id = (await db.auth.getUser()).data.user.id;
+                await db.from('announcements').insert(formData); loadAnnouncements();
+            } else {
+                formData.description = e.target.description.value; formData.due_date = e.target.dueDate.value;
+                await db.from('assignments').insert(formData); loadAssignments();
+            }
+            setLoading(false); e.target.reset();
+            showModal("Success", type === 'news' ? "Announcement Posted" : "Assignment Created");
+        };
+        window.handleDeletePost = async function(id, table) { 
+            showConfirm("Delete Item?", "Confirm deletion.", async () => {
+                await db.from(table).delete().eq('id', id); 
+                if(table==='announcements') loadAnnouncements(); else loadAssignments();
+            });
+        };
         
-        async function toggleResultRelease(examId) {
-            const res = await fetchAppsScript('toggleResultRelease', { examId });
-            if(res.result === 'success') loadInitialData();
+        async function loadAnnouncements() {
+            const { data: posts } = await db.from('announcements').select('*, likes(count), comments(count)').eq('course', adminState.assignedCourse).order('date', {ascending: false});
+            const myId = `Admin (${adminState.username})`;
+            const { data: myLikes } = await db.from('likes').select('announcement_id').eq('user_identifier', myId);
+            const myLikedIds = (myLikes || []).map(l => l.announcement_id);
+
+            document.getElementById('newsList').innerHTML = posts.map((a, i) => {
+                const isLiked = myLikedIds.includes(a.id);
+                return `
+                <div class="bg-white p-4 border rounded-xl mb-4 relative shadow-sm">
+                    <button onclick="handleDeletePost('${a.id}', 'announcements')" class="absolute top-4 right-4 text-gray-300 hover:text-red-500"><span data-lucide="trash-2" class="w-4 h-4"></span></button>
+                    <h4 class="font-bold text-lg text-gray-800">${a.title}</h4>
+                    <p class="text-sm text-gray-600 mt-1 mb-3 whitespace-pre-wrap">${a.content}</p>
+                    <div class="flex items-center gap-4 text-xs text-gray-500 border-t pt-3">
+                        <button onclick="adminLike('${a.id}')" class="flex items-center gap-1 hover:text-red-500 transition ${isLiked ? 'text-red-500 fill-current' : ''}">
+                            <span data-lucide="heart" class="w-4 h-4"></span> ${a.likes[0].count}
+                        </button>
+                        <button onclick="toggleComments('${a.id}', 'comments-${i}')" class="flex items-center gap-1 hover:text-blue-500 transition">
+                            <span data-lucide="message-square" class="w-4 h-4"></span> ${a.comments[0].count}
+                        </button>
+                        <span class="ml-auto">${new Date(a.date).toLocaleDateString()}</span>
+                    </div>
+                    <div id="comments-${i}" class="hidden mt-3 pt-3 bg-gray-50 -mx-4 -mb-4 p-4 rounded-b-xl border-t"></div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
         }
 
-        async function deleteExam(examId) {
-            showConfirm("Delete Exam?", "Are you sure? This cannot be undone.", async () => {
-                 setLoading(true, "Deleting Exam...");
-                 const res = await fetchAppsScript('deleteExam', { examId });
-                 if(res.result === 'success') loadInitialData();
-            });
-        }
+        window.adminLike = async function(id) {
+            const userId = `Admin (${adminState.username})`;
+            const { data: existing } = await db.from('likes').select('id').eq('announcement_id', id).eq('user_identifier', userId).maybeSingle();
+            if(existing) await db.from('likes').delete().eq('id', existing.id);
+            else await db.from('likes').insert({ announcement_id: id, user_identifier: userId });
+            loadAnnouncements();
+        };
 
-        // --- CRUD OPERATIONS (STANDARD) ---
-        async function handleAddAnnouncement(e) {
+        window.toggleComments = async function(annId, divId) {
+            const div = document.getElementById(divId);
+            if(!div.classList.contains('hidden')) { div.classList.add('hidden'); return; }
+            div.classList.remove('hidden'); div.innerHTML = 'Loading comments...';
+            const { data } = await db.from('comments').select('*').eq('announcement_id', annId).order('date');
+            div.innerHTML = `<div class="space-y-2 max-h-40 overflow-y-auto mb-3 custom-scrollbar">
+                ${(data||[]).map(c => {
+                    const isAdmin = c.user_identifier.includes('Admin');
+                    return `<div class="chat-bubble ${isAdmin ? 'chat-admin' : 'chat-student'}"><span class="font-bold text-xs block opacity-70 mb-1">${c.user_identifier}</span>${c.comment}</div>`;
+                }).join('')}
+                ${data.length === 0 ? '<p class="text-xs text-gray-400 text-center italic">No comments yet</p>' : ''}
+            </div>
+            <form onsubmit="adminComment(event, '${annId}', '${divId}')" class="flex gap-2"><input name="comment" class="flex-grow border rounded-full px-3 py-1 text-sm focus:outline-none focus:border-emerald-500" placeholder="Reply..." required><button type="submit" class="bg-emerald-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-emerald-700"><span data-lucide="send" class="w-4 h-4"></span></button></form>`;
+            lucide.createIcons();
+        };
+
+        window.adminComment = async function(e, annId, divId) {
             e.preventDefault();
-            const form = e.target;
-            const result = await fetchAppsScript('addAnnouncement', { course: adminState.assignedCourse, title: form.title.value, content: form.content.value, visibility: form.visibility.value });
-            if (result.result === 'success') { showModal('Success', 'Announcement posted successfully!'); form.reset(); loadInitialData(); } else { showModal('Error', result.message || 'Failed to post.', true); }
+            await db.from('comments').insert({ announcement_id: annId, user_identifier: `Admin (${adminState.username})`, comment: e.target.comment.value });
+            toggleComments(annId, divId);
+        };
+
+        async function loadAssignments() {
+            const { data } = await db.from('assignments').select('*').eq('course', adminState.assignedCourse).order('due_date');
+            document.getElementById('assignmentList').innerHTML = data.map(a => `<div class="bg-white p-3 border rounded mb-2 relative"><button onclick="handleDeletePost('${a.id}', 'assignments')" class="absolute top-2 right-2 text-red-400 text-xs">Delete</button><h4 class="font-bold">${a.title}</h4><p class="text-xs text-blue-600">Due: ${a.due_date}</p></div>`).join('');
         }
 
-        function handleDeleteAnnouncement(id) {
-            showConfirm("Delete Post?", "Are you sure you want to delete this announcement? This cannot be undone.", async () => {
-                setLoading(true, "Deleting Post...");
-                const result = await fetchAppsScript('deleteAnnouncement', { id });
-                if (result.result === 'success') { showModal('Deleted', 'Post deleted successfully.'); loadInitialData(); } else { showModal('Error', result.message || 'Failed to delete.', true); }
+        // 4. STUDENTS
+        async function loadStudents() {
+            const { data } = await db.from('students').select('*').eq('course_applied', adminState.assignedCourse);
+            document.getElementById('studentTable').innerHTML = `<table class="min-w-full text-sm"><thead class="bg-gray-50"><tr><th class="p-3">Adm No</th><th class="p-3">Name</th><th class="p-3">Phone</th><th class="p-3">Action</th></tr></thead><tbody>${data.map(s => `<tr><td class="p-3">${s.admission_no}</td><td class="p-3">${s.first_name} ${s.last_name}</td><td class="p-3">${s.phone}</td><td class="p-3"><button onclick="deleteStudent('${s.admission_no}')" class="text-red-500 text-xs">Remove</button></td></tr>`).join('')}</tbody></table>`;
+        }
+        window.deleteStudent = async function(adm) { 
+            showConfirm("Remove Student?", "Are you sure?", async () => {
+                await db.from('students').delete().eq('admission_no', adm); loadStudents(); 
             });
+        };
+
+        // 5. ATTENDANCE (WEEKLY VIEW)
+        function getMonday(d) {
+            d = new Date(d);
+            var day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
         }
 
-        // --- IMPROVED UI/UX: LIKES & COMMENTS ---
-        function toggleComments(annId) {
-            const section = document.getElementById(`comments-section-${annId}`);
-            const chevron = document.getElementById(`chevron-${annId}`);
-            if(section.classList.contains('hidden')) { section.classList.remove('hidden'); chevron.style.transform = 'rotate(180deg)'; } else { section.classList.add('hidden'); chevron.style.transform = 'rotate(0deg)'; }
-        }
-
-        async function handleLikeOptimistic(btn, annId) {
-            const icon = btn.querySelector('[data-lucide="heart"]');
-            const countSpan = btn.querySelector('span:nth-child(2)');
-            let count = parseInt(countSpan.innerText) || 0;
-            const isLiked = icon.classList.contains('text-red-500');
+        async function loadAttendance() {
+            const container = document.getElementById('attendanceContainer');
+            container.innerHTML = 'Loading Week...';
             
-            // Optimistic UI update
-            if (isLiked) {
-                icon.classList.remove('fill-current', 'text-red-500');
-                icon.classList.add('text-gray-500');
-                countSpan.classList.remove('text-red-500', 'font-bold');
-                countSpan.innerText = Math.max(0, count - 1);
+            const startStr = adminState.currentWeekStart.toISOString().split('T')[0];
+            const end = new Date(adminState.currentWeekStart); end.setDate(end.getDate()+4);
+            const endStr = end.toISOString().split('T')[0];
+
+            // 1. Check Week Status
+            const { data: weekData } = await db.from('academic_weeks').select('*').eq('week_start_date', startStr).eq('course', adminState.assignedCourse).maybeSingle();
+            
+            if(!weekData) {
+                await db.from('academic_weeks').insert({ week_start_date: startStr, course: adminState.assignedCourse, is_active: true });
+                adminState.weekIsActive = true;
             } else {
-                icon.classList.remove('text-gray-500');
-                icon.classList.add('fill-current', 'text-red-500');
-                countSpan.classList.add('text-red-500', 'font-bold');
-                countSpan.innerText = count + 1;
+                adminState.weekIsActive = weekData.is_active;
             }
-            
-            // Send to backend and correct if necessary
-            const res = await fetchAppsScript('toggleLike', { announcementId: annId, user: adminState.username }, true);
-            if(res.result === 'success' && res.liked !== undefined) {
-                 // Sync server truth if needed
-                 const serverLiked = res.liked;
-                 if(serverLiked) {
-                     icon.classList.remove('text-gray-500'); icon.classList.add('fill-current', 'text-red-500'); countSpan.classList.add('text-red-500', 'font-bold');
-                 } else {
-                     icon.classList.remove('fill-current', 'text-red-500'); icon.classList.add('text-gray-500'); countSpan.classList.remove('text-red-500', 'font-bold');
-                 }
+
+            // 2. Fetch Students & Marks
+            const { data: students } = await db.from('students').select('admission_no, first_name, last_name').eq('course_applied', adminState.assignedCourse);
+            const { data: marks } = await db.from('attendance').select('*').gte('date', startStr).lte('date', endStr).in('admission_no', students.map(s => s.admission_no));
+
+            const markMap = {};
+            (marks||[]).forEach(m => markMap[`${m.admission_no}_${m.date}`] = m.status);
+
+            const dates = [];
+            for(let i=0; i<5; i++) {
+                const d = new Date(adminState.currentWeekStart); d.setDate(d.getDate() + i);
+                dates.push(d.toISOString().split('T')[0]);
             }
-        }
 
-        async function handlePostCommentOptimistic(e, annId) {
-            e.preventDefault();
-            const input = e.target.comment;
-            const text = input.value.trim();
-            if(!text) return;
+            const disabledClass = adminState.weekIsActive ? '' : 'opacity-50 pointer-events-none bg-gray-100';
             
-            // Clear "No comments yet" message if exists
-            const list = document.getElementById(`comments-list-${annId}`);
-            if(list.querySelector('p.italic')) { list.innerHTML = ''; }
-            
-            // Show optimistic comment
-            const tempId = 'temp-' + new Date().getTime();
-            const optimisticHtml = `<div id="${tempId}" class="animate-pulse fade-enter opacity-50"><div class="flex items-start space-x-2"><div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-700">ME</div><div class="flex-1 bg-white p-2 rounded-lg rounded-tl-none shadow-sm border border-gray-100"><p class="font-bold text-gray-800 text-[11px] mb-0.5">${adminState.username} <span class="text-[9px] text-gray-400 font-normal">• Posting...</span></p><p class="text-gray-600 leading-relaxed">${text}</p></div></div></div>`;
-            const temp = document.createElement('div');
-            temp.innerHTML = optimisticHtml;
-            list.appendChild(temp.firstElementChild);
-            list.scrollTop = list.scrollHeight;
-            input.value = ''; 
-            
-            // Send to backend
-            const res = await fetchAppsScript('addComment', { announcementId: annId, user: adminState.username, comment: text }, true);
-            
-            if(res.result === 'success' && res.newComment) {
-                 // Replace temp comment with confirmed data
-                 const c = res.newComment;
-                 const confirmedHtml = `<div class="fade-enter"><div class="flex items-start space-x-2"><div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-700">ME</div><div class="flex-1 bg-white p-2 rounded-lg rounded-tl-none shadow-sm border border-gray-100"><p class="font-bold text-gray-800 text-[11px] mb-0.5">${c.user} <span class="text-[9px] text-gray-400 font-normal">• ${c.time}</span></p><p class="text-gray-600 leading-relaxed">${c.text}</p></div></div></div>`;
-                 const finalEl = document.getElementById(tempId);
-                 if(finalEl) finalEl.outerHTML = confirmedHtml;
-                 
-                 // Update Count
-                 const commentBtn = document.querySelector(`button[onclick="toggleComments('${annId}')"] span:nth-child(2)`);
-                 if(commentBtn) { 
-                     let currentCount = parseInt(commentBtn.innerText) || 0; 
-                     commentBtn.innerText = `${currentCount + 1} Comments`; 
-                 }
-            } else {
-                // Remove temp comment if failed
-                const finalEl = document.getElementById(tempId);
-                if(finalEl) finalEl.remove();
-                alert("Failed to post comment");
-            }
-        }
-
-        async function handleAddAssignment(e) {
-            e.preventDefault();
-            const form = e.target;
-            const result = await fetchAppsScript('addAssignment', { course: adminState.assignedCourse, title: form.title.value, description: form.description.value, dueDate: form.dueDate.value });
-            if (result.result === 'success') { showModal('Success', 'Assignment added successfully!'); form.reset(); loadInitialData(); } else { showModal('Error', result.message || 'Failed.', true); }
-        }
-
-        function handleDeleteAssignment(id) {
-            showConfirm("Delete Assignment?", "Are you sure you want to remove this assignment? Students will no longer see it.", async () => {
-                setLoading(true, "Deleting Assignment...");
-                const result = await fetchAppsScript('deleteAssignment', { id });
-                if (result.result === 'success') { showModal('Deleted', 'Assignment deleted successfully.'); loadInitialData(); } else { showModal('Error', result.message || 'Failed to delete.', true); }
-            });
-        }
-
-        async function handleRemoveStudent(admNo, course) {
-            showConfirm("Remove Student?", `Are you sure you want to remove ${admNo}? This will delete their record from the class list.`, async () => {
-                setLoading(true, `Removing ${admNo}...`);
-                const result = await fetchAppsScript('removeStudent', { admNo, course });
-                if (result.result === 'success') { showModal('Removed', `Student ${admNo} has been removed.`); adminState.students = adminState.students.filter(s => s.admNo !== admNo); render(AdminDashboard); } else { showModal('Error', result.message || 'Failed.', true); }
-            });
-        }
-
-        // --- ATTENDANCE LOGIC ---
-        function filterAttendanceList(query) {
-            const listContainer = document.getElementById('attendanceListContainer');
-            const lowerQuery = query.toLowerCase();
-            const filteredStudents = adminState.students.filter(s => s.firstName.toLowerCase().includes(lowerQuery) || s.lastName.toLowerCase().includes(lowerQuery) || String(s.admNo).toLowerCase().includes(lowerQuery));
-            if (filteredStudents.length === 0) { listContainer.innerHTML = `<div class="p-8 text-center text-gray-500">No students found matching "${query}"</div>`; return; }
-            listContainer.innerHTML = filteredStudents.map(student => `
-                <div class="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 transition">
-                    <div class="flex items-center space-x-4"><div class="bg-indigo-100 text-indigo-700 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs">${student.admNo}</div><div><p class="font-semibold text-gray-800">${student.firstName} ${student.lastName}</p><p class="text-xs text-gray-500">${student.email}</p></div></div>
-                    <div class="flex items-center space-x-2"><select id="status-${student.admNo}" class="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2 border"><option value="Present">Present</option><option value="Absent">Absent</option><option value="Late">Late</option><option value="Excused">Excused</option></select><button onclick="handleQuickAttendance('${student.admNo}')" class="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-md shadow transition flex items-center"><span data-lucide="check" class="w-4 h-4"></span><span class="ml-2 text-xs font-bold uppercase hidden md:inline">Save</span></button></div>
-                </div>`).join('');
-            lucide.createIcons(); 
-        }
-
-        async function handleQuickAttendance(admNo) {
-            const date = document.getElementById('attendanceDate').value;
-            const statusSelect = document.getElementById(`status-${admNo}`);
-            const status = statusSelect.value;
-            const course = adminState.assignedCourse;
-            const btn = statusSelect.nextElementSibling;
-            const originalContent = btn.innerHTML;
-            btn.innerHTML = `<span class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>`;
-            btn.disabled = true;
-            try {
-                const formBody = new URLSearchParams({ action: 'recordAttendance', admNo, status, date, course });
-                const response = await fetch(SCRIPT_URL, { method: 'POST', body: formBody });
-                const result = await response.json();
-                if (result.result === 'success') {
-                    btn.innerHTML = `<span data-lucide="check-circle" class="w-4 h-4"></span>`; btn.classList.replace('bg-indigo-600', 'bg-green-500'); btn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-600');
-                    const toast = document.getElementById('toastMsg');
-                    toast.innerText = `Recorded: ${admNo} is ${status}`;
-                    toast.classList.remove('opacity-0', 'translate-y-4');
-                    setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-4'); btn.innerHTML = originalContent; btn.classList.replace('bg-green-500', 'bg-indigo-600'); btn.classList.replace('hover:bg-green-600', 'hover:bg-indigo-700'); btn.disabled = false; lucide.createIcons(); }, 2000);
-                } else { showModal("Error", result.message, true); btn.innerHTML = originalContent; btn.disabled = false; lucide.createIcons(); }
-            } catch(e) { showModal("Error", "Network connection failed.", true); btn.innerHTML = originalContent; btn.disabled = false; lucide.createIcons(); }
-        }
-
-        // --- NEW UPDATE: SUBJECT MANAGEMENT LOGIC ---
-        async function handleAddSubject(e) {
-            e.preventDefault();
-            const form = e.target;
-            const code = form.code.value.trim().toUpperCase();
-            const title = form.title.value.trim();
-            const unit = form.unit.value;
-            const program = adminState.assignedCourse;
-
-            if(!code || !title || !unit) return;
-
-            setLoading(true, "Adding Course...");
-            const res = await fetchAppsScript('addSubject', { code, title, unit, program });
-            setLoading(false);
-
-            if (res.result === 'success') {
-                showModal("Success", "Course added successfully!");
-                form.reset();
-                loadAdminSubjects();
-            } else {
-                showModal("Error", res.message || "Failed to add course.", true);
-            }
-        }
-
-        async function loadAdminSubjects() {
-            const container = document.getElementById('subjectListContainer');
-            const res = await fetchAppsScript('getSubjectsByProgram', { program: adminState.assignedCourse }, true);
-            
-            if (res.result === 'success' && res.data.length > 0) {
-                container.innerHTML = `
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th><th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Unit</th><th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Action</th></tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            ${res.data.map(s => `
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 font-bold text-gray-900">${s.code}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-600">${s.title}</td>
-                                    <td class="px-6 py-4 text-center text-sm font-mono">${s.unit}</td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button onclick="handleDeleteSubject('${s.code}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded transition"><span data-lucide="trash-2" class="w-4 h-4"></span></button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-                lucide.createIcons();
-            } else {
-                container.innerHTML = `<div class="p-10 text-center text-gray-400">No courses found for ${adminState.assignedCourse}. Add one to get started.</div>`;
-            }
-        }
-
-        function handleDeleteSubject(code) {
-            showConfirm("Delete Course?", `Are you sure you want to delete ${code}?`, async () => {
-                setLoading(true, "Deleting...");
-                const res = await fetchAppsScript('deleteSubject', { code, program: adminState.assignedCourse });
-                setLoading(false);
-                if (res.result === 'success') { loadAdminSubjects(); } else { showModal("Error", res.message, true); }
-            });
-        }
-
-        // --- NEW UPDATE: SCORE INPUT LOGIC ---
-        function loadGradeSheet() {
-            const subject = document.getElementById('scoreSubjectSelect').value;
-            const container = document.getElementById('gradeSheetContainer');
-            const tbody = document.getElementById('gradeSheetBody');
-            if(!subject) { container.classList.add('hidden'); return; }
-            container.classList.remove('hidden');
-            document.getElementById('gradeSheetTitle').innerText = `Grading: ${subject}`;
-            tbody.innerHTML = adminState.students.map(s => `
-                <tr id="row-${s.admNo}">
-                    <td class="px-6 py-4 whitespace-nowrap"><div class="text-sm font-medium text-gray-900">${s.firstName} ${s.lastName}</div><div class="text-xs text-gray-500">${s.admNo}</div></td>
-                    <td class="px-6 py-4 whitespace-nowrap"><input type="number" id="ca-${s.admNo}" max="30" class="w-20 p-1 border rounded text-center focus:ring-emerald-500 focus:border-emerald-500" placeholder="0"></td>
-                    <td class="px-6 py-4 whitespace-nowrap"><input type="number" id="exam-${s.admNo}" max="70" class="w-20 p-1 border rounded text-center focus:ring-emerald-500 focus:border-emerald-500" placeholder="0"></td>
-                    <td class="px-6 py-4 whitespace-nowrap"><span id="total-${s.admNo}" class="text-sm font-bold text-gray-700">-</span></td>
-                    <td class="px-6 py-4 whitespace-nowrap"><button onclick="saveStudentScore('${s.admNo}', '${subject}', this)" class="text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1 rounded text-xs transition">Save</button></td>
-                </tr>
-            `).join('');
-        }
-
-        async function saveStudentScore(admNo, subject, btn) {
-            const ca = document.getElementById(`ca-${admNo}`).value || 0;
-            const exam = document.getElementById(`exam-${admNo}`).value || 0;
-            const totalEl = document.getElementById(`total-${admNo}`);
-            const total = parseInt(ca) + parseInt(exam);
-            totalEl.innerText = total;
-            const originalText = btn.innerText; btn.innerText = '...'; btn.disabled = true;
-            const result = await fetchAppsScript('savePhysicalScore', { admNo, courseCode: subject, ca, exam }, true);
-            if(result.result === 'success') {
-                btn.innerText = 'Saved'; btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700'); btn.classList.add('bg-gray-400');
-                setTimeout(() => { btn.innerText = 'Save'; btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700'); btn.classList.remove('bg-gray-400'); btn.disabled = false; }, 2000);
-            } else {
-                showModal('Error', 'Failed to save score. Student might not be registered.', true); btn.innerText = originalText; btn.disabled = false;
-            }
-        }
-
-        // --- UI COMPONENTS ---
-        function AdminLogin() {
-            return `
-                <div class="min-h-screen flex items-center justify-center p-4">
-                    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
-                        <div class="text-center mb-8"><h2 class="text-3xl font-extrabold text-gray-900">Admin Login</h2><p class="mt-2 text-sm text-gray-600">School Management System</p></div>
-                        <form id="adminLoginForm" class="space-y-6">
-                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Username</label><input type="text" name="username" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"></div>
-                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Password</label><input type="password" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"></div>
-                            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition"><span data-lucide="log-in" class="w-5 h-5 mr-2"></span> Log In</button>
-                        </form>
+            let html = `
+                <div class="flex justify-between items-center mb-4 p-4 bg-white rounded-lg border shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <button onclick="changeWeek(-7)" class="p-2 hover:bg-gray-100 rounded"><i data-lucide="chevron-left"></i></button>
+                        <span class="font-bold text-lg">${startStr} to ${endStr}</span>
+                        <button onclick="changeWeek(7)" class="p-2 hover:bg-gray-100 rounded"><i data-lucide="chevron-right"></i></button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" onchange="toggleWeekActive(this.checked)" class="sr-only peer" ${adminState.weekIsActive ? 'checked' : ''}>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            <span class="ml-3 text-sm font-medium text-gray-900">School Open</span>
+                        </label>
                     </div>
                 </div>
-            `;
+                <div class="overflow-x-auto bg-white rounded-lg shadow border ${disabledClass}">
+                    <table class="min-w-full text-sm"><thead class="bg-gray-50"><tr><th class="p-3 text-left sticky left-0 bg-gray-50 z-10">Student</th>${dates.map(d => `<th class="p-3 text-center min-w-[100px]">${new Date(d).toLocaleDateString('en-US', {weekday:'short', day:'numeric'})}</th>`).join('')}</tr></thead><tbody class="divide-y">
+                        ${students.map(s => `<tr><td class="p-3 sticky left-0 bg-white z-10 font-medium border-r shadow-sm">${s.first_name} ${s.last_name}<br><span class="text-xs text-gray-500">${s.admission_no}</span></td>
+                            ${dates.map(d => {
+                                const status = markMap[`${s.admission_no}_${d}`] || '';
+                                const color = status === 'Present' ? 'text-green-600' : status === 'Absent' ? 'text-red-600' : status === 'Late' ? 'text-yellow-600' : status === 'Excused' ? 'text-blue-600' : 'text-gray-400';
+                                return `<td class="p-2 text-center"><select onchange="updateAttendance('${s.admission_no}', '${d}', this.value)" class="border rounded p-1 text-xs font-bold ${color} focus:outline-none w-full"><option value="" ${status===''?'selected':''}>-</option><option value="Present" ${status==='Present'?'selected':''} class="text-green-600">Present</option><option value="Absent" ${status==='Absent'?'selected':''} class="text-red-600">Absent</option><option value="Late" ${status==='Late'?'selected':''} class="text-yellow-600">Late</option><option value="Excused" ${status==='Excused'?'selected':''} class="text-blue-600">Excused</option></select></td>`;
+                            }).join('')}
+                        </tr>`).join('')}
+                    </tbody></table>
+                </div>`;
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        window.changeWeek = function(days) {
+            const newDate = new Date(adminState.currentWeekStart);
+            newDate.setDate(newDate.getDate() + days);
+            adminState.currentWeekStart = newDate;
+            loadAttendance();
+        };
+
+        window.toggleWeekActive = async function(isActive) {
+            const startStr = adminState.currentWeekStart.toISOString().split('T')[0];
+            setLoading(true, "Updating Week...");
+            await db.from('academic_weeks').update({ is_active: isActive }).eq('week_start_date', startStr).eq('course', adminState.assignedCourse);
+            setLoading(false);
+            loadAttendance();
+        };
+
+        window.updateAttendance = async function(adm, date, status) {
+            if(status === "") await db.from('attendance').delete().eq('admission_no', adm).eq('date', date);
+            else {
+                const { data: exist } = await db.from('attendance').select('id').eq('admission_no', adm).eq('date', date).maybeSingle();
+                if(exist) await db.from('attendance').update({ status: status }).eq('id', exist.id);
+                else await db.from('attendance').insert({ admission_no: adm, date: date, status: status, marked_by: (await db.auth.getUser()).data.user.id });
+            }
+        };
+
+        // 6. SCORES
+        async function loadScoreSubjects() {
+            const { data } = await db.from('subjects').select('*').eq('program', adminState.assignedCourse);
+            document.getElementById('scoreSubjectSelect').innerHTML = '<option value="">-- Choose Subject --</option>' + (data||[]).map(s => `<option value="${s.course_code}">${s.course_code}</option>`).join('');
+        }
+        window.loadGradeSheet = async function() {
+            const course = document.getElementById('scoreSubjectSelect').value;
+            const container = document.getElementById('gradeSheetBody');
+            const sheet = document.getElementById('gradeSheetContainer');
+            if(!course) { sheet.classList.add('hidden'); return; }
+            sheet.classList.remove('hidden');
+            const { data: students } = await db.from('students').select('*').eq('course_applied', adminState.assignedCourse);
+            const { data: scores } = await db.from('scores').select('*').eq('course_code', course);
+            const scoreMap = {}; (scores||[]).forEach(s => scoreMap[s.admission_no] = s);
+            container.innerHTML = students.map(s => {
+                const sc = scoreMap[s.admission_no] || { ca_score: 0, exam_score: 0, total_score: 0 };
+                return `<tr><td class="px-6 py-4">${s.first_name} ${s.last_name}<br><span class="text-xs text-gray-500">${s.admission_no}</span></td><td class="px-6 py-4"><input type="number" id="ca-${s.admission_no}" value="${sc.ca_score}" class="w-16 border rounded p-1" max="30"></td><td class="px-6 py-4"><input type="number" id="ex-${s.admission_no}" value="${sc.exam_score}" class="w-16 border rounded p-1" max="70"></td><td class="px-6 py-4" id="tot-${s.admission_no}">${sc.total_score}</td><td class="px-6 py-4"><button onclick="saveScore('${s.admission_no}', '${course}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs">Save</button></td></tr>`;
+            }).join('');
+        };
+        window.saveScore = async function(admNo, course) {
+            const ca = document.getElementById(`ca-${admNo}`).value; const ex = document.getElementById(`ex-${admNo}`).value; const total = parseInt(ca) + parseInt(ex);
+            let grade = 'F'; if(total >= 70) grade = 'A'; else if(total >= 60) grade = 'B'; else if(total >= 50) grade = 'C'; else if(total >= 45) grade = 'D';
+            document.getElementById(`tot-${admNo}`).innerText = total;
+            const { data: existing } = await db.from('scores').select('id').eq('admission_no', admNo).eq('course_code', course).single();
+            if(existing) await db.from('scores').update({ ca_score: ca, exam_score: ex, grade: grade }).eq('id', existing.id);
+            else await db.from('scores').insert({ admission_no: admNo, course_code: course, ca_score: ca, exam_score: ex, grade: grade });
+        };
+
+        // --- CORE UI ---
+        function toggleSidebar() { adminState.isSidebarOpen = !adminState.isSidebarOpen; render(AdminDashboard); loadDashboardData(); }
+        function changeTab(t) { adminState.activeTab = t; render(AdminDashboard); lucide.createIcons(); loadDashboardData(); }
+        function setLoading(s, m) { const el=document.getElementById('loadingOverlay'); document.getElementById('loadingText').innerText=m; if(s){el.classList.remove('hidden');el.classList.add('flex')}else{el.classList.add('hidden');el.classList.remove('flex')} }
+        function showModal(t, m, e) { 
+            const icon = e ? `<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>` : `<svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+            document.getElementById('modalIcon').innerHTML = icon;
+            document.getElementById('modalTitle').innerText=t; 
+            document.getElementById('modalMessage').innerText=m; 
+            document.getElementById('messageModal').classList.remove('hidden'); 
+            document.getElementById('messageModal').classList.add('flex'); 
+        }
+        function closeModal() { document.getElementById('messageModal').classList.add('hidden'); document.getElementById('messageModal').classList.remove('flex'); }
+        function showConfirm(t, m, c) { document.getElementById('confirmTitle').innerText=t; document.getElementById('confirmMessage').innerText=m; confirmCallback=c; document.getElementById('confirmModal').classList.remove('hidden'); document.getElementById('confirmModal').classList.add('flex'); }
+        function closeConfirm() { document.getElementById('confirmModal').classList.add('hidden'); document.getElementById('confirmModal').classList.remove('flex'); }
+        function executeConfirm() { if(confirmCallback) confirmCallback(); closeConfirm(); }
+        function render(component) { document.getElementById('app').innerHTML = component(); lucide.createIcons(); if(adminState.isLoggedIn) { if(adminState.activeTab === 'subjects') loadSubjects(); if(adminState.activeTab === 'results') loadScoreSubjects(); if(adminState.activeTab === 'attendance') loadAttendance(); }}
+
+        // --- COMPONENTS ---
+        function AdminLogin() {
+            return `<div class="min-h-screen flex items-center justify-center bg-gray-100 p-4"><div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"><h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Admin Portal</h2><form onsubmit="window.handleAdminLogin(event)" class="space-y-4"><input name="username" type="email" placeholder="Admin Email" required class="w-full p-3 border rounded-lg"><input name="password" type="password" placeholder="Password" required class="w-full p-3 border rounded-lg"><button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700">Login</button></form></div></div>`;
         }
 
         function AdminDashboard() {
             const tabs = [
-                { id: 'dashboard', name: 'Dashboard', icon: 'layout-dashboard' },
-                { id: 'students', name: 'Students', icon: 'users' },
-                { id: 'subjects', name: 'Subjects', icon: 'book-open' }, // --- NEW TAB ---
-                { id: 'announcements', name: 'News', icon: 'megaphone' },
-                { id: 'assignments', name: 'Assignments', icon: 'clipboard-list' },
-                { id: 'exams', name: 'CBT / Exams', icon: 'monitor-check' },
-                { id: 'results', name: 'Score Input', icon: 'calculator' }, // --- NEW TAB ---
-                { id: 'attendance', name: 'Attendance', icon: 'calendar-check' },
+                {id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard'},
+                {id: 'students', label: 'Students', icon: 'users'},
+                {id: 'subjects', label: 'Subjects', icon: 'book-open'},
+                {id: 'announcements', label: 'News & Posts', icon: 'megaphone'},
+                {id: 'assignments', label: 'Assignments', icon: 'clipboard-list'},
+                {id: 'exams', label: 'CBT Exams', icon: 'monitor'},
+                {id: 'results', label: 'Score Input', icon: 'calculator'},
+                {id: 'attendance', label: 'Attendance', icon: 'calendar-check'},
             ];
-
-            const sidebarClasses = adminState.isSidebarOpen ? 'translate-x-0' : '-translate-x-full';
-            const overlayClasses = adminState.isSidebarOpen ? '' : 'hidden';
-
             return `
-                <div class="min-h-screen flex relative overflow-hidden bg-gray-50">
-                    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden ${overlayClasses}"></div>
-                    <div id="sidebar" class="sidebar fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 text-white flex flex-col shadow-2xl transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:inset-auto ${sidebarClasses}">
-                        <div class="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-700"><div class="flex items-center font-bold text-lg"><span data-lucide="graduation-cap" class="w-6 h-6 mr-2 text-emerald-400"></span><span>Admin Panel</span></div><button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white cursor-pointer"><span data-lucide="x" class="w-6 h-6"></span></button></div>
-                        <div class="p-4 border-b border-gray-700 bg-gray-900/30"><p class="font-semibold text-sm truncate">${adminState.username}</p><p class="text-xs text-gray-400 mt-1 truncate">Course: ${adminState.assignedCourse}</p></div>
-                        <nav class="flex-grow p-4 space-y-1 overflow-y-auto">${tabs.map(tab => `<div class="nav-item ${adminState.activeTab === tab.id ? 'active' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}" data-tab="${tab.id}"><span data-lucide="${tab.icon}" class="w-5 h-5 mr-3"></span>${tab.name}</div>`).join('')}</nav>
-                        <div class="p-4 border-t border-gray-700"><button id="logoutBtn" class="w-full flex items-center justify-center p-3 text-red-400 hover:bg-gray-700 rounded-lg transition duration-150 group"><span data-lucide="log-out" class="w-5 h-5 mr-2 group-hover:text-red-300"></span> Logout</button></div>
-                    </div>
-                    <main class="flex-grow flex flex-col h-screen overflow-hidden relative">
-                        <div class="md:hidden bg-white shadow-sm border-b border-gray-200 p-4 flex items-center justify-between flex-shrink-0 z-30"><div class="flex items-center"><button onclick="toggleSidebar()" class="mr-3 text-gray-600 hover:text-emerald-600 focus:outline-none cursor-pointer"><span data-lucide="menu" class="w-6 h-6"></span></button><h1 class="text-lg font-bold text-gray-800">${tabs.find(t => t.id === adminState.activeTab).name}</h1></div><div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-bold text-xs">AD</div></div>
-                        <div class="flex-grow overflow-y-auto p-4 md:p-8">
-                            <h1 class="text-3xl font-bold text-gray-800 mb-6 hidden md:block">${tabs.find(t => t.id === adminState.activeTab).name} Management</h1>
-                            <div id="toastMsg" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 opacity-0 translate-y-4 z-50 flex items-center"><span data-lucide="info" class="w-4 h-4 mr-2"></span><span>Notification</span></div>
-                            <div class="min-h-[500px]">${renderActiveTabContent()}</div>
-                        </div>
-                    </main>
+            <div class="min-h-screen flex bg-gray-50">
+                <div class="fixed inset-0 bg-black/50 z-40 md:hidden ${adminState.isSidebarOpen?'':'hidden'}" onclick="toggleSidebar()"></div>
+                <div id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gray-900 text-white z-50 transform ${adminState.isSidebarOpen?'translate-x-0':'-translate-x-full'} md:translate-x-0 transition duration-300 flex flex-col">
+                    <div class="p-6 font-bold text-xl border-b border-gray-700 flex justify-between"><span>Admin Panel</span><button onclick="toggleSidebar()" class="md:hidden"><i data-lucide="x"></i></button></div>
+                    <div class="p-4 border-b border-gray-700 bg-gray-800"><p class="text-sm font-bold truncate">${adminState.username}</p><p class="text-xs text-gray-400 truncate">${adminState.assignedCourse}</p></div>
+                    <nav class="flex-grow p-4 space-y-1 overflow-y-auto">${tabs.map(t => `<div onclick="changeTab('${t.id}')" class="flex items-center p-3 rounded cursor-pointer ${adminState.activeTab===t.id?'bg-emerald-600 text-white':'text-gray-400 hover:bg-gray-800 hover:text-white'}"><i data-lucide="${t.icon}" class="w-5 h-5 mr-3"></i>${t.label}</div>`).join('')}</nav>
+                    <div class="p-4 border-t border-gray-700"><button onclick="handleLogout()" class="w-full p-2 text-red-400 hover:bg-gray-800 rounded flex items-center justify-center"><i data-lucide="log-out" class="w-5 h-5 mr-2"></i> Logout</button></div>
                 </div>
-            `;
+                <main class="flex-grow md:ml-64 h-screen overflow-y-auto flex flex-col">
+                    <header class="bg-white border-b p-4 flex items-center md:hidden"><button onclick="toggleSidebar()" class="mr-4"><i data-lucide="menu"></i></button><h1 class="font-bold text-lg">${tabs.find(t=>t.id===adminState.activeTab).label}</h1></header>
+                    <div class="p-6 md:p-10 flex-grow">${renderContent()}</div>
+                </main>
+            </div>`;
         }
 
-        function renderActiveTabContent() {
-            switch (adminState.activeTab) {
-                case 'dashboard': return DashboardTab();
-                case 'students': return StudentList();
-                case 'subjects': return SubjectsTab(); // --- NEW ---
-                case 'announcements': return AnnouncementsTab();
-                case 'assignments': return AssignmentsTab();
-                case 'exams': return renderExamsTab();
-                case 'results': return ResultsTab(); // --- NEW ---
-                case 'attendance': return AttendanceTab();
-                default: return `<p>Select a tab.</p>`;
-            }
-        }
-
-        // --- TAB CONTENTS ---
-        function DashboardTab() {
-            const studentCount = adminState.students.length;
-            const assignmentCount = adminState.assignments.length;
-            const announcementCount = adminState.announcements.length;
-            const examCount = adminState.exams.length;
-            return `
-                <h2 class="text-2xl font-semibold mb-6 text-gray-700 hidden md:block">Course: ${adminState.assignedCourse}</h2>
+        function renderContent() {
+            if(adminState.activeTab === 'dashboard') return `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500 flex justify-between items-center"><div><p class="text-sm font-medium text-gray-500">Total Students</p><p class="text-3xl font-extrabold text-gray-800 mt-1">${studentCount}</p></div><div class="p-3 bg-blue-50 rounded-lg text-blue-500"><span data-lucide="users" class="w-6 h-6"></span></div></div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500 flex justify-between items-center"><div><p class="text-sm font-medium text-gray-500">Active Assignments</p><p class="text-3xl font-extrabold text-gray-800 mt-1">${assignmentCount}</p></div><div class="p-3 bg-yellow-50 rounded-lg text-yellow-500"><span data-lucide="clipboard-list" class="w-6 h-6"></span></div></div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500 flex justify-between items-center"><div><p class="text-sm font-medium text-gray-500">Total Announcements</p><p class="text-3xl font-extrabold text-gray-800 mt-1">${announcementCount}</p></div><div class="p-3 bg-emerald-50 rounded-lg text-emerald-500"><span data-lucide="megaphone" class="w-6 h-6"></span></div></div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500 flex justify-between items-center"><div><p class="text-sm font-medium text-gray-500">Total Exams</p><p class="text-3xl font-extrabold text-gray-800 mt-1">${examCount}</p></div><div class="p-3 bg-purple-50 rounded-lg text-purple-500"><span data-lucide="monitor-check" class="w-6 h-6"></span></div></div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500"><p class="text-gray-500 text-sm">Total Students</p><h2 id="count-students" class="text-3xl font-bold text-gray-800">...</h2></div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500"><p class="text-gray-500 text-sm">Announcements</p><h2 id="count-news" class="text-3xl font-bold text-gray-800">...</h2></div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500"><p class="text-gray-500 text-sm">Assignments</p><h2 id="count-ass" class="text-3xl font-bold text-gray-800">...</h2></div>
                 </div>
-            `;
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-6"><h3 class="font-bold text-blue-800 text-lg mb-2">Welcome Back!</h3><p class="text-blue-600">Managing <strong>${adminState.assignedCourse}</strong>.</p></div>`;
+            if(adminState.activeTab === 'students') return `<div class="bg-white rounded-xl shadow-sm border overflow-hidden"><div class="p-4 bg-gray-50 border-b font-bold">Student Directory</div><div id="studentTable" class="overflow-x-auto">Loading...</div></div>`;
+            if(adminState.activeTab === 'subjects') return `<div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm border h-fit"><h3 class="font-bold mb-4">Add Course</h3><form onsubmit="window.handleAddSubject(event)" class="space-y-4"><input name="code" placeholder="Code" class="w-full p-2 border rounded" required><input name="title" placeholder="Title" class="w-full p-2 border rounded" required><input name="unit" type="number" placeholder="Unit" class="w-full p-2 border rounded" required><button class="w-full bg-emerald-600 text-white py-2 rounded font-bold">Add</button></form></div><div class="md:col-span-2 bg-white rounded-xl shadow-sm border p-4"><h3 class="font-bold mb-4">Course List</h3><div id="subjectList">Loading...</div></div></div>`;
+            if(adminState.activeTab === 'exams') return `<div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm border h-fit"><h3 class="font-bold mb-4">Create CBT Exam</h3><form onsubmit="window.handleCreateExam(event)" class="space-y-4"><input name="title" placeholder="Exam Title" class="w-full p-2 border rounded" required><input name="duration" type="number" placeholder="Duration (Minutes)" class="w-full p-2 border rounded" required><button class="w-full bg-blue-600 text-white py-2 rounded font-bold">Create Exam</button></form></div><div class="md:col-span-2"><h3 class="font-bold mb-4">Manage Exams</h3><div id="examList">Loading...</div></div></div>`;
+            if(adminState.activeTab === 'announcements') return `<div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm border h-fit"><h3 class="font-bold mb-4">Post News</h3><form onsubmit="window.handleAddPost(event, 'news')" class="space-y-4"><input name="title" placeholder="Title" class="w-full p-2 border rounded" required><textarea name="content" rows="4" placeholder="Message..." class="w-full p-2 border rounded" required></textarea><select name="visibility" class="w-full p-2 border rounded"><option value="public">Public (Homepage)</option><option value="private">Portal Only</option></select><button class="w-full bg-emerald-600 text-white py-2 rounded font-bold">Post</button></form></div><div class="md:col-span-2"><h3 class="font-bold mb-4">Recent Posts</h3><div id="newsList">Loading...</div></div></div>`;
+            if(adminState.activeTab === 'assignments') return `<div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm border h-fit"><h3 class="font-bold mb-4">New Assignment</h3><form onsubmit="window.handleAddPost(event, 'assignment')" class="space-y-4"><input name="title" placeholder="Title" class="w-full p-2 border rounded" required><textarea name="description" rows="4" placeholder="Instructions..." class="w-full p-2 border rounded" required></textarea><label class="block text-xs font-bold">Due Date</label><input type="date" name="dueDate" class="w-full p-2 border rounded" required><button class="w-full bg-blue-600 text-white py-2 rounded font-bold">Assign</button></form></div><div class="md:col-span-2 bg-white rounded-xl shadow-sm border p-4"><h3 class="font-bold mb-4">Active Assignments</h3><div id="assignmentList">Loading...</div></div></div>`;
+            if(adminState.activeTab === 'attendance') return `<div id="attendanceContainer" class="max-w-6xl mx-auto"></div>`;
+            if(adminState.activeTab === 'results') return `<div class="max-w-6xl mx-auto"><div class="bg-white p-6 rounded-xl shadow-sm border mb-6"><h2 class="text-xl font-bold mb-4">Input Scores</h2><div class="grid md:grid-cols-2 gap-4"><div><label class="block text-sm font-bold text-gray-700 mb-1">Select Subject</label><select id="scoreSubjectSelect" onchange="window.loadGradeSheet()" class="w-full p-2.5 border rounded-lg"><option>Loading...</option></select></div></div></div><div id="gradeSheetContainer" class="bg-white rounded-xl shadow-sm border overflow-hidden hidden"><div class="p-4 border-b bg-gray-50"><h3 class="font-bold">Students</h3></div><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs uppercase">Student</th><th class="px-6 py-3 w-24">CA</th><th class="px-6 py-3 w-24">Exam</th><th class="px-6 py-3 w-24">Total</th><th class="px-6 py-3">Action</th></tr></thead><tbody id="gradeSheetBody" class="divide-y"></tbody></table></div></div>`;
+            return '';
         }
-
-        function StudentList() {
-            return `
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50"><h2 class="text-lg font-bold text-gray-800">Student Directory</h2><span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full font-bold">${adminState.students.length}</span></div>
-                    ${adminState.students.length === 0 ? `<p class="p-8 text-center text-gray-500">No students found.</p>` : `<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adm. No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">${adminState.students.map(s => `<tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${s.admNo}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${s.firstName} ${s.lastName}</td><td class="px-6 py-4 whitespace-nowrap text-sm"><button onclick="handleRemoveStudent('${s.admNo}', '${adminState.assignedCourse}')" class="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md font-medium text-xs transition">Remove</button></td></tr>`).join('')}</tbody></table></div>`}
-                </div>
-            `;
-        }
-        
-        function renderAnnouncementList() {
-            if(adminState.announcements.length === 0) {
-                return `<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center"><div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"><span data-lucide="coffee" class="w-8 h-8 text-gray-400"></span></div><h3 class="text-lg font-medium text-gray-900">No posts yet</h3><p class="text-gray-500 mt-1">Be the first to post an update for your students.</p></div>`;
-            }
-            return adminState.announcements.map((a, index) => { 
-                const likes = a.likes || 0; 
-                const comments = a.comments || []; 
-                const likedByMe = a.likedByMe || false; 
-                const annId = a.id; 
-                const initials = "AD"; 
-                const isPublic = a.visibility === 'public'; 
-                const likeColorClass = likedByMe ? 'fill-current text-red-500' : 'text-gray-500'; 
-                const likeCountClass = likedByMe ? 'text-red-500 font-bold' : 'text-gray-500'; 
-                
-                return `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-shadow hover:shadow-md"><div class="p-4 flex items-center space-x-3"><div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">${initials}</div><div class="flex-1 min-w-0"><p class="text-sm font-bold text-gray-900 truncate">${adminState.username || 'Administrator'} ${isPublic ? '<span class="ml-2 text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Public</span>' : '<span class="ml-2 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Private</span>'}</p><p class="text-xs text-gray-500 flex items-center"><span>${a.date}</span><span class="mx-1">•</span><span class="text-emerald-600 font-medium bg-emerald-50 px-1.5 rounded text-[10px]">Admin</span></p></div><button onclick="handleDeleteAnnouncement('${annId}')" class="text-gray-400 hover:text-red-500 transition"><span data-lucide="trash-2" class="w-5 h-5"></span></button></div><div class="px-4 pb-2"><h3 class="text-base font-bold text-gray-900 mb-2 leading-tight">${a.title}</h3><div class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">${a.content}</div></div><div class="px-4 py-2 flex items-center justify-between border-t border-gray-100 text-xs text-gray-500 bg-gray-50"><button onclick="handleLikeOptimistic(this, '${annId}')" class="flex items-center space-x-1 hover:bg-gray-200 p-2 rounded-lg transition group cursor-pointer"><span data-lucide="heart" class="w-4 h-4 transition-transform group-active:scale-125 ${likeColorClass}"></span> <span class="${likeCountClass}">${likes}</span></button><button onclick="toggleComments('${annId}')" class="flex items-center space-x-1 hover:bg-gray-200 p-2 rounded-lg transition text-gray-600 cursor-pointer"><span data-lucide="message-circle" class="w-4 h-4"></span><span>${comments.length} Comments</span><span id="chevron-${annId}" data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-300"></span></button></div><div id="comments-section-${annId}" class="hidden bg-gray-50 border-t border-gray-100"><div id="comments-list-${annId}" class="p-4 max-h-60 overflow-y-auto text-xs space-y-3 custom-scrollbar">${comments.map(c => `<div class="flex items-start space-x-2"><div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">${c.user.substring(0,2).toUpperCase()}</div><div class="flex-1 bg-white p-2 rounded-lg rounded-tl-none shadow-sm border border-gray-100"><p class="font-bold text-gray-800 text-[11px] mb-0.5">${c.user} <span class="text-[9px] text-gray-400 font-normal">• ${c.time || ''}</span></p><p class="text-gray-600 leading-relaxed">${c.text}</p></div></div>`).join('') || '<p class="text-gray-400 italic text-center py-2">No comments yet. Be the first to start the conversation.</p>'}</div><form onsubmit="handlePostCommentOptimistic(event, '${annId}')" class="p-3 border-t border-gray-200 flex gap-2 bg-white"><input type="text" name="comment" placeholder="Write a comment..." class="flex-1 bg-gray-100 border-transparent focus:bg-white focus:border-emerald-500 focus:ring-0 rounded-lg px-3 py-2 text-xs transition outline-none"><button type="submit" class="text-xs bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 font-medium transition shadow-sm">Post</button></form></div></div>`;
-            }).join('');
-        }
-
-        function AnnouncementsTab() {
-            return `
-                <div class="max-w-5xl mx-auto">
-                    <div class="flex flex-col lg:flex-row gap-6">
-                        <div class="lg:w-1/3 order-1">
-                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:sticky lg:top-4"><h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center"><span data-lucide="pen-tool" class="w-5 h-5 mr-2 text-emerald-600"></span>Create Post</h2><form id="announcementForm" class="space-y-4"><div><input type="text" name="title" required placeholder="Post Title" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none text-sm font-semibold text-gray-800"></div><div><textarea name="content" rows="4" required placeholder="What's happening in ${adminState.assignedCourse}?" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none text-sm resize-none"></textarea></div><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Visibility</label><select name="visibility" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none text-sm text-gray-800"><option value="public" selected>🌍 Public (Home Page & Students)</option><option value="private">🔒 Private (Course Students Only)</option></select></div><button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center transform active:scale-95"><span data-lucide="send" class="w-4 h-4 mr-2"></span> Post Update</button></form></div>
-                        </div>
-                        <div class="lg:w-2/3 order-2">
-                            <div class="flex items-center justify-between mb-4 px-1"><h2 class="text-xl font-bold text-gray-800">News Feed</h2><span class="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded-full border shadow-sm">${adminState.announcements.length} Posts</span></div>
-                            <div id="announcementListContainer" class="space-y-5 pb-20">
-                                ${renderAnnouncementList()}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function AssignmentsTab() {
-            return `
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div><h2 class="text-2xl font-semibold mb-4 text-gray-700">New Assignment</h2><form id="assignmentForm" class="space-y-4 bg-white p-6 rounded-xl shadow-sm border border-gray-200"><input type="text" name="title" required placeholder="Title" class="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white transition"><textarea name="description" rows="4" required placeholder="Details" class="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white transition"></textarea><input type="date" name="dueDate" required class="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white transition"><button type="submit" class="action-btn bg-blue-600 text-white w-full hover:bg-blue-700 transition shadow-md">Create</button></form></div>
-                    <div><h2 class="text-2xl font-semibold mb-4 text-gray-700">Active</h2><div class="space-y-4 data-container max-h-96 overflow-y-auto">${adminState.assignments.map(a => `<div class="p-4 border rounded-lg bg-white shadow-sm border-l-4 border-blue-500 relative group"><button onclick="handleDeleteAssignment('${a.id}')" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><span data-lucide="trash-2" class="w-4 h-4"></span></button><p class="font-bold text-gray-900 pr-6">${a.title}</p><p class="text-sm text-gray-600 mt-1">${a.description}</p><p class="text-xs mt-2 font-medium text-blue-600 bg-blue-50 inline-block px-2 py-1 rounded">Due: ${a.dueDate}</p></div>`).join('')}</div></div>
-                </div>
-            `;
-        }
-
-        function renderExamsTab() {
-            return `
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div><h2 class="text-2xl font-bold mb-4 text-gray-800">Create Exam</h2><form onsubmit="handleCreateExam(event)" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4"><input name="title" placeholder="Exam Title (e.g. 1st Semester GST)" class="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white" required><input name="duration" type="number" placeholder="Duration (Minutes)" class="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white" required><button class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition">Create Exam</button></form></div>
-                    <div><h2 class="text-2xl font-bold mb-4 text-gray-800">Manage Exams</h2><div class="space-y-4 data-container max-h-96 overflow-y-auto">${adminState.exams.length === 0 ? '<div class="p-8 text-center text-gray-500 bg-white rounded-xl border border-gray-200">No exams created yet.</div>' : adminState.exams.map(ex => `<div class="bg-white p-5 rounded-xl shadow-sm border border-l-4 ${ex.status==='Open'?'border-green-500':'border-gray-400'}"><div class="flex justify-between items-start mb-2"><div><h3 class="font-bold text-lg text-gray-900">${ex.title}</h3><p class="text-xs text-gray-500">${ex.duration} Mins • <span class="${ex.status==='Open'?'text-green-600':'text-red-500'} font-bold">${ex.status}</span></p></div><button onclick="deleteExam('${ex.id}')" class="text-gray-400 hover:text-red-500 transition"><span data-lucide="trash-2" class="w-4 h-4"></span></button></div><div class="flex gap-2 mt-3 mb-3"><button onclick="toggleExamStatus('${ex.id}')" class="flex-1 py-1.5 text-xs font-bold border rounded transition ${ex.status==='Open'?'bg-red-50 text-red-600 border-red-200 hover:bg-red-100':'bg-green-50 text-green-600 border-green-200 hover:bg-green-100'}">${ex.status==='Open'?'Close Exam':'Open Exam'}</button><button onclick="toggleResultRelease('${ex.id}')" class="flex-1 py-1.5 text-xs font-bold border rounded transition ${ex.resultStatus==='Released'?'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100':'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'}">${ex.resultStatus==='Released'?'Results: Released':'Results: Held'}</button></div><button onclick="openAddQuestionModal('${ex.id}')" class="w-full py-2 border border-dashed border-blue-300 text-blue-600 rounded bg-blue-50 text-sm font-medium hover:bg-blue-100 transition">+ Add Questions</button></div>`).join('')}</div></div>
-                </div>
-            `;
-        }
-
-        // --- NEW UPDATE: SUBJECT MANAGEMENT TAB ---
-        function SubjectsTab() {
-            setTimeout(loadAdminSubjects, 100);
-            return `
-                <div class="grid md:grid-cols-3 gap-8">
-                    <div class="md:col-span-1">
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 sticky top-4">
-                            <h2 class="text-xl font-bold text-gray-800 mb-4">Add New Course</h2>
-                            <p class="text-sm text-gray-500 mb-4">For: <span class="font-bold text-emerald-600">${adminState.assignedCourse}</span></p>
-                            <form onsubmit="handleAddSubject(event)" class="space-y-4">
-                                <input name="code" placeholder="Code (e.g. MTH111)" class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500" required>
-                                <input name="title" placeholder="Title (e.g. General Math)" class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500" required>
-                                <input name="unit" type="number" min="1" max="6" placeholder="Unit (e.g. 3)" class="w-full px-3 py-2 border rounded-lg focus:ring-emerald-500" required>
-                                <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-md transition">Add Course</button>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="md:col-span-2">
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center"><h2 class="text-lg font-bold text-gray-800">Current Course List</h2><button onclick="loadAdminSubjects()" class="text-emerald-600 hover:text-emerald-800 text-sm font-medium"><span data-lucide="refresh-cw" class="w-4 h-4"></span> Refresh</button></div>
-                            <div id="subjectListContainer" class="divide-y divide-gray-100 max-h-[70vh] overflow-y-auto"><div class="p-10 text-center text-gray-400">Loading courses...</div></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // --- NEW UPDATE: RESULTS / SCORE INPUT TAB ---
-        function ResultsTab() {
-            // Helper to populate subjects dropdown immediately
-            fetchAppsScript('getSubjectsByProgram', { program: adminState.assignedCourse }, true).then(res => {
-                const sel = document.getElementById('scoreSubjectSelect');
-                if(sel && res.result==='success') {
-                    sel.innerHTML = '<option value="">-- Choose Subject --</option>' + res.data.map(s => `<option value="${s.code}">${s.code} - ${s.title}</option>`).join('');
-                }
-            });
-
-            return `
-                <div class="max-w-6xl mx-auto">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
-                        <h2 class="text-xl font-bold text-gray-800 mb-4">Input Physical Exam Scores</h2>
-                        <div class="grid md:grid-cols-2 gap-4 items-end">
-                            <div><label class="block text-sm font-bold text-gray-700 mb-1">Select Subject</label><select id="scoreSubjectSelect" onchange="loadGradeSheet()" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"><option value="">Loading subjects...</option></select></div>
-                        </div>
-                    </div>
-                    <div id="gradeSheetContainer" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hidden">
-                        <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center"><h3 class="font-bold text-gray-700" id="gradeSheetTitle">Students</h3><span class="text-xs text-gray-500 italic">Auto-saves on button click</span></div>
-                        <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">CA (30)</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">Exam (70)</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">Total</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th></tr></thead><tbody id="gradeSheetBody" class="bg-white divide-y divide-gray-200"></tbody></table></div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function AttendanceTab() {
-            return `
-                <div class="max-w-4xl mx-auto">
-                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4"><h2 class="text-2xl font-semibold text-gray-700">Mark Attendance</h2><div class="flex items-center space-x-2 bg-white p-2 rounded-lg shadow-sm border border-gray-200"><label class="text-sm font-bold text-gray-600 pl-2">Date:</label><input type="date" id="attendanceDate" value="${new Date().toISOString().slice(0, 10)}" class="px-2 py-1 border-none focus:ring-0 text-gray-700 font-medium"></div></div>
-                    <div class="relative mb-6"><div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span data-lucide="search" class="text-gray-400 w-5 h-5"></span></div><input type="text" id="studentSearchInput" placeholder="Search by Student Name or Admission Number..." class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg transition bg-white" autocomplete="off"></div>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><div class="bg-gray-50 px-4 py-2 border-b border-gray-200 flex justify-between items-center"><span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Student Details</span><span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Mark Status</span></div><div id="attendanceListContainer" class="divide-y divide-gray-100 max-h-[500px] overflow-y-auto"><div class="p-8 text-center text-gray-500 flex flex-col items-center"><span data-lucide="search" class="w-12 h-12 text-gray-300 mb-2"></span><p>Start typing a name or admission number above to find students.</p></div></div></div>
-                </div>
-            `;
-        }
-
-        function bindDashboardEvents() {
-            document.querySelectorAll('.nav-item').forEach(item => { item.onclick = () => changeTab(item.getAttribute('data-tab')); });
-            if(document.getElementById('logoutBtn')) document.getElementById('logoutBtn').onclick = handleLogout;
-            if(document.getElementById('announcementForm')) document.getElementById('announcementForm').onsubmit = handleAddAnnouncement;
-            if(document.getElementById('assignmentForm')) document.getElementById('assignmentForm').onsubmit = handleAddAssignment;
-            if(document.getElementById('addQuestionForm')) document.getElementById('addQuestionForm').onsubmit = handleAddQuestion;
-            const searchInput = document.getElementById('studentSearchInput');
-            if (searchInput) {
-                searchInput.addEventListener('input', (e) => {
-                    const query = e.target.value.trim();
-                    if (query.length > 0) filterAttendanceList(query);
-                    else { document.getElementById('attendanceListContainer').innerHTML = `<div class="p-8 text-center text-gray-500 flex flex-col items-center"><span data-lucide="search" class="w-12 h-12 text-gray-300 mb-2"></span><p>Start typing a name or admission number above to find students.</p></div>`; lucide.createIcons(); }
-                });
-                searchInput.focus();
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
 </html>

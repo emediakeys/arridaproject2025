@@ -5,22 +5,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ACHSTS Home</title>
-  <!-- Load Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Load Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <!--Add icon to header -->
   <link rel="icon" type="image/png" sizes="32x32" href="icon.jpg">
   <link rel="icon" type="image/png" sizes="16x16" href="icon.jpg">
   <link rel="apple-touch-icon" href="icon.jpg">
 
-  <!-- SweetAlert2 CDN -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     /* Custom Configuration for Theme, Font, and Hero */
@@ -148,18 +141,15 @@
 
 <body class="text-gray-800 antialiased bg-gray-50">
 
-  <!-- Header / Navbar Section -->
   <nav class="navbar fixed top-0 left-0 w-full bg-white shadow-lg z-50 transition duration-300 ease-in-out">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-20">
-        <!-- Logo -->
         <div class="flex-shrink-0">
           <a href="#hero-section" class="text-2xl font-extrabold text-blue-600 hover:text-blue-800 transition">
             <i class="fas fa-mosque mr-2"></i><span class="text-gray-800">ACHSTS</span>
           </a>
         </div>
 
-        <!-- Desktop Menu -->
         <ul class="hidden lg:flex space-x-6 items-center">
           <li><a href="#hero" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Home</a></li>
           <li><a href="#about-section"
@@ -169,7 +159,6 @@
           <li><a href="#admission"
               class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Admission</a></li>
 
-          <!-- D R O P D O W N L O G I N F I X -->
           <li class="relative">
   <details class="group">
     <summary
@@ -194,8 +183,6 @@
   </details>
 </li>
 
-          <!-- E N D D R O P D O W N -->
-
           <li><a href="#news" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">News</a>
           </li>
           <li><a href="#team" class="text-gray-700 hover:text-blue-600 font-medium transition duration-150">Teachers</a>
@@ -210,7 +197,6 @@
           </li>
         </ul>
 
-        <!-- Mobile Menu Button (Theme Toggle removed) -->
         <div class="flex lg:hidden items-center space-x-3">
           <button class="text-2xl text-gray-800 hover:text-blue-600" id="menu-open-button">
             <i class="fas fa-bars"></i>
@@ -219,7 +205,6 @@
       </div>
     </div>
 
-    <!-- Mobile Menu (Off-Canvas) -->
     <ul id="mobile-menu"
       class="menu hidden-on-mobile fixed top-0 right-0 w-64 h-full bg-white shadow-xl p-6 lg:hidden flex flex-col space-y-4 z-50">
       <button class="text-2xl text-gray-800 self-end mb-4 hover:text-blue-600" id="menu-close-button">
@@ -238,7 +223,6 @@
           class="text-gray-700 hover:text-blue-600 font-medium text-lg border-b pb-1 transition duration-150">Admission</a>
       </li>
 
-      <!-- Mobile Login Links (Expanded) -->
       <li class="pt-2">
         <p class="text-gray-500 text-sm font-semibold mb-1">Login</p>
         <a href="student_dashboard.html"
@@ -250,8 +234,6 @@
           <i class="fas fa-user-shield w-5 mr-2"></i> Admin Login
         </a>
       </li>
-      <!-- End Mobile Login -->
-
       <li><a href="#news"
           class="text-gray-700 hover:text-blue-600 font-medium text-lg border-b pb-1 transition duration-150">News</a>
       </li>
@@ -271,7 +253,6 @@
   </nav>
 
   <main>
-    <!-- hero section -->
     <section class="hero-section flex items-center justify-center text-center" id="hero">
       <div class="overlay w-full h-full flex flex-col items-center justify-center p-6 sm:p-12">
         <h1 class="headline text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white mb-4">
@@ -289,25 +270,20 @@
       </div>
     </section>
 
-    <!-- about section -->
     <section class="about-section py-16 md:py-24" id="about-section">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <!-- Image Wrapper -->
           <div class="relative w-full overflow-hidden rounded-xl shadow-2xl">
-            <!-- Placeholder image URL is used for the image src -->
             <img src="images/DSC_3728.JPG" alt="Abdulmalik Usaini, Director"
               class="w-full h-auto object-cover transition duration-500 hover:scale-105">
             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
           </div>
 
-          <!-- About Details -->
           <div class="about-details">
             <p class="text-sm font-semibold uppercase text-blue-600 mb-2">About Our Institution</p>
             <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">ABDULMALIK USAINI</h1>
             <i class="block text-xl font-medium text-emerald-600 mb-4">Director</i>
 
-            <!-- Social Links -->
             <div class="flex space-x-4 mb-8">
               <a href="https://www.tiktok.com/@hanifessaiy?_t=ZM-8wxL6yx5MJC&_r=1"
                 class="text-2xl text-gray-500 hover:text-pink-600 transition"><i class="fa-brands fa-tiktok"></i></a>
@@ -331,7 +307,6 @@
               community health centers, research institutions, and public health organizations.
             </p>
 
-            <!-- Buttons -->
             <div class="flex space-x-4">
               <a href="images/Covr1.jgp" download="Ar-rida Flyer"
                 class="py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150">
@@ -347,17 +322,14 @@
       </div>
     </section>
 
-    <!-- services section (Admission) -->
     <section class="services-section bg-gray-100 py-16 md:py-24" id="admission">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Courses We Offer</h3>
         <p class="text-gray-600 mb-12 max-w-3xl mx-auto">Click on any course card to view detailed information, duration,
           certification level, and key features.</p>
 
-        <!-- CONTAINER FOR DYNAMICALLY GENERATED COURSE CARDS -->
         <div id="courses-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <!-- Course cards will be injected here by JavaScript -->
-        </div>
+          </div>
 
         <div class="mt-12">
           <a href="form.html"
@@ -372,7 +344,6 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-12">Gallery</h3>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <!-- Placeholder images used for gallery items -->
           <div
             class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
             <img src="images/DSC_3654.JPG" alt="Gallery 1" class="gallery-img w-full h-48 object-cover">
@@ -405,7 +376,6 @@
               <i class="fas fa-expand text-white text-2xl"></i>
             </div>
           </div>
-          <!-- Added a few more for better layout -->
           <div
             class="gallery-item relative overflow-hidden rounded-xl shadow-lg cursor-pointer transform hover:scale-[1.02] transition duration-300 group">
             <img src="images/DSC_3751.JPG" alt="Gallery 5" class="gallery-img w-full h-48 object-cover">
@@ -426,7 +396,6 @@
       </div>
     </section>
 
-    <!-- News Section (Social Feed Viewer) -->
     <section class="news-section bg-gray-100 py-16 md:py-24" id="news">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12">
@@ -434,9 +403,7 @@
             <p class="text-gray-600 mt-2">Latest updates, announcements, and events from ACHSTS.</p>
         </div>
 
-        <!-- Dynamic News Feed Container -->
         <div id="news-feed" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- Loading State -->
             <div class="col-span-full text-center py-10">
                 <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
                 <p class="text-gray-500 mt-2">Loading news feed...</p>
@@ -446,24 +413,19 @@
       </div>
     </section>
 
-    <!-- My team section -->
     <section class="my-team py-16 md:py-24" id="team">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-12">Our Teachers & Staff</h3>
-        <!-- CONTAINER FOR DYNAMICALLY GENERATED TEAM CARDS -->
         <div id="team-container" class="grid grid-cols-2 md:grid-cols-4 gap-8">
-          <!-- Team cards will be injected here by JavaScript -->
-        </div>
+          </div>
       </div>
     </section>
 
-    <!-- Contact section -->
     <section class="contact-section bg-blue-600 py-16 md:py-24" id="contact-section">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <h3 class="text-3xl sm:text-4xl font-bold text-white mb-12 text-center">Contact Us</h3>
         <div class="bg-white rounded-xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2">
 
-          <!-- Left: Contact Form -->
           <form id="contact-form" class="p-8 md:p-12 space-y-6">
             <h2 class="text-2xl font-bold text-gray-900 mb-4">Send a Message</h2>
             <input type="text" name="name" placeholder="Full Name" required
@@ -478,7 +440,6 @@
             </button>
           </form>
 
-          <!-- Right: Contact Info -->
           <div class="bg-blue-700 p-8 md:p-12 text-white flex flex-col justify-center">
             <h2 class="text-2xl font-bold mb-6">Contact Information</h2>
             <ul class="space-y-4 text-gray-200">
@@ -511,7 +472,6 @@
     </footer>
   </main>
 
-  <!-- Gallery Lightbox Modal -->
   <div id="lightbox" class="modal-base">
     <button class="modal-close">&times;</button>
     <div class="lightbox-content">
@@ -519,7 +479,6 @@
     </div>
   </div>
 
-  <!-- Course Details Modal -->
   <div id="course-modal" class="modal-base">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative p-8 m-4">
       <button id="course-modal-close" class="modal-close !text-gray-800 !right-4 !top-4 !text-3xl">&times;</button>
@@ -531,7 +490,6 @@
 
       <p id="modal-description" class="text-gray-700 mb-6 text-center leading-relaxed border-b pb-4"></p>
 
-      <!-- Key Details Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
         <div class="bg-blue-50 p-4 rounded-lg shadow-inner">
           <p class="text-sm font-medium uppercase text-blue-600 mb-1 flex items-center">
@@ -547,15 +505,12 @@
         </div>
       </div>
 
-      <!-- Key Features List -->
       <div class="mb-8">
         <h3 class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Key Program Features</h3>
         <ul id="modal-features" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
-          <!-- Features injected here -->
-        </ul>
+          </ul>
       </div>
 
-      <!-- CTA Button -->
       <a id="modal-cta-link" href="#"
         class="block w-full text-center py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition duration-150">
         Enroll Now
@@ -565,122 +520,39 @@
 
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMEpK3kKSrQR99hvVBA0fvs-_eWGKHzfQutXHy7X369_ELy0t8BpI-2mrSYnWKVkNX4Q/exec";
+    // --- 1. CONFIGURATION ---
+    const SUPABASE_URL = 'https://adhbsmbmeigfcieofrkq.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaGJzbWJtZWlnZmNpZW9mcmtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODc1ODcsImV4cCI6MjA4MTI2MzU4N30.wpOMUUJ2PcEJbuHHFbG-gUjVoxttnxA5UxZJttChJ1s'; // <--- PASTE KEY HERE
+
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     document.addEventListener('DOMContentLoaded', () => {
       initUI();
-
-      let firebaseActive = false;
-      try {
-        if (typeof __firebase_config !== 'undefined') {
-            const firebaseConfig = JSON.parse(__firebase_config);
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-            firebaseActive = true;
-            initAuth(); 
-        }
-      } catch (e) {
-        console.warn("Firebase config issue:", e);
-      }
-
-      if(!firebaseActive) {
-          // If no firebase, load news from Apps Script immediately
-          loadNewsFromAppsScript();
-      }
+      fetchSupabaseNews(); // Fetch news immediately
     });
 
-    let currentUser = null;
-    let appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-    async function initAuth() {
-        const auth = firebase.auth();
-        auth.onAuthStateChanged(async (user) => {
-            if (user && !user.isAnonymous) {
-                currentUser = user;
-            } else {
-                currentUser = user; 
-                if (!user) {
-                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await auth.signInWithCustomToken(__initial_auth_token);
-                    } else {
-                        await auth.signInAnonymously();
-                    }
-                }
-            }
-            loadNewsFeed();
-        });
-    }
-
-    // --- MAIN NEWS LOGIC ---
-    function loadNewsFeed() {
-        const db = firebase.firestore();
+    // --- NEWS FETCHING ---
+    async function fetchSupabaseNews() {
         const feedContainer = document.getElementById('news-feed');
-        let firebaseHasResponded = false;
-
-        // 1. Set a timeout to force fallback if Firebase hangs (e.g., offline/firewall)
-        const fallbackTimer = setTimeout(() => {
-            if (!firebaseHasResponded) {
-                console.warn("Firebase connection timed out. Switching to Google Sheets source.");
-                loadNewsFromAppsScript();
-            }
-        }, 5000); // 5 seconds wait time
         
-        // 2. Try Firebase
-        db.collection('artifacts').doc(appId).collection('public').doc('data').collection('news_posts')
-          .orderBy('timestamp', 'desc')
-          .limit(20)
-          .onSnapshot((snapshot) => {
-            firebaseHasResponded = true;
-            clearTimeout(fallbackTimer); // Clear timeout if successful
-
-            if(snapshot.empty) {
-                loadNewsFromAppsScript(); 
-                return;
-            }
-            // If data exists, render it
-            renderNews(snapshot.docs.map(d => ({...d.data(), id: d.id})), true);
-          }, (error) => {
-              firebaseHasResponded = true;
-              clearTimeout(fallbackTimer);
-              console.warn("Firebase error, falling back to Apps Script", error);
-              loadNewsFromAppsScript();
-          });
-    }
-
-    async function loadNewsFromAppsScript() {
-        const feedContainer = document.getElementById('news-feed');
         try {
-            // Send action "getPublicAnnouncements" to your GAS
-            const params = new URLSearchParams();
-            params.append('action', 'getPublicAnnouncements'); 
-            
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: params
-            });
-            const result = await response.json();
-            
-            if(result.result === 'success' && result.data && result.data.length > 0) {
-                // Map GAS structure to match what renderNews expects
-                const posts = result.data.map((item, idx) => ({
-                    id: 'gas-' + idx,
-                    title: item.title,
-                    content: item.content,
-                    authorName: item.author || 'Admin',
-                    authorInitials: 'AD',
-                    timestamp: item.date, // GAS usually returns string dates
-                    likes: 0,
-                    comments: [],
-                    imageUrl: null,
-                    isReadOnly: true // Flag to disable interaction
-                }));
-                renderNews(posts, false);
+            // Fetch public announcements from Supabase
+            const { data: news, error } = await db
+                .from('announcements')
+                .select('*')
+                .eq('visibility', 'public')
+                .order('date', { ascending: false })
+                .limit(20);
+
+            if (error) throw error;
+
+            if (news && news.length > 0) {
+                renderNews(news);
             } else {
                 renderDefaultNews();
             }
-        } catch(e) {
-            console.error("Apps Script Fetch Error:", e);
+        } catch (err) {
+            console.error("News fetch error:", err);
             renderDefaultNews();
         }
     }
@@ -694,88 +566,38 @@
                 </div>
                 <h3 class="text-xl font-bold text-gray-900">Welcome to ACHSTS</h3>
                 <p class="text-gray-600 mt-2">Check back soon for the latest news and announcements.</p>
-                <div class="mt-6 p-4 bg-yellow-50 border border-yellow-100 rounded-lg text-sm text-yellow-700">
-                    <i class="fas fa-info-circle mr-2"></i> Note: Real-time news feed is currently offline. 
-                    Please ensure you are connected to the internet.
-                </div>
             </div>
         `;
     }
 
-    function renderNews(posts, isInteractive) {
+    function renderNews(posts) {
         const feedContainer = document.getElementById('news-feed');
         let html = '';
         
         posts.forEach(post => {
-            // Handle Timestamp difference (Firebase Object vs String)
-            let timeString = post.timestamp;
-            if(post.timestamp && post.timestamp.toDate) {
-                timeString = post.timestamp.toDate().toLocaleDateString();
-            } else if (!timeString) {
-                timeString = 'Recent';
-            }
-
-            let commentsHtml = '';
-            if(post.comments && post.comments.length > 0) {
-                post.comments.forEach(comment => {
-                    commentsHtml += `
-                        <div class="bg-gray-50 p-2 rounded-lg mb-2 text-sm">
-                            <span class="font-bold text-gray-800">${comment.user}:</span>
-                            <span class="text-gray-600">${comment.text}</span>
-                        </div>`;
-                });
-            } else {
-                commentsHtml = '<p class="text-xs text-gray-400 italic">No comments yet.</p>';
-            }
-
-            const isLiked = false; // Simplified for read-only / hybrid
-            const likeColor = isLiked ? 'text-red-500' : 'text-gray-500';
+            const date = new Date(post.date).toLocaleDateString();
             
-            // Interaction Buttons (Disabled if read-only)
-            const interactionBar = isInteractive ? `
-                <div class="news-actions flex justify-between items-center border-t border-gray-100 pt-4 mt-auto">
-                        <div class="flex space-x-4">
-                        <button onclick="handleLike('${post.id}')" class="like-btn ${likeColor} hover:text-red-500 transition flex items-center text-sm font-medium">
-                            <i class="fa-solid fa-heart mr-1 ${isLiked ? 'like-anim' : ''}"></i> <span>${post.likes || 0}</span>
-                        </button>
-                        <button onclick="toggleComments('${post.id}')" class="text-gray-500 hover:text-blue-600 transition flex items-center text-sm font-medium">
-                            <i class="fa-solid fa-comment mr-1"></i> <span>${post.comments ? post.comments.length : 0}</span>
-                        </button>
-                        </div>
-                        <button onclick="handleShare('${post.title || 'ACHSTS News'}', '${post.content}')" class="text-gray-500 hover:text-blue-800 transition flex items-center text-sm font-medium">
-                        <i class="fa-solid fa-share"></i>
-                        </button>
-                </div>
-                <div id="comments-${post.id}" class="comment-section mt-4 pt-4 border-t border-gray-100 hidden">
-                        <div class="comments-list mb-3 max-h-32 overflow-y-auto">${commentsHtml}</div>
-                        <div class="flex">
-                        <input type="text" id="input-${post.id}" placeholder="Write a comment..." class="flex-1 text-sm border border-gray-300 rounded-l-lg px-3 py-1 focus:outline-none">
-                        <button onclick="postComment('${post.id}')" class="bg-blue-600 text-white px-3 py-1 rounded-r-lg text-sm hover:bg-blue-700">Send</button>
-                        </div>
-                </div>
-            ` : `
-                <div class="mt-auto pt-4 border-t border-gray-100 text-xs text-gray-400 italic flex justify-between">
-                    <span>Read Only (from Archive)</span>
-                    <button onclick="handleShare('${post.title || 'News'}', '${post.content}')" class="text-gray-500 hover:text-blue-800 transition flex items-center"><i class="fa-solid fa-share mr-1"></i> Share</button>
-                </div>
-            `;
-
+            // Note: Public View is Read-Only for Likes/Comments to keep homepage fast
+            // Students can interact when logged into dashboard
+            
             html += `
-            <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300">
-                ${post.imageUrl ? `<img src="${post.imageUrl}" alt="News Image" class="news-img w-full h-48 object-cover">` : ''}
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition duration-300 border border-gray-100">
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="flex items-center mb-3">
                         <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs mr-2">
-                            ${post.authorInitials || 'A'}
+                            AD
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-gray-900">${post.authorName || 'Admin'}</h4>
-                            <p class="text-xs text-gray-500">${timeString}</p>
+                            <h4 class="text-sm font-bold text-gray-900">Admin</h4>
+                            <p class="text-xs text-gray-500">${date}</p>
                         </div>
                     </div>
-                    ${post.title ? `<h4 class="news-title text-xl font-bold text-gray-900 mb-2">${post.title}</h4>` : ''}
+                    <h4 class="news-title text-xl font-bold text-gray-900 mb-2">${post.title}</h4>
                     <p class="news-body text-gray-600 flex-grow mb-4 whitespace-pre-line">${post.content}</p>
-                    ${interactionBar}
+                    
+                    <div class="mt-auto pt-4 border-t border-gray-100 text-xs text-gray-400 italic flex justify-between">
+                        <span><i class="fas fa-globe mr-1"></i> Public Announcement</span>
+                    </div>
                 </div>
             </div>
             `;
@@ -783,65 +605,7 @@
         feedContainer.innerHTML = html;
     }
 
-    // --- Interaction Functions ---
-    window.handleLike = async (postId) => {
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        if(!auth.currentUser) await auth.signInAnonymously();
-        const postRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('news_posts').doc(postId);
-        try {
-            await db.runTransaction(async (transaction) => {
-                const doc = await transaction.get(postRef);
-                if (!doc.exists) throw "Doc missing";
-                const data = doc.data();
-                const likedBy = data.likedBy || [];
-                const uid = auth.currentUser.uid;
-                if (likedBy.includes(uid)) {
-                    transaction.update(postRef, { likes: (data.likes || 1) - 1, likedBy: likedBy.filter(id => id !== uid) });
-                } else {
-                    transaction.update(postRef, { likes: (data.likes || 0) + 1, likedBy: [...likedBy, uid] });
-                }
-            });
-        } catch (e) { console.error(e); }
-    };
-
-    window.toggleComments = (postId) => {
-        const el = document.getElementById(`comments-${postId}`);
-        if(el.classList.contains('hidden')) {
-            el.classList.remove('hidden'); setTimeout(() => el.classList.add('open'), 10);
-        } else {
-            el.classList.remove('open'); setTimeout(() => el.classList.add('hidden'), 300);
-        }
-    };
-
-    window.postComment = async (postId) => {
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        if(!auth.currentUser) await auth.signInAnonymously();
-        const input = document.getElementById(`input-${postId}`);
-        const text = input.value.trim();
-        if(!text) return;
-        const postRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('news_posts').doc(postId);
-        const displayName = (currentUser && !currentUser.isAnonymous) ? currentUser.displayName : 'Guest';
-        try {
-            await postRef.update({
-                comments: firebase.firestore.FieldValue.arrayUnion({
-                    user: displayName, userId: auth.currentUser.uid, text: text, timestamp: new Date().toISOString()
-                })
-            });
-            input.value = '';
-        } catch (e) { Swal.fire('Error', 'Could not post comment', 'error'); }
-    };
-
-    window.handleShare = async (title, text) => {
-        if (navigator.share) {
-            try { await navigator.share({ title: title, text: text.substring(0, 100) + '...', url: window.location.href }); } catch (err) {}
-        } else {
-            Swal.fire({ title: 'Share', text: 'Link copied!', icon: 'success', timer: 1500, showConfirmButton: false });
-        }
-    };
-
-    // --- UI Logic ---
+    // --- UI Logic (Your Original Functions) ---
     function initUI() {
         const navbar = document.querySelector('.navbar');
         const openMenuBtn = document.getElementById('menu-open-button');
@@ -952,7 +716,4 @@
   </script>
 
 </body>
-
 </html>
-
-

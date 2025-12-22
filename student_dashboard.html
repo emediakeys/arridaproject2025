@@ -17,22 +17,105 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <style>
-        :root { --primary-color: #3b82f6; }
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .nav-item { display: flex; align-items: center; padding: 0.75rem 1rem; cursor: pointer; border-radius: 0.5rem; margin-bottom: 0.5rem; transition: all 0.2s; }
-        .nav-item:hover, .nav-item.active { background-color: var(--primary-color); color: white; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
-        .card { background-color: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .form-input { width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; background-color: #f9fafb; transition: all 0.2s; }
-        .form-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); outline: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: transparent; }
-        .custom-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .chat-bubble { padding: 8px 12px; border-radius: 12px; font-size: 0.85rem; max-width: 85%; margin-bottom: 8px; }
-        .chat-admin { background-color: #dbeafe; color: #1e40af; border-left: 4px solid #2563eb; }
-        .chat-student { background-color: #f3f4f6; color: #1f2937; }
+        :root {
+            --primary-color: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+        }
+
+        .card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            background-color: #f9fafb;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+            outline: none;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: transparent;
+        }
+
+        .custom-scrollbar {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-bubble {
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            max-width: 85%;
+            margin-bottom: 8px;
+        }
+
+        .chat-admin {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #2563eb;
+        }
+
+        .chat-student {
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
     </style>
 </head>
 
@@ -44,60 +127,81 @@
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
             <h3 id="modalTitle" class="text-xl font-bold text-gray-900 mb-2">Message</h3>
             <p id="modalMessage" class="text-gray-600 mb-6"></p>
-            <button onclick="closeModal()" class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold">Close</button>
+            <button onclick="closeModal()"
+                class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold">Close</button>
         </div>
     </div>
-    
+
     <div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
-            <div class="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4 text-blue-600"><i class="fas fa-question text-xl"></i></div>
+            <div class="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4 text-blue-600">
+                <i class="fas fa-question text-xl"></i></div>
             <h3 id="confirmTitle" class="text-lg font-bold text-gray-900">Confirm Action</h3>
             <p id="confirmMessage" class="text-gray-500 text-sm mt-2 mb-6">Are you sure you want to proceed?</p>
             <div class="flex space-x-3">
-                <button onclick="closeConfirm()" class="flex-1 py-2 border rounded-lg hover:bg-gray-50 font-bold text-gray-600">Cancel</button>
-                <button onclick="executeConfirm()" class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold">Confirm</button>
+                <button onclick="closeConfirm()"
+                    class="flex-1 py-2 border rounded-lg hover:bg-gray-50 font-bold text-gray-600">Cancel</button>
+                <button onclick="executeConfirm()"
+                    class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold">Confirm</button>
             </div>
         </div>
     </div>
-    
-    <div id="forgotPasswordModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+
+    <div id="forgotPasswordModal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
-            <div class="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4 text-blue-600"><i class="fas fa-envelope text-xl"></i></div>
+            <div class="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4 text-blue-600">
+                <i class="fas fa-envelope text-xl"></i></div>
             <h3 class="text-lg font-bold text-gray-900">Reset Password</h3>
             <p class="text-gray-500 text-sm mt-2 mb-6">Enter your registered email to receive a reset link.</p>
             <form onsubmit="window.sendResetLink(event)">
-                <input type="email" id="resetEmailInput" class="form-input mb-4" placeholder="student@example.com" required>
+                <input type="email" id="resetEmailInput" class="form-input mb-4" placeholder="student@example.com"
+                    required>
                 <div class="flex gap-2">
-                    <button type="button" onclick="document.getElementById('forgotPasswordModal').classList.add('hidden'); document.getElementById('forgotPasswordModal').classList.remove('flex');" class="flex-1 py-2 border rounded-lg font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
-                    <button type="submit" class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold">Send Link</button>
+                    <button type="button"
+                        onclick="document.getElementById('forgotPasswordModal').classList.add('hidden'); document.getElementById('forgotPasswordModal').classList.remove('flex');"
+                        class="flex-1 py-2 border rounded-lg font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
+                    <button type="submit"
+                        class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold">Send
+                        Link</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="resetPasswordModal" class="fixed inset-0 bg-gray-600 bg-opacity-90 hidden items-center justify-center p-4 z-50">
+    <div id="resetPasswordModal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-90 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
-            <div class="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600"><i class="fas fa-key text-xl"></i></div>
+            <div
+                class="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
+                <i class="fas fa-key text-xl"></i></div>
             <h3 class="text-lg font-bold text-gray-900">Set New Password</h3>
             <p class="text-gray-500 text-sm mt-2 mb-6">Enter your new password below to secure your account.</p>
             <form onsubmit="window.finalizePasswordReset(event)">
-                <input type="password" id="finalNewPass" class="form-input mb-4" placeholder="New Password (min 6 chars)" minlength="6" required>
-                <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold">Update Password</button>
+                <input type="password" id="finalNewPass" class="form-input mb-4"
+                    placeholder="New Password (min 6 chars)" minlength="6" required>
+                <button type="submit"
+                    class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold">Update
+                    Password</button>
             </form>
         </div>
     </div>
 
-    <div id="apiLoadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+    <div id="apiLoadingOverlay"
+        class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
             <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
             <p class="mt-4 text-gray-600 font-semibold" id="loadingMessage">Processing...</p>
         </div>
     </div>
 
+    <img id="schoolLetterhead" src="admission_template.jpg" alt="Letterhead" style="display: none;"
+        crossorigin="anonymous">
+
     <script>
         // --- 1. CONFIGURATION ---
         const SUPABASE_URL = 'https://adhbsmbmeigfcieofrkq.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaGJzbWJtZWlnZmNpZW9mcmtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODc1ODcsImV4cCI6MjA4MTI2MzU4N30.wpOMUUJ2PcEJbuHHFbG-gUjVoxttnxA5UxZJttChJ1s'; // <--- PASTE KEY
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaGJzbWJtZWlnZmNpZW9mcmtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODc1ODcsImV4cCI6MjA4MTI2MzU4N30.wpOMUUJ2PcEJbuHHFbG-gUjVoxttnxA5UxZJttChJ1s';
         const PAYSTACK_PUBLIC_KEY = 'pk_test_34033a8e8865add5341146621b171d687d606024';
 
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -177,12 +281,12 @@
 
         // --- 3. GLOBAL FUNCTIONS (Attached to Window for onClick) ---
 
-        window.handleStudentLogin = async function(event) {
+        window.handleStudentLogin = async function (event) {
             event.preventDefault();
             // Note: We use the ID 'admNo' from your design, but user must enter Email
-            const email = document.getElementById('admNo').value.trim(); 
+            const email = document.getElementById('admNo').value.trim();
             const password = document.getElementById('password').value;
-            
+
             setLoading(true, 'Authenticating...');
 
             const { data, error } = await db.auth.signInWithPassword({
@@ -211,7 +315,7 @@
 
                 if (error || !student) {
                     setLoading(false);
-                    if(!student) { alert("Profile not found."); await db.auth.signOut(); renderLogin(); }
+                    if (!student) { alert("Profile not found."); await db.auth.signOut(); renderLogin(); }
                     return;
                 }
 
@@ -224,7 +328,7 @@
 
                 // 3. Fetch Payments
                 const { data: payments } = await db.from('payments').select('*').eq('admission_no', student.admission_no).eq('status', 'Success');
-                
+
                 const safeProfile = profile || {}; // Fallback to empty if profile doesn't exist yet
                 const hasPaidAcceptance = payments?.some(p => p.fee_type === 'Acceptance');
                 const hasPaidTuition = payments?.some(p => p.fee_type === 'Tuition');
@@ -259,32 +363,32 @@
                     nok_address: safeProfile.nok_address,
                     primary_school: safeProfile.primary_school,
                     secondary_school: safeProfile.secondary_school,
-                    
+
                     isComplete: !!safeProfile.state_of_origin
                 };
-                
+
                 localStorage.setItem('studentData', JSON.stringify(studentData));
-                
+
                 // Listen for news in background
                 listenForAnnouncements();
 
-                if(document.getElementById('portalContent')) loadTabContent(currentTab);
+                if (document.getElementById('portalContent')) loadTabContent(currentTab);
                 else renderDashboard();
 
-            } catch(e) { console.error(e); setLoading(false); }
+            } catch (e) { console.error(e); setLoading(false); }
             finally { setLoading(false); }
         }
 
         // --- TOGGLE LIKE (CORRECTED) ---
-        window.toggleLike = async function(id, btn) {
+        window.toggleLike = async function (id, btn) {
             const userId = studentData.admNo;
 
             // 1. Optimistic Update (Visual)
             const icon = btn.querySelector('i');
             const isLiked = icon.classList.contains('fas'); // Solid heart = liked
-            
+
             // Flip Classes immediately
-            if(isLiked) {
+            if (isLiked) {
                 icon.className = 'far fa-heart text-gray-500'; // Make Gray
             } else {
                 icon.className = 'fas fa-heart text-red-500'; // Make Red
@@ -304,11 +408,11 @@
         };
 
         // --- FIXED LOGOUT ---
-        window.handleLogout = async function() {
+        window.handleLogout = async function () {
             setLoading(true, "Logging out...");
             await db.auth.signOut();
             localStorage.clear();
-            window.location.reload(); 
+            window.location.reload();
         }
 
         // --- 4. UI RENDERERS ---
@@ -316,7 +420,7 @@
         function renderLogin() {
             const date = new Date();
             const session = date.getMonth() >= 8 ? `${date.getFullYear()}/${date.getFullYear() + 1}` : `${date.getFullYear() - 1}/${date.getFullYear()}`;
-            
+
             document.getElementById('app').innerHTML = `
                 <div class="min-h-screen w-full flex flex-col md:flex-row bg-white overflow-hidden">
                     <div class="hidden md:flex md:w-1/2 relative items-center justify-center p-12 text-white overflow-hidden group transition-all duration-700">
@@ -347,9 +451,7 @@
         }
 
         function renderForgotPassword() {
-            // This function is no longer needed as the reset is handled by the modal after clicking the link
-            // However, if you want a separate screen to request the link, you can add it back.
-            // For now, the button in login directly calls handleForgotPassword which is correct.
+            // Handled by modal
         }
 
         function renderDashboard() {
@@ -397,17 +499,17 @@
 
             try {
                 if (tab === 'profile') {
-                    const s = studentData; 
+                    const s = studentData;
                     const isComplete = s.isComplete;
                     // Generate State Options
-                    const stateOptions = Object.keys(stateLgaData).map(st => `<option value="${st}" ${s.state_of_origin===st?'selected':''}>${st}</option>`).join('');
-                    
-                    const statusBadge = isComplete ? 
-                        `<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold"><i class="fas fa-check-circle mr-1"></i> Registration Complete</span>` : 
+                    const stateOptions = Object.keys(stateLgaData).map(st => `<option value="${st}" ${s.state_of_origin === st ? 'selected' : ''}>${st}</option>`).join('');
+
+                    const statusBadge = isComplete ?
+                        `<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold"><i class="fas fa-check-circle mr-1"></i> Registration Complete</span>` :
                         `<span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold"><i class="fas fa-exclamation-circle mr-1"></i> Incomplete Bio-Data</span>`;
-                    
-                    const editButton = isComplete ? 
-                        `<button class="bg-gray-400 text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-md cursor-not-allowed" onclick="showMessage('Profile Locked', 'Your profile is completed. Contact Admin for corrections.', false)"><i class="fas fa-lock mr-2"></i> Locked</button>` : 
+
+                    const editButton = isComplete ?
+                        `<button class="bg-gray-400 text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-md cursor-not-allowed" onclick="showMessage('Profile Locked', 'Your profile is completed. Contact Admin for corrections.', false)"><i class="fas fa-lock mr-2"></i> Locked</button>` :
                         `<button onclick="toggleProfileEdit()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold shadow-md transition transform hover:-translate-y-0.5"><i class="fas fa-pen mr-2"></i> Complete Profile</button>`;
 
                     content.innerHTML = `
@@ -434,30 +536,30 @@
                                 <h3 class="text-lg font-bold text-blue-800 mb-6 border-b pb-2">Update Bio-Data</h3>
                                 <form id="profileForm" onsubmit="window.saveProfile(event)" class="space-y-6">
                                     <div class="grid md:grid-cols-3 gap-5">
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Middle Name</label><input name="middle_name" value="${s.middle_name||''}" class="form-input"></div>
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Marital Status</label><select name="marital_status" class="form-input"><option value="${s.marital_status}">${s.marital_status||'Select'}</option><option>Single</option><option>Married</option></select></div>
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Religion</label><select name="religion" class="form-input"><option value="${s.religion}">${s.religion||'Select'}</option><option>Christianity</option><option>Islam</option></select></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Middle Name</label><input name="middle_name" value="${s.middle_name || ''}" class="form-input"></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Marital Status</label><select name="marital_status" class="form-input"><option value="${s.marital_status}">${s.marital_status || 'Select'}</option><option>Single</option><option>Married</option></select></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Religion</label><select name="religion" class="form-input"><option value="${s.religion}">${s.religion || 'Select'}</option><option>Christianity</option><option>Islam</option></select></div>
                                         <div><label class="block text-xs font-bold text-gray-500 mb-1">State of Origin</label><select id="stateSelect" name="state_of_origin" class="form-input" onchange="window.updateLgas()"><option value="">Select State</option>${stateOptions}</select></div>
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">LGA</label><select id="lgaSelect" name="lga" class="form-input"><option value="${s.lga}">${s.lga||'Select State First'}</option></select></div>
-                                        <div class="md:col-span-3"><label class="block text-xs font-bold text-gray-500 mb-1">Permanent Address</label><input name="permanent_address" value="${s.permanent_address||''}" class="form-input"></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">LGA</label><select id="lgaSelect" name="lga" class="form-input"><option value="${s.lga}">${s.lga || 'Select State First'}</option></select></div>
+                                        <div class="md:col-span-3"><label class="block text-xs font-bold text-gray-500 mb-1">Permanent Address</label><input name="permanent_address" value="${s.permanent_address || ''}" class="form-input"></div>
                                     </div>
                                     <h3 class="text-lg font-bold text-red-800 mb-4">2. Medical Info</h3>
                                     <div class="grid md:grid-cols-3 gap-4">
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Blood Group</label><select name="blood_group" class="form-input"><option value="${s.bloodGroup}">${s.bloodGroup||'Select'}</option><option>A+</option><option>O+</option><option>B+</option></select></div>
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Genotype</label><select name="genotype" class="form-input"><option value="${s.genotype}">${s.genotype||'Select'}</option><option>AA</option><option>AS</option><option>SS</option></select></div>
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Medical Conditions</label><input name="medical_conditions" value="${s.medicalConditions||''}" class="form-input"></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Blood Group</label><select name="blood_group" class="form-input"><option value="${s.bloodGroup}">${s.bloodGroup || 'Select'}</option><option>A+</option><option>O+</option><option>B+</option></select></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Genotype</label><select name="genotype" class="form-input"><option value="${s.genotype}">${s.genotype || 'Select'}</option><option>AA</option><option>AS</option><option>SS</option></select></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Medical Conditions</label><input name="medical_conditions" value="${s.medicalConditions || ''}" class="form-input"></div>
                                     </div>
                                     <h3 class="text-lg font-bold text-purple-800 mb-4">3. Next of Kin</h3>
                                     <div class="grid md:grid-cols-2 gap-4">
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Full Name</label><input name="nok_name" value="${s.nokName||''}" class="form-input"></div>
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Relationship</label><input name="nok_relationship" value="${s.nokRel||''}" class="form-input"></div>
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Phone</label><input name="nok_phone" value="${s.nokPhone||''}" class="form-input"></div>
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Address</label><input name="nok_address" value="${s.nokAddress||''}" class="form-input"></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Full Name</label><input name="nok_name" value="${s.nokName || ''}" class="form-input"></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Relationship</label><input name="nok_relationship" value="${s.nokRel || ''}" class="form-input"></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Phone</label><input name="nok_phone" value="${s.nokPhone || ''}" class="form-input"></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Address</label><input name="nok_address" value="${s.nokAddress || ''}" class="form-input"></div>
                                     </div>
                                     <h3 class="text-lg font-bold text-gray-800 mb-4">4. Academic History</h3>
                                     <div class="grid md:grid-cols-2 gap-4">
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Primary School</label><input name="primary_school" value="${s.primarySchool||''}" class="form-input"></div>
-                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Secondary School</label><input name="secondary_school" value="${s.secondarySchool||''}" class="form-input"></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Primary School</label><input name="primary_school" value="${s.primarySchool || ''}" class="form-input"></div>
+                                        <div><label class="block text-xs font-bold text-gray-500 mb-1">Secondary School</label><input name="secondary_school" value="${s.secondarySchool || ''}" class="form-input"></div>
                                     </div>
                                     <div class="flex gap-3 pt-4">
                                         <button type="button" onclick="window.toggleProfileEdit()" class="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200">Cancel</button>
@@ -470,19 +572,19 @@
                                 <div class="card space-y-4">
                                     <h3 class="font-bold text-gray-800 border-b pb-2">Personal Info</h3>
                                     <div class="grid grid-cols-2 gap-4 text-sm">
-                                        <div><p class="text-gray-400 text-xs">State</p><p class="font-medium">${s.state_of_origin||'-'}</p></div>
-                                        <div><p class="text-gray-400 text-xs">LGA</p><p class="font-medium">${s.lga||'-'}</p></div>
-                                        <div><p class="text-gray-400 text-xs">Religion</p><p class="font-medium">${s.religion||'-'}</p></div>
-                                        <div><p class="text-gray-400 text-xs">Marital Status</p><p class="font-medium">${s.marital_status||'-'}</p></div>
-                                        <div class="col-span-2"><p class="text-gray-400 text-xs">Address</p><p class="font-medium">${s.permanent_address||'-'}</p></div>
+                                        <div><p class="text-gray-400 text-xs">State</p><p class="font-medium">${s.state_of_origin || '-'}</p></div>
+                                        <div><p class="text-gray-400 text-xs">LGA</p><p class="font-medium">${s.lga || '-'}</p></div>
+                                        <div><p class="text-gray-400 text-xs">Religion</p><p class="font-medium">${s.religion || '-'}</p></div>
+                                        <div><p class="text-gray-400 text-xs">Marital Status</p><p class="font-medium">${s.marital_status || '-'}</p></div>
+                                        <div class="col-span-2"><p class="text-gray-400 text-xs">Address</p><p class="font-medium">${s.permanent_address || '-'}</p></div>
                                     </div>
                                 </div>
                                 <div class="card space-y-4">
                                     <h3 class="font-bold text-gray-800 border-b pb-2">Medical & NOK</h3>
                                     <div class="grid grid-cols-2 gap-4 text-sm">
-                                        <div><p class="text-gray-400 text-xs">Genotype</p><p class="font-medium">${s.genotype||'-'}</p></div>
-                                        <div><p class="text-gray-400 text-xs">Blood Group</p><p class="font-medium">${s.blood_group||'-'}</p></div>
-                                        <div class="col-span-2"><p class="text-gray-400 text-xs">NOK</p><p class="font-medium">${s.nok_name||'-'} (${s.nok_phone||'-'})</p></div>
+                                        <div><p class="text-gray-400 text-xs">Genotype</p><p class="font-medium">${s.genotype || '-'}</p></div>
+                                        <div><p class="text-gray-400 text-xs">Blood Group</p><p class="font-medium">${s.blood_group || '-'}</p></div>
+                                        <div class="col-span-2"><p class="text-gray-400 text-xs">NOK</p><p class="font-medium">${s.nok_name || '-'} (${s.nok_phone || '-'})</p></div>
                                     </div>
                                 </div>
                                 <div class="card space-y-4 col-span-2">
@@ -495,15 +597,15 @@
                                 </div>
                             </div>
                         </div>`;
-                        // Populate LGAs if state is already selected
-                        if(s.state_of_origin) updateLgas(s.lga);
+                    // Populate LGAs if state is already selected
+                    if (s.state_of_origin) updateLgas(s.lga);
                 } else if (tab === 'announcements') {
                     // 1. Fetch Posts with Counts
                     const { data: posts } = await db
                         .from('announcements')
                         .select('*, likes(count), comments(count)')
                         .or(`course.eq.${studentData.course},visibility.eq.public`)
-                        .order('date', {ascending: false});
+                        .order('date', { ascending: false });
 
                     // 2. Fetch "My Likes" to know which hearts to paint Red
                     const { data: myLikes } = await db
@@ -517,7 +619,7 @@
                     content.innerHTML = `<div class="max-w-3xl mx-auto space-y-4">${posts.map((a, i) => {
                         const isLiked = myLikedIds.includes(a.id);
                         const heartClass = isLiked ? "fas fa-heart text-red-500" : "far fa-heart text-gray-500";
-                        
+
                         return `<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                             <h3 class="font-bold text-lg text-gray-900">${a.title}</h3>
                             <p class="text-gray-700 mt-2 whitespace-pre-wrap">${a.content}</p>
@@ -542,20 +644,20 @@
                     const { data: subjects } = await db.from('subjects').select('*').eq('program', studentData.course);
                     const { data: registered } = await db.from('scores').select('course_code').eq('admission_no', studentData.admNo);
                     const regList = registered ? registered.map(r => r.course_code) : [];
-                    if(subjects && subjects.length) {
+                    if (subjects && subjects.length) {
                         content.innerHTML = `<div class="max-w-4xl mx-auto bg-white rounded-xl shadow-sm overflow-hidden"><div class="p-6 border-b border-gray-100"><h3 class="font-bold text-gray-800">Available Courses</h3></div><table class="w-full text-left"><thead class="bg-gray-50 text-xs uppercase text-gray-500"><tr><th class="p-4">Action</th><th class="p-4">Code</th><th class="p-4">Title</th><th class="p-4">Unit</th></tr></thead><tbody class="divide-y divide-gray-100">${subjects.map(s => `<tr class="hover:bg-gray-50"><td class="p-4">${regList.includes(s.course_code) ? '<span class="text-green-600 text-xs font-bold">Registered</span>' : `<button onclick="window.registerCourse('${s.course_code}')" class="text-blue-600 font-bold text-xs">Add</button>`}</td><td class="p-4 font-mono font-bold">${s.course_code}</td><td class="p-4">${s.course_title}</td><td class="p-4">${s.unit}</td></tr>`).join('')}</tbody></table></div>`;
                     } else content.innerHTML = `<div class="text-center p-10 text-gray-500">No courses available.</div>`;
                 } else if (tab === 'performance') {
                     const { data: scores } = await db.from('scores').select('*, subjects(unit)').eq('admission_no', studentData.admNo);
-                    if(scores && scores.length) {
+                    if (scores && scores.length) {
                         let points = 0, units = 0;
                         const rows = scores.map(s => {
                             const unit = s.subjects ? s.subjects.unit : 0;
-                            const gp = (s.total_score>=70?5:s.total_score>=60?4:s.total_score>=50?3:s.total_score>=45?2:0);
+                            const gp = (s.total_score >= 70 ? 5 : s.total_score >= 60 ? 4 : s.total_score >= 50 ? 3 : s.total_score >= 45 ? 2 : 0);
                             points += gp * unit; units += unit;
-                            return `<tr><td class="p-3">${s.course_code}</td><td class="p-3">${s.total_score||'-'}</td><td class="p-3 font-bold">${s.grade||'-'}</td></tr>`;
+                            return `<tr><td class="p-3">${s.course_code}</td><td class="p-3">${s.total_score || '-'}</td><td class="p-3 font-bold">${s.grade || '-'}</td></tr>`;
                         }).join('');
-                        const cgpa = units ? (points/units).toFixed(2) : '0.00';
+                        const cgpa = units ? (points / units).toFixed(2) : '0.00';
                         content.innerHTML = `<div class="max-w-4xl mx-auto"><div class="bg-blue-600 text-white p-6 rounded-xl mb-6"><h3 class="text-lg opacity-80">CGPA</h3><h1 class="text-5xl font-bold">${cgpa}</h1></div><div class="card overflow-hidden"><table class="w-full text-left"><thead class="bg-gray-50"><tr><th class="p-3">Course</th><th class="p-3">Score</th><th class="p-3">Grade</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
                     } else content.innerHTML = `<div class="text-center p-10 text-gray-500">No results yet.</div>`;
                 } else if (tab === 'payments' || tab === 'letter') {
@@ -566,20 +668,20 @@
                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Admission Letter</h2>
                                <p class="text-gray-500 mb-6">You must pay your acceptance fee to download your provisional admission letter.</p>
                                
-                               ${studentData.hasPaidAcceptance ? 
-                                   `<div class="bg-green-50 border border-green-200 p-4 rounded-lg mb-6"><p class="text-green-700 font-bold"><i class="fas fa-check-circle mr-2"></i> Acceptance Fee Paid</p></div>
-                                    <button onclick="window.downloadLetter()" class="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 shadow-lg font-bold transition transform hover:-translate-y-1"><i class="fas fa-download mr-2"></i> Download Admission Letter</button>` : 
-                                   `<div class="bg-yellow-50 border border-yellow-200 p-6 rounded-lg max-w-sm mx-auto">
-                                       <p class="text-xs font-bold text-gray-500 uppercase">Acceptance Fee</p>
-                                       <p class="text-3xl font-bold text-gray-900 my-2">₦10,000</p>
-                                       <button onclick="window.initPayment(10000, 'Acceptance')" class="w-full bg-yellow-500 text-white py-3 rounded-lg font-bold hover:bg-yellow-600 shadow-md">Pay Now</button>
+                               ${studentData.hasPaidAcceptance ?
+                                `<div class="bg-green-50 border border-green-200 p-4 rounded-lg mb-6"><p class="text-green-700 font-bold"><i class="fas fa-check-circle mr-2"></i> Acceptance Fee Paid</p></div>
+                                    <button onclick="window.downloadLetter()" class="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 shadow-lg font-bold transition transform hover:-translate-y-1"><i class="fas fa-download mr-2"></i> Download Admission Letter</button>` :
+                                `<div class="bg-yellow-50 border border-yellow-200 p-6 rounded-lg max-w-sm mx-auto">
+                                           <p class="text-xs font-bold text-gray-500 uppercase">Acceptance Fee</p>
+                                           <p class="text-3xl font-bold text-gray-900 my-2">₦10,000</p>
+                                           <button onclick="window.initPayment(10000, 'Acceptance')" class="w-full bg-yellow-500 text-white py-3 rounded-lg font-bold hover:bg-yellow-600 shadow-md">Pay Now</button>
                                     </div>`
-                               }
+                            }
                            </div>
                        </div>`;
-                   } else {
-                       // Payments Tab
-                       content.innerHTML = `<div class="max-w-4xl mx-auto">
+                    } else {
+                        // Payments Tab
+                        content.innerHTML = `<div class="max-w-4xl mx-auto">
                            <div class="grid md:grid-cols-2 gap-6">
                                <div class="bg-white p-6 rounded-xl shadow-sm border ${studentData.hasPaidTuition ? 'border-green-500' : 'border-gray-300'}">
                                    <div class="flex justify-between items-start mb-4">
@@ -591,7 +693,7 @@
                                <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 flex items-center justify-center text-gray-400 text-sm">More fees coming soon...</div>
                            </div>
                        </div>`;
-                   }
+                    }
                 }
             } catch (err) {
                 console.error(err);
@@ -602,14 +704,14 @@
         }
 
         // --- 5. GLOBAL FUNCTIONS (Attached to Window) ---
-        window.handleForgotPassword = async function(e) {
+        window.handleForgotPassword = async function (e) {
             e.preventDefault();
             // Show the modal instead of prompt
             document.getElementById('forgotPasswordModal').classList.remove('hidden');
             document.getElementById('forgotPasswordModal').classList.add('flex');
         }
 
-        window.sendResetLink = async function(e) {
+        window.sendResetLink = async function (e) {
             e.preventDefault();
             const email = document.getElementById('resetEmailInput').value;
             const modal = document.getElementById('forgotPasswordModal');
@@ -618,30 +720,30 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
 
-            if(!email) return;
+            if (!email) return;
 
             setLoading(true, "Sending link...");
-            
+
             // FIXED: Send Reset Email with Redirect
             const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
-            
+
             setLoading(false);
-            
-            if(error) {
-                 showMessage("Error", error.message, false); 
-            } else { 
-                 showMessage("Check Email", "A reset link has been sent.", true); 
+
+            if (error) {
+                showMessage("Error", error.message, false);
+            } else {
+                showMessage("Check Email", "A reset link has been sent.", true);
             }
         }
-        
-        window.finalizePasswordReset = async function(e) {
+
+        window.finalizePasswordReset = async function (e) {
             e.preventDefault();
             const newPassword = document.getElementById('finalNewPass').value;
             setLoading(true, "Updating...");
             const { error } = await db.auth.updateUser({ password: newPassword });
             setLoading(false);
-            
-            if(error) showMessage("Error", error.message, false);
+
+            if (error) showMessage("Error", error.message, false);
             else {
                 document.getElementById('resetPasswordModal').classList.add('hidden');
                 document.getElementById('resetPasswordModal').classList.remove('flex');
@@ -650,33 +752,33 @@
             }
         }
 
-        window.toggleProfileEdit = function() {
+        window.toggleProfileEdit = function () {
             const view = document.getElementById('profileView');
             const form = document.getElementById('profileFormContainer');
             view.classList.toggle('hidden');
             form.classList.toggle('hidden');
         }
 
-        window.updateLgas = function(selectedLga) {
+        window.updateLgas = function (selectedLga) {
             const state = document.getElementById('stateSelect').value;
             const lgaSelect = document.getElementById('lgaSelect');
             lgaSelect.innerHTML = '<option value="">Select LGA</option>';
-            if(state && stateLgaData[state]) {
+            if (state && stateLgaData[state]) {
                 stateLgaData[state].forEach(lga => {
                     const option = document.createElement('option');
                     option.value = lga;
                     option.text = lga;
-                    if(selectedLga && selectedLga === lga) option.selected = true;
+                    if (selectedLga && selectedLga === lga) option.selected = true;
                     lgaSelect.appendChild(option);
                 });
             }
         }
 
-        window.saveProfile = async function(e) {
+        window.saveProfile = async function (e) {
             e.preventDefault();
-            
+
             // Check
-            if(!studentData || !studentData.admNo) return showMessage("Error", "Session invalid. Reload.", false);
+            if (!studentData || !studentData.admNo) return showMessage("Error", "Session invalid. Reload.", false);
 
             showConfirm("Save & Lock Profile?", "You cannot edit this again after saving.", async () => {
                 setLoading(true, "Saving...");
@@ -685,190 +787,136 @@
                 updates.admission_no = studentData.admNo; // Ensure key is attached
 
                 const { error } = await db.from('student_profiles').upsert(updates, { onConflict: 'admission_no' });
-                
+
                 setLoading(false);
-                if(error) {
+                if (error) {
                     showMessage("Error", error.message, false);
-                } else { 
-                    showMessage("Success", "Profile Completed & Locked!"); 
+                } else {
+                    showMessage("Success", "Profile Completed & Locked!");
                     refreshStudentData(studentData.user_id);
                 }
             });
         }
 
-        window.submitChangePassword = async function(e) {
+        window.submitChangePassword = async function (e) {
             e.preventDefault(); setLoading(true);
             const oldPass = document.getElementById('oldPass').value;
             const newPass = document.getElementById('newPass').value;
-            
+
             // Verify Old Password
             const { error: loginError } = await db.auth.signInWithPassword({ email: studentData.email, password: oldPass });
-            if(loginError) { setLoading(false); return showMessage("Error", "Incorrect current password.", false); }
+            if (loginError) { setLoading(false); return showMessage("Error", "Incorrect current password.", false); }
 
             const { error } = await db.auth.updateUser({ password: newPass });
             setLoading(false);
-            if(error) showMessage("Error", error.message, false); else { e.target.reset(); showMessage("Success", "Password Updated."); }
+            if (error) showMessage("Error", error.message, false); else { e.target.reset(); showMessage("Success", "Password Updated."); }
         }
 
-        window.registerCourse = async function(code) {
+        window.registerCourse = async function (code) {
             showConfirm("Register Course?", `Add ${code}?`, async () => {
                 setLoading(true, "Registering...");
                 const { error } = await db.from('scores').insert({ admission_no: studentData.admNo, course_code: code });
                 setLoading(false);
-                if(error) showMessage("Error", error.message, false); else { showMessage("Success", "Registered."); loadTabContent('coursereg'); }
+                if (error) showMessage("Error", error.message, false); else { showMessage("Success", "Registered."); loadTabContent('coursereg'); }
             });
         }
 
-        // TOGGLE LIKE LOGIC
-        window.toggleLike = async function(id, btn) {
-            const userId = studentData.admNo;
-
-            // 1. Optimistic Update (Visual)
-            const icon = btn.querySelector('i');
-            const isLiked = icon.classList.contains('fas'); // Solid heart = liked
-            
-            // Flip Classes immediately
-            if(isLiked) {
-                icon.className = 'far fa-heart text-gray-500'; // Make Gray
-            } else {
-                icon.className = 'fas fa-heart text-red-500'; // Make Red
-            }
-
-            // 2. Database Operation
-            const { data: existing } = await db.from('likes').select('id').eq('announcement_id', id).eq('user_identifier', userId).maybeSingle();
-
-            if (existing) {
-                await db.from('likes').delete().eq('id', existing.id);
-            } else {
-                await db.from('likes').insert({ announcement_id: id, user_identifier: userId });
-            }
-
-            // 3. Silent Refresh to sync counts
-            loadTabContent('announcements');
-        };
-
-        window.toggleComments = async function(divId, annId) {
+        window.toggleComments = async function (divId, annId) {
             const div = document.getElementById(divId);
-            if(!div.classList.contains('hidden')) { div.classList.add('hidden'); return; }
+            if (!div.classList.contains('hidden')) { div.classList.add('hidden'); return; }
             div.classList.remove('hidden'); div.innerHTML = 'Loading...';
             const { data } = await db.from('comments').select('*').eq('announcement_id', annId).order('date');
             div.innerHTML = `<div class="space-y-2 max-h-40 overflow-y-auto mb-3 custom-scrollbar">
-                ${(data||[]).map(c => {
-                    const isAdmin = c.user_identifier.includes('Admin');
-                    return `<div class="chat-bubble ${isAdmin ? 'chat-admin' : 'chat-student'}"><span class="font-bold text-xs block opacity-70 mb-1">${c.user_identifier}</span>${c.comment}</div>`;
-                }).join('')}
+                ${(data || []).map(c => {
+                const isAdmin = c.user_identifier.includes('Admin');
+                return `<div class="chat-bubble ${isAdmin ? 'chat-admin' : 'chat-student'}"><span class="font-bold text-xs block opacity-70 mb-1">${c.user_identifier}</span>${c.comment}</div>`;
+            }).join('')}
                 ${data.length === 0 ? '<p class="text-xs text-gray-400 text-center italic">No comments yet</p>' : ''}
             </div>
             <form onsubmit="window.postComment(event, '${annId}', '${divId}')" class="flex gap-2"><input name="c" class="border rounded px-2 py-1 flex-grow text-xs" placeholder="Reply..."><button class="bg-blue-600 text-white px-3 rounded text-xs">Post</button></form>`;
         }
 
-        window.postComment = async function(e, annId, divId) {
+        window.postComment = async function (e, annId, divId) {
             e.preventDefault();
             await db.from('comments').insert({ announcement_id: annId, user_identifier: studentData.firstName, comment: e.target.c.value });
             window.toggleComments(divId, annId);
         }
 
-        window.initPayment = function(amount, type) {
-            const handler = PaystackPop.setup({ 
-                key: PAYSTACK_PUBLIC_KEY, 
-                email: studentData.email, 
-                amount: amount*100, 
-                callback: function(res) {
+        window.initPayment = function (amount, type) {
+            const handler = PaystackPop.setup({
+                key: PAYSTACK_PUBLIC_KEY,
+                email: studentData.email,
+                amount: amount * 100,
+                callback: function (res) {
                     setLoading(true, "Verifying...");
                     db.functions.invoke('paystack-verify', { body: { reference: res.reference, admNo: studentData.admNo, amount, feeType: type } })
-                    .then(() => {
-                         setLoading(false); 
-                         showMessage("Success", "Verified!"); 
-                         refreshStudentData(studentData.user_id);
-                    });
+                        .then(() => {
+                            setLoading(false);
+                            showMessage("Success", "Verified!");
+                            refreshStudentData(studentData.user_id);
+                        });
                 }
             });
             handler.openIframe();
         }
 
         // --- ENHANCED PDF GENERATOR ---
-        window.downloadLetter = function() {
+        window.downloadLetter = function () {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const s = studentData;
+
+            // Get dimensions
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
 
-            // 1. ADD TEMPLATE BACKGROUND (If exists)
-            // If you have the image file, you would load it here.
-            // Since we are coding "blind", we will draw the letterhead manually to look like a template.
+            // 1. GET IMAGE FROM HTML TAG
+            const imgElement = document.getElementById('schoolLetterhead');
 
-            // --- TEMPLATE DRAWING START ---
-            
-            // Border
-            doc.setLineWidth(1);
-            doc.setDrawColor(30, 58, 138); // Dark Blue
-            doc.rect(5, 5, pageWidth-10, pageHeight-10);
+            // Check if image is actually loaded
+            if (imgElement.complete && imgElement.naturalHeight !== 0) {
+                // Add the image: Element, Format, X, Y, Width, Height
+                // usage: doc.addImage(imgElement, 'JPEG', x, y, w, h)
+                // If your image is PNG, change 'JPEG' to 'PNG'
+                doc.addImage(imgElement, 'JPEG', 0, 0, pageWidth, pageHeight);
+            } else {
+                alert("Letterhead image not loaded yet. Please wait a moment and try again.");
+                return;
+            }
 
-            // Watermark (Slanted Text)
-            doc.setTextColor(240, 240, 240); // Very Light Gray
-            doc.setFontSize(60);
-            doc.setFont("helvetica", "bold");
-            // Rotate context
-            doc.saveGraphicsState();
-            doc.setTextColor(230, 230, 230);
-            doc.text("OFFICIAL ADMISSION", pageWidth/2, pageHeight/2, {align: "center", angle: 45});
-            doc.restoreGraphicsState();
-
-            // Logo Placeholder (Shield shape)
-            doc.setFillColor(30, 58, 138);
-            doc.circle(30, 30, 15, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(10);
-            doc.text("LOGO", 30, 31, null, null, "center");
-
-            // Header Text
-            doc.setTextColor(30, 58, 138); // Dark Blue
-            doc.setFont("times", "bold");
-            doc.setFontSize(22);
-            doc.text("ARRIDA COLLEGE OF HEALTH TECHNOLOGY", pageWidth/2 + 10, 25, null, null, "center");
-            
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(80, 80, 80);
-            doc.text("No. 12 Bakin Iku, Kaduna Road, Suleja, Niger State.", pageWidth/2 + 10, 32, null, null, "center");
-            doc.text("Email: admissions@arrida.edu.ng | Tel: +234 800 000 0000", pageWidth/2 + 10, 37, null, null, "center");
-
-            // Line Separator
-            doc.setDrawColor(200, 200, 200);
-            doc.setLineWidth(0.5);
-            doc.line(15, 45, pageWidth-15, 45);
-            // --- TEMPLATE DRAWING END ---
-
-            // 2. DYNAMIC CONTENT
+            // 2. DYNAMIC CONTENT OVERLAY
             doc.setTextColor(0, 0, 0);
-            doc.setFontSize(11);
-            doc.setFont("times", "normal");
-            
-            // Date
-            doc.text(`Date: ${new Date().toLocaleDateString()}`, pageWidth-25, 55, null, null, "right");
+            doc.setFontSize(14);
+            doc.setFont("Helvetica", "normal");
 
-            // Recipient
+            // STARTING Y POSITION
+            // Adjust this value (e.g., 60, 70, 80) to move text down 
+            // so it doesn't overlap your letterhead logo
+            let y = 70;
             const leftMargin = 25;
-            let y = 65;
-            doc.setFont("times", "bold");
+
+            // Date
+            doc.text(`Date: ${new Date().toLocaleDateString()}`, pageWidth - 25, y - 10, null, null, "right");
+
+            // Recipient Info
+            doc.setFont("Helvetica", "bold");
             doc.text(`NAME: ${s.firstName.toUpperCase()} ${s.lastName.toUpperCase()}`, leftMargin, y);
             y += 7;
             doc.text(`ADMISSION NO: ${s.admNo}`, leftMargin, y);
             y += 15;
 
-            // Title
+            // Letter Title
             doc.setFontSize(14);
-            doc.setFont("times", "bold");
-            doc.text("OFFER OF PROVISIONAL ADMISSION", pageWidth/2, y, null, null, "center");
+            doc.setFont("Helvetica", "bold");
+            doc.text("OFFER OF PROVISIONAL ADMISSION", pageWidth / 2, y, null, null, "center");
             doc.setLineWidth(0.2);
-            doc.line(pageWidth/2 - 40, y+2, pageWidth/2 + 40, y+2); // Underline
+            doc.line(pageWidth / 2 - 40, y + 2, pageWidth / 2 + 40, y + 2); // Underline
             y += 20;
 
-            // Body
-            doc.setFontSize(12);
-            doc.setFont("times", "normal");
-            const body = `We are pleased to inform you that you have been offered provisional admission into the Department of ${s.course.toUpperCase()} for the ${new Date().getFullYear()}/${new Date().getFullYear()+1} Academic Session.
+            // Letter Body
+            doc.setFontSize(14);
+            doc.setFont("Helvetica", "normal");
+            const body = `We are pleased to inform you that you have been offered provisional admission into the Department of ${s.course.toUpperCase()} for the ${new Date().getFullYear()}/${new Date().getFullYear() + 1} Academic Session.
 
 This offer is subject to the ratification of your original credentials during the physical screening exercise. You are required to accept this offer by completing your registration within two weeks from the date of this letter.
 
@@ -876,69 +924,57 @@ Failure to complete your registration within the stipulated period may result in
 
 We congratulate you on your admission and look forward to welcoming you to the college.`;
 
+            // Wrap text
             const splitText = doc.splitTextToSize(body, pageWidth - 50);
             doc.text(splitText, leftMargin, y);
-            
-            y += 80; // Move down for signature
 
-            // Signature
-            doc.setFont("times", "bold");
-            doc.text("Yours Faithfully,", leftMargin, y);
-            y += 15;
-            
-            // Draw Signature Line
-            doc.setDrawColor(0);
-            doc.line(leftMargin, y, leftMargin+50, y);
-            
-            y += 5;
-            doc.text("Registrar", leftMargin, y);
-
-            // Save
+            // Save PDF
             doc.save(`Admission_Letter_${s.admNo}.pdf`);
         }
 
-        window.startExam = async function(id, title, duration) {
+        window.startExam = async function (id, title, duration) {
             setLoading(true, "Loading...");
             const { data: q } = await db.from('questions').select('id, question, option_a, option_b, option_c, option_d').eq('exam_id', id);
             setLoading(false);
-            if(!q || !q.length) return showMessage("Error", "No questions found.", false);
+            if (!q || !q.length) return showMessage("Error", "No questions found.", false);
             let html = `<div class="bg-white p-8 rounded-xl max-w-3xl mx-auto"><h2 class="text-2xl font-bold mb-6">${title}</h2><form id="examForm">`;
-            q.forEach((item, i) => html += `<div class="mb-6"><p class="font-bold mb-2">${i+1}. ${item.question}</p><div class="grid grid-cols-2 gap-2">${['a','b','c','d'].map(o => `<label class="p-2 border rounded cursor-pointer hover:bg-gray-50"><input type="radio" name="${item.id}" value="${o.toUpperCase()}"> ${item['option_'+o]}</label>`).join('')}</div></div>`);
+            q.forEach((item, i) => html += `<div class="mb-6"><p class="font-bold mb-2">${i + 1}. ${item.question}</p><div class="grid grid-cols-2 gap-2">${['a', 'b', 'c', 'd'].map(o => `<label class="p-2 border rounded cursor-pointer hover:bg-gray-50"><input type="radio" name="${item.id}" value="${o.toUpperCase()}"> ${item['option_' + o]}</label>`).join('')}</div></div>`);
             html += `<button type="button" onclick="window.submitExam('${id}', ${q.length})" class="bg-green-600 text-white py-3 w-full rounded font-bold">Submit</button></form></div>`;
             document.getElementById('portalContent').innerHTML = html;
         }
 
-        window.submitExam = async function(id, total) {
+        window.submitExam = async function (id, total) {
             showConfirm("Submit Exam?", "You cannot undo this.", async () => {
                 setLoading(true, "Grading...");
                 const fd = new FormData(document.getElementById('examForm'));
                 const { data: keys } = await db.from('questions').select('id, correct_answer').eq('exam_id', id);
                 let score = 0;
-                keys.forEach(k => { if(fd.get(String(k.id)) === k.correct_answer) score++; });
+                keys.forEach(k => { if (fd.get(String(k.id)) === k.correct_answer) score++; });
                 await db.from('results').insert({ exam_id: id, admission_no: studentData.admNo, score, total });
                 setLoading(false); showMessage("Result", `You scored ${score} / ${total}`); loadTabContent('exams');
             });
         }
 
         // --- 6. UTILS ---
-        window.switchTab = function(t) { currentTab = t; isSidebarOpen = false; renderDashboard(); };
-        window.toggleSidebar = function() { isSidebarOpen = !isSidebarOpen; renderDashboard(); };
-        window.togglePassword = function(id, icon) { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; icon.classList.toggle('fa-eye'); icon.classList.toggle('fa-eye-slash'); };
-        window.setLoading = function(s, m) { document.getElementById('loadingMessage').innerText = m; document.getElementById('apiLoadingOverlay').classList.toggle('hidden', !s); document.getElementById('apiLoadingOverlay').classList.toggle('flex', s); };
-        window.showMessage = function(t, m, s) { document.getElementById('modalTitle').innerText = t; document.getElementById('modalMessage').innerText = m; document.getElementById('messageModal').classList.replace('hidden', 'flex'); };
-        window.closeModal = function() { document.getElementById('messageModal').classList.replace('flex', 'hidden'); };
-        window.closeConfirm = function() { document.getElementById('confirmModal').classList.replace('flex', 'hidden'); };
-        window.executeConfirm = function() { if (confirmCallback) confirmCallback(); closeConfirm(); };
-        window.showConfirm = function(t, m, cb) { document.getElementById('confirmTitle').innerText = t; document.getElementById('confirmMessage').innerText = m; confirmCallback = cb; document.getElementById('confirmModal').classList.replace('hidden', 'flex'); };
-        
-        function listenForAnnouncements() { 
-            db.channel('public:announcements').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, () => { 
-                if(currentTab==='announcements') loadTabContent('announcements'); 
-                showMessage("New", "New Announcement posted!"); 
-            }).subscribe(); 
+        window.switchTab = function (t) { currentTab = t; isSidebarOpen = false; renderDashboard(); };
+        window.toggleSidebar = function () { isSidebarOpen = !isSidebarOpen; renderDashboard(); };
+        window.togglePassword = function (id, icon) { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; icon.classList.toggle('fa-eye'); icon.classList.toggle('fa-eye-slash'); };
+        window.setLoading = function (s, m) { document.getElementById('loadingMessage').innerText = m; document.getElementById('apiLoadingOverlay').classList.toggle('hidden', !s); document.getElementById('apiLoadingOverlay').classList.toggle('flex', s); };
+        window.showMessage = function (t, m, s) { document.getElementById('modalTitle').innerText = t; document.getElementById('modalMessage').innerText = m; document.getElementById('messageModal').classList.replace('hidden', 'flex'); };
+        window.closeModal = function () { document.getElementById('messageModal').classList.replace('flex', 'hidden'); };
+        window.closeConfirm = function () { document.getElementById('confirmModal').classList.replace('flex', 'hidden'); };
+        window.executeConfirm = function () { if (confirmCallback) confirmCallback(); closeConfirm(); };
+        window.showConfirm = function (t, m, cb) { document.getElementById('confirmTitle').innerText = t; document.getElementById('confirmMessage').innerText = m; confirmCallback = cb; document.getElementById('confirmModal').classList.replace('hidden', 'flex'); };
+
+        function listenForAnnouncements() {
+            db.channel('public:announcements').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements' }, () => {
+                if (currentTab === 'announcements') loadTabContent('announcements');
+                showMessage("New", "New Announcement posted!");
+            }).subscribe();
         }
 
         document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
+
 </html>

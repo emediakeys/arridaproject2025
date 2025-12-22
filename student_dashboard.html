@@ -60,11 +60,26 @@
         </div>
     </div>
     
+    <div id="forgotPasswordModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <div class="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4 text-blue-600"><i class="fas fa-envelope text-xl"></i></div>
+            <h3 class="text-lg font-bold text-gray-900">Reset Password</h3>
+            <p class="text-gray-500 text-sm mt-2 mb-6">Enter your registered email to receive a reset link.</p>
+            <form onsubmit="window.sendResetLink(event)">
+                <input type="email" id="resetEmailInput" class="form-input mb-4" placeholder="student@example.com" required>
+                <div class="flex gap-2">
+                    <button type="button" onclick="document.getElementById('forgotPasswordModal').classList.add('hidden'); document.getElementById('forgotPasswordModal').classList.remove('flex');" class="flex-1 py-2 border rounded-lg font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold">Send Link</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="resetPasswordModal" class="fixed inset-0 bg-gray-600 bg-opacity-90 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
             <div class="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600"><i class="fas fa-key text-xl"></i></div>
             <h3 class="text-lg font-bold text-gray-900">Set New Password</h3>
-            <p class="text-gray-500 text-sm mt-2 mb-6">Enter your new password below.</p>
+            <p class="text-gray-500 text-sm mt-2 mb-6">Enter your new password below to secure your account.</p>
             <form onsubmit="window.finalizePasswordReset(event)">
                 <input type="password" id="finalNewPass" class="form-input mb-4" placeholder="New Password (min 6 chars)" minlength="6" required>
                 <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold">Update Password</button>
@@ -260,6 +275,34 @@
             finally { setLoading(false); }
         }
 
+        // --- TOGGLE LIKE (CORRECTED) ---
+        window.toggleLike = async function(id, btn) {
+            const userId = studentData.admNo;
+
+            // 1. Optimistic Update (Visual)
+            const icon = btn.querySelector('i');
+            const isLiked = icon.classList.contains('fas'); // Solid heart = liked
+            
+            // Flip Classes immediately
+            if(isLiked) {
+                icon.className = 'far fa-heart text-gray-500'; // Make Gray
+            } else {
+                icon.className = 'fas fa-heart text-red-500'; // Make Red
+            }
+
+            // 2. Database Operation
+            const { data: existing } = await db.from('likes').select('id').eq('announcement_id', id).eq('user_identifier', userId).maybeSingle();
+
+            if (existing) {
+                await db.from('likes').delete().eq('id', existing.id);
+            } else {
+                await db.from('likes').insert({ announcement_id: id, user_identifier: userId });
+            }
+
+            // 3. Silent Refresh to sync counts
+            loadTabContent('announcements');
+        };
+
         // --- FIXED LOGOUT ---
         window.handleLogout = async function() {
             setLoading(true, "Logging out...");
@@ -296,6 +339,7 @@
                                 <button type="submit" class="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-lg">Sign In</button>
                             </form>
                             <p class="mt-8 text-center text-sm text-gray-500">Not a Student? <a href="form.html" class="text-blue-600 font-bold hover:underline">Apply Here!</a></p>
+                            <p class="mt-8 text-center text-sm text-gray-500"><a href="index.html" class="text-green-600 font-bold hover:underline">Go home!</a></p>
                         </div>
                         <div class="absolute bottom-4 left-8 text-xs text-gray-400 font-mono">Session: ${session}</div>
                     </div>
@@ -560,7 +604,20 @@
         // --- 5. GLOBAL FUNCTIONS (Attached to Window) ---
         window.handleForgotPassword = async function(e) {
             e.preventDefault();
-            const email = prompt("Enter your registered email:"); // Simple Prompt for input
+            // Show the modal instead of prompt
+            document.getElementById('forgotPasswordModal').classList.remove('hidden');
+            document.getElementById('forgotPasswordModal').classList.add('flex');
+        }
+
+        window.sendResetLink = async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('resetEmailInput').value;
+            const modal = document.getElementById('forgotPasswordModal');
+
+            // Hide Modal first
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+
             if(!email) return;
 
             setLoading(true, "Sending link...");
@@ -573,7 +630,7 @@
             if(error) {
                  showMessage("Error", error.message, false); 
             } else { 
-                 showMessage("Check Email", "If an account exists, a reset link has been sent.", true); 
+                 showMessage("Check Email", "A reset link has been sent.", true); 
             }
         }
         

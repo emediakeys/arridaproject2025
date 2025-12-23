@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,36 +9,94 @@
     <link rel="icon" type="image/png" sizes="32x32" href="icon.jpg">
     <link rel="icon" type="image/png" sizes="16x16" href="icon.jpg">
     <link rel="apple-touch-icon" href="icon.jpg">
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+
     <style>
-        :root { --primary-color: #10b981; }
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .nav-item { display: flex; align-items: center; padding: 0.75rem 1rem; cursor: pointer; border-radius: 0.5rem; margin-bottom: 0.5rem; transition: all 0.2s; }
-        .nav-item:hover, .nav-item.active { background-color: var(--primary-color); color: white; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3); }
-        .data-container { max-height: 70vh; overflow-y: auto; }
-        .sidebar { transition: transform 0.3s ease-in-out; }
-        .chat-bubble { position: relative; padding: 10px; border-radius: 10px; max-width: 80%; font-size: 0.85rem; }
-        .chat-admin { background-color: #d1fae5; color: #065f46; margin-left: auto; border-bottom-right-radius: 0; }
-        .chat-student { background-color: #f3f4f6; color: #1f2937; margin-right: auto; border-bottom-left-radius: 0; }
-        
+        :root {
+            --primary-color: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+        }
+
+        .data-container {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .chat-bubble {
+            position: relative;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+            font-size: 0.85rem;
+        }
+
+        .chat-admin {
+            background-color: #d1fae5;
+            color: #065f46;
+            margin-left: auto;
+            border-bottom-right-radius: 0;
+        }
+
+        .chat-student {
+            background-color: #f3f4f6;
+            color: #1f2937;
+            margin-right: auto;
+            border-bottom-left-radius: 0;
+        }
+
         /* Toggle Switch Styles */
-        .toggle-checkbox:checked { right: 0; border-color: #10b981; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #10b981;
+        }
+
+        .toggle-checkbox:checked+.toggle-label {
+            background-color: #10b981;
+        }
     </style>
 </head>
+
 <body>
 
     <div id="app"></div>
 
-    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+    <div id="loadingOverlay"
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl p-8 text-center shadow-2xl">
-            <svg class="animate-spin h-8 w-8 text-emerald-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin h-8 w-8 text-emerald-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
             </svg>
             <p class="text-gray-500 font-medium" id="loadingText">Processing...</p>
         </div>
@@ -48,7 +107,8 @@
             <div id="modalIcon" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4"></div>
             <h3 id="modalTitle" class="text-xl font-bold text-gray-900 mb-2">Message</h3>
             <p id="modalMessage" class="text-gray-600 mb-6"></p>
-            <button onclick="closeModal()" class="w-full py-2.5 bg-gray-800 text-white font-medium rounded-lg hover:bg-gray-900 transition shadow-md">Close</button>
+            <button onclick="closeModal()"
+                class="w-full py-2.5 bg-gray-800 text-white font-medium rounded-lg hover:bg-gray-900 transition shadow-md">Close</button>
         </div>
     </div>
 
@@ -57,7 +117,8 @@
             <h3 class="text-xl font-bold text-gray-900 mb-4">Add Question</h3>
             <form id="addQuestionForm" onsubmit="window.handleAddQuestion(event)">
                 <input type="hidden" id="q_examId">
-                <textarea id="q_text" placeholder="Question Text" class="w-full p-3 border rounded-lg bg-gray-50 mb-4" rows="3" required></textarea>
+                <textarea id="q_text" placeholder="Question Text" class="w-full p-3 border rounded-lg bg-gray-50 mb-4"
+                    rows="3" required></textarea>
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <input id="q_optA" placeholder="Option A" class="p-2 border rounded" required>
                     <input id="q_optB" placeholder="Option B" class="p-2 border rounded" required>
@@ -72,8 +133,11 @@
                     <option value="D">Option D</option>
                 </select>
                 <div class="flex space-x-3">
-                    <button type="button" onclick="document.getElementById('questionModal').classList.add('hidden'); document.getElementById('questionModal').classList.remove('flex');" class="flex-1 py-3 border rounded hover:bg-gray-50">Cancel</button>
-                    <button type="submit" class="flex-1 py-3 bg-emerald-600 text-white rounded hover:bg-emerald-700">Save</button>
+                    <button type="button"
+                        onclick="document.getElementById('questionModal').classList.add('hidden'); document.getElementById('questionModal').classList.remove('flex');"
+                        class="flex-1 py-3 border rounded hover:bg-gray-50">Cancel</button>
+                    <button type="submit"
+                        class="flex-1 py-3 bg-emerald-600 text-white rounded hover:bg-emerald-700">Save</button>
                 </div>
             </form>
         </div>
@@ -82,13 +146,17 @@
     <div id="confirmModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center">
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
-                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
             </div>
             <h3 id="confirmTitle" class="text-lg font-bold text-gray-900">Confirmation</h3>
             <p id="confirmMessage" class="text-sm text-gray-500 mt-2 mb-4">Are you sure?</p>
             <div class="flex space-x-3">
                 <button onclick="closeConfirm()" class="flex-1 py-2 border rounded hover:bg-gray-50">Cancel</button>
-                <button onclick="executeConfirm()" class="flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Confirm</button>
+                <button onclick="executeConfirm()"
+                    class="flex-1 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Confirm</button>
             </div>
         </div>
     </div>
@@ -96,16 +164,16 @@
     <script>
         // --- CONFIGURATION ---
         const SUPABASE_URL = 'https://adhbsmbmeigfcieofrkq.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaGJzbWJtZWlnZmNpZW9mcmtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODc1ODcsImV4cCI6MjA4MTI2MzU4N30.wpOMUUJ2PcEJbuHHFbG-gUjVoxttnxA5UxZJttChJ1s';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaGJzbWJtZWlnZmNpZW9mcmtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODc1ODcsImV4cCI6MjA4MTI2MzU4N30.wpOMUUJ2PcEJbuHHFbG-gUjVoxttnxA5UxZJttChJ1s'; // <--- PASTE KEY
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let adminState = { 
-            isLoggedIn: false, 
-            username: '', 
-            assignedCourse: '', 
-            activeTab: 'dashboard', 
+        let adminState = {
+            isLoggedIn: false,
+            username: '',
+            assignedCourse: '',
+            activeTab: 'dashboard',
             isSidebarOpen: false,
-            currentWeekStart: getMonday(new Date()), 
+            currentWeekStart: getMonday(new Date()),
             weekIsActive: true
         };
 
@@ -117,15 +185,16 @@
         async function checkAuth() {
             const { data: { session } } = await db.auth.getSession();
             if (session) {
+                // Fetch Admin Profile to get 'assigned_course'
                 const { data } = await db.from('admins').select('*').eq('id', session.user.id).single();
                 if (data) {
                     adminState = { ...adminState, isLoggedIn: true, username: data.username, assignedCourse: data.assigned_course };
                     render(AdminDashboard);
                     lucide.createIcons();
-                    loadDashboardData();
+                    loadDashboardData(); // Load filtered data immediately
                 } else {
                     showModal("Access Denied", "You do not have Admin privileges.", true);
-                    await db.auth.signOut(); 
+                    await db.auth.signOut();
                     render(AdminLogin);
                 }
             } else {
@@ -133,7 +202,7 @@
             }
         }
 
-        window.handleAdminLogin = async function(e) {
+        window.handleAdminLogin = async function (e) {
             e.preventDefault();
             setLoading(true, "Logging in...");
             const { error } = await db.auth.signInWithPassword({
@@ -141,37 +210,48 @@
                 password: e.target.password.value
             });
             setLoading(false);
-            if(error) showModal("Login Failed", error.message, true); else checkAuth();
+            if (error) showModal("Login Failed", error.message, true); else checkAuth();
         };
 
-        window.handleLogout = async function() {
+        window.handleLogout = async function () {
             await db.auth.signOut();
             location.reload();
         };
 
-        // --- DATA LOADERS ---
+        // --- DATA LOADERS (FIXED TO FILTER BY COURSE) ---
         async function loadDashboardData() {
-            if(adminState.activeTab === 'dashboard') {
-                const { count: sCount } = await db.from('students').select('*', { count: 'exact', head: true });
-                const { count: aCount } = await db.from('announcements').select('*', { count: 'exact', head: true });
-                const { count: qCount } = await db.from('assignments').select('*', { count: 'exact', head: true });
-                
+            if (adminState.activeTab === 'dashboard') {
+                // 1. Get Student Count for this Course ONLY
+                const { count: sCount } = await db.from('students')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('course_applied', adminState.assignedCourse); // <--- FILTER ADDED
+
+                // 2. Get Announcements for this Course ONLY
+                const { count: aCount } = await db.from('announcements')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('course', adminState.assignedCourse); // <--- FILTER ADDED
+
+                // 3. Get Assignments for this Course ONLY
+                const { count: qCount } = await db.from('assignments')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('course', adminState.assignedCourse); // <--- FILTER ADDED
+
                 document.getElementById('count-students').innerText = sCount || 0;
                 document.getElementById('count-news').innerText = aCount || 0;
                 document.getElementById('count-ass').innerText = qCount || 0;
             }
-            if(adminState.activeTab === 'subjects') loadSubjects();
-            if(adminState.activeTab === 'announcements') loadAnnouncements();
-            if(adminState.activeTab === 'assignments') loadAssignments();
-            if(adminState.activeTab === 'students') loadStudents();
-            if(adminState.activeTab === 'exams') loadExams();
-            if(adminState.activeTab === 'attendance') loadAttendance();
+            if (adminState.activeTab === 'subjects') loadSubjects();
+            if (adminState.activeTab === 'announcements') loadAnnouncements();
+            if (adminState.activeTab === 'assignments') loadAssignments();
+            if (adminState.activeTab === 'students') loadStudents();
+            if (adminState.activeTab === 'exams') loadExams();
+            if (adminState.activeTab === 'attendance') loadAttendance();
         }
 
         // --- TAB ACTIONS ---
 
         // 1. SUBJECTS
-        window.handleAddSubject = async function(e) {
+        window.handleAddSubject = async function (e) {
             e.preventDefault();
             setLoading(true, "Adding Subject...");
             const { error } = await db.from('subjects').insert({
@@ -181,11 +261,11 @@
                 program: adminState.assignedCourse
             });
             setLoading(false);
-            if(error) showModal("Error", error.message, true);
+            if (error) showModal("Error", error.message, true);
             else { e.target.reset(); loadSubjects(); showModal("Success", "Subject added!"); }
         };
 
-        window.handleDeleteSubject = async function(id) {
+        window.handleDeleteSubject = async function (id) {
             showConfirm("Delete Subject?", "This cannot be undone.", async () => {
                 await db.from('subjects').delete().eq('id', id);
                 loadSubjects();
@@ -196,53 +276,53 @@
             const el = document.getElementById('subjectList');
             el.innerHTML = 'Loading...';
             const { data } = await db.from('subjects').select('*').eq('program', adminState.assignedCourse);
-            el.innerHTML = (data||[]).length ? `<table class="min-w-full text-sm text-left"><thead class="bg-gray-50"><tr><th class="p-3">Code</th><th class="p-3">Title</th><th class="p-3">Unit</th><th class="p-3">Action</th></tr></thead><tbody>${data.map(s => `<tr><td class="p-3 border-b">${s.course_code}</td><td class="p-3 border-b">${s.course_title}</td><td class="p-3 border-b">${s.unit}</td><td class="p-3 border-b"><button onclick="handleDeleteSubject(${s.id})" class="text-red-500 hover:underline">Delete</button></td></tr>`).join('')}</tbody></table>` : '<p class="p-4 text-gray-500">No subjects found.</p>';
+            el.innerHTML = (data || []).length ? `<table class="min-w-full text-sm text-left"><thead class="bg-gray-50"><tr><th class="p-3">Code</th><th class="p-3">Title</th><th class="p-3">Unit</th><th class="p-3">Action</th></tr></thead><tbody>${data.map(s => `<tr><td class="p-3 border-b">${s.course_code}</td><td class="p-3 border-b">${s.course_title}</td><td class="p-3 border-b">${s.unit}</td><td class="p-3 border-b"><button onclick="handleDeleteSubject(${s.id})" class="text-red-500 hover:underline">Delete</button></td></tr>`).join('')}</tbody></table>` : '<p class="p-4 text-gray-500">No subjects found.</p>';
         }
 
         // 2. EXAMS
-        window.handleCreateExam = async function(e) {
+        window.handleCreateExam = async function (e) {
             e.preventDefault();
             setLoading(true, "Creating Exam...");
             const { error } = await db.from('exams').insert({ course: adminState.assignedCourse, title: e.target.title.value, duration: e.target.duration.value });
-            setLoading(false); 
-            if(error) showModal("Error", error.message, true); 
+            setLoading(false);
+            if (error) showModal("Error", error.message, true);
             else { e.target.reset(); loadExams(); showModal("Success", "Exam Created!"); }
         };
-        window.toggleExamStatus = async function(id, current) {
+        window.toggleExamStatus = async function (id, current) {
             await db.from('exams').update({ status: current === 'Open' ? 'Closed' : 'Open' }).eq('id', id);
             loadExams();
         };
-        window.openAddQuestion = function(examId) {
+        window.openAddQuestion = function (examId) {
             document.getElementById('q_examId').value = examId;
             const modal = document.getElementById('questionModal'); modal.classList.remove('hidden'); modal.classList.add('flex');
         };
-        window.handleAddQuestion = async function(e) {
+        window.handleAddQuestion = async function (e) {
             e.preventDefault();
             const val = (id) => document.getElementById(id).value;
-            const ansKey = val('q_answer'); 
-            const correctText = val('q_opt' + ansKey); 
+            const ansKey = val('q_answer');
+            const correctText = val('q_opt' + ansKey);
             const { error } = await db.from('questions').insert({
                 exam_id: val('q_examId'), question: val('q_text'), option_a: val('q_optA'), option_b: val('q_optB'), option_c: val('q_optC'), option_d: val('q_optD'), correct_answer: correctText
             });
-            if(!error) { 
-                document.getElementById('addQuestionForm').reset(); 
-                document.getElementById('questionModal').classList.add('hidden'); 
-                document.getElementById('questionModal').classList.remove('flex'); 
-                showModal("Success", "Question Added!"); 
+            if (!error) {
+                document.getElementById('addQuestionForm').reset();
+                document.getElementById('questionModal').classList.add('hidden');
+                document.getElementById('questionModal').classList.remove('flex');
+                showModal("Success", "Question Added!");
             } else {
                 showModal("Error", error.message, true);
             }
         };
         async function loadExams() {
-            const { data } = await db.from('exams').select('*').eq('course', adminState.assignedCourse).order('id', {ascending: false});
-            document.getElementById('examList').innerHTML = (data||[]).map(e => `<div class="bg-white p-4 rounded-lg shadow-sm border border-l-4 ${e.status==='Open' ? 'border-l-emerald-500' : 'border-l-gray-400'} mb-3"><div class="flex justify-between items-center"><div><h3 class="font-bold text-gray-800">${e.title}</h3><p class="text-xs text-gray-500">${e.duration} Mins • Status: <strong>${e.status}</strong></p></div><div class="flex gap-2"><button onclick="openAddQuestion('${e.id}')" class="px-3 py-1 bg-blue-50 text-blue-600 rounded text-xs hover:bg-blue-100">+ Question</button><button onclick="toggleExamStatus('${e.id}', '${e.status}')" class="px-3 py-1 border rounded text-xs ${e.status==='Open'?'bg-red-50 text-red-600':'bg-green-50 text-green-600'}">${e.status==='Open'?'Close':'Open'}</button></div></div></div>`).join('');
+            const { data } = await db.from('exams').select('*').eq('course', adminState.assignedCourse).order('id', { ascending: false });
+            document.getElementById('examList').innerHTML = (data || []).map(e => `<div class="bg-white p-4 rounded-lg shadow-sm border border-l-4 ${e.status === 'Open' ? 'border-l-emerald-500' : 'border-l-gray-400'} mb-3"><div class="flex justify-between items-center"><div><h3 class="font-bold text-gray-800">${e.title}</h3><p class="text-xs text-gray-500">${e.duration} Mins • Status: <strong>${e.status}</strong></p></div><div class="flex gap-2"><button onclick="openAddQuestion('${e.id}')" class="px-3 py-1 bg-blue-50 text-blue-600 rounded text-xs hover:bg-blue-100">+ Question</button><button onclick="toggleExamStatus('${e.id}', '${e.status}')" class="px-3 py-1 border rounded text-xs ${e.status === 'Open' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}">${e.status === 'Open' ? 'Close' : 'Open'}</button></div></div></div>`).join('');
         }
 
         // 3. ANNOUNCEMENTS
-        window.handleAddPost = async function(e, type) {
+        window.handleAddPost = async function (e, type) {
             e.preventDefault(); setLoading(true, "Posting...");
             const formData = { course: adminState.assignedCourse, title: e.target.title.value };
-            if(type === 'news') {
+            if (type === 'news') {
                 formData.content = e.target.content.value; formData.visibility = e.target.visibility.value; formData.author_id = (await db.auth.getUser()).data.user.id;
                 await db.from('announcements').insert(formData); loadAnnouncements();
             } else {
@@ -252,15 +332,15 @@
             setLoading(false); e.target.reset();
             showModal("Success", type === 'news' ? "Announcement Posted" : "Assignment Created");
         };
-        window.handleDeletePost = async function(id, table) { 
+        window.handleDeletePost = async function (id, table) {
             showConfirm("Delete Item?", "Confirm deletion.", async () => {
-                await db.from(table).delete().eq('id', id); 
-                if(table==='announcements') loadAnnouncements(); else loadAssignments();
+                await db.from(table).delete().eq('id', id);
+                if (table === 'announcements') loadAnnouncements(); else loadAssignments();
             });
         };
-        
+
         async function loadAnnouncements() {
-            const { data: posts } = await db.from('announcements').select('*, likes(count), comments(count)').eq('course', adminState.assignedCourse).order('date', {ascending: false});
+            const { data: posts } = await db.from('announcements').select('*, likes(count), comments(count)').eq('course', adminState.assignedCourse).order('date', { ascending: false });
             const myId = `Admin (${adminState.username})`;
             const { data: myLikes } = await db.from('likes').select('announcement_id').eq('user_identifier', myId);
             const myLikedIds = (myLikes || []).map(l => l.announcement_id);
@@ -287,31 +367,31 @@
             lucide.createIcons();
         }
 
-        window.adminLike = async function(id) {
+        window.adminLike = async function (id) {
             const userId = `Admin (${adminState.username})`;
             const { data: existing } = await db.from('likes').select('id').eq('announcement_id', id).eq('user_identifier', userId).maybeSingle();
-            if(existing) await db.from('likes').delete().eq('id', existing.id);
+            if (existing) await db.from('likes').delete().eq('id', existing.id);
             else await db.from('likes').insert({ announcement_id: id, user_identifier: userId });
             loadAnnouncements();
         };
 
-        window.toggleComments = async function(annId, divId) {
+        window.toggleComments = async function (annId, divId) {
             const div = document.getElementById(divId);
-            if(!div.classList.contains('hidden')) { div.classList.add('hidden'); return; }
+            if (!div.classList.contains('hidden')) { div.classList.add('hidden'); return; }
             div.classList.remove('hidden'); div.innerHTML = 'Loading comments...';
             const { data } = await db.from('comments').select('*').eq('announcement_id', annId).order('date');
             div.innerHTML = `<div class="space-y-2 max-h-40 overflow-y-auto mb-3 custom-scrollbar">
-                ${(data||[]).map(c => {
-                    const isAdmin = c.user_identifier.includes('Admin');
-                    return `<div class="chat-bubble ${isAdmin ? 'chat-admin' : 'chat-student'}"><span class="font-bold text-xs block opacity-70 mb-1">${c.user_identifier}</span>${c.comment}</div>`;
-                }).join('')}
+                ${(data || []).map(c => {
+                const isAdmin = c.user_identifier.includes('Admin');
+                return `<div class="chat-bubble ${isAdmin ? 'chat-admin' : 'chat-student'}"><span class="font-bold text-xs block opacity-70 mb-1">${c.user_identifier}</span>${c.comment}</div>`;
+            }).join('')}
                 ${data.length === 0 ? '<p class="text-xs text-gray-400 text-center italic">No comments yet</p>' : ''}
             </div>
             <form onsubmit="adminComment(event, '${annId}', '${divId}')" class="flex gap-2"><input name="comment" class="flex-grow border rounded-full px-3 py-1 text-sm focus:outline-none focus:border-emerald-500" placeholder="Reply..." required><button type="submit" class="bg-emerald-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-emerald-700"><span data-lucide="send" class="w-4 h-4"></span></button></form>`;
             lucide.createIcons();
         };
 
-        window.adminComment = async function(e, annId, divId) {
+        window.adminComment = async function (e, annId, divId) {
             e.preventDefault();
             await db.from('comments').insert({ announcement_id: annId, user_identifier: `Admin (${adminState.username})`, comment: e.target.comment.value });
             toggleComments(annId, divId);
@@ -324,12 +404,13 @@
 
         // 4. STUDENTS
         async function loadStudents() {
+            // FILTER ADDED: Only load students from assigned course
             const { data } = await db.from('students').select('*').eq('course_applied', adminState.assignedCourse);
             document.getElementById('studentTable').innerHTML = `<table class="min-w-full text-sm"><thead class="bg-gray-50"><tr><th class="p-3">Adm No</th><th class="p-3">Name</th><th class="p-3">Phone</th><th class="p-3">Action</th></tr></thead><tbody>${data.map(s => `<tr><td class="p-3">${s.admission_no}</td><td class="p-3">${s.first_name} ${s.last_name}</td><td class="p-3">${s.phone}</td><td class="p-3"><button onclick="deleteStudent('${s.admission_no}')" class="text-red-500 text-xs">Remove</button></td></tr>`).join('')}</tbody></table>`;
         }
-        window.deleteStudent = async function(adm) { 
+        window.deleteStudent = async function (adm) {
             showConfirm("Remove Student?", "Are you sure?", async () => {
-                await db.from('students').delete().eq('admission_no', adm); loadStudents(); 
+                await db.from('students').delete().eq('admission_no', adm); loadStudents();
             });
         };
 
@@ -343,15 +424,15 @@
         async function loadAttendance() {
             const container = document.getElementById('attendanceContainer');
             container.innerHTML = 'Loading Week...';
-            
+
             const startStr = adminState.currentWeekStart.toISOString().split('T')[0];
-            const end = new Date(adminState.currentWeekStart); end.setDate(end.getDate()+4);
+            const end = new Date(adminState.currentWeekStart); end.setDate(end.getDate() + 4);
             const endStr = end.toISOString().split('T')[0];
 
             // 1. Check Week Status
             const { data: weekData } = await db.from('academic_weeks').select('*').eq('week_start_date', startStr).eq('course', adminState.assignedCourse).maybeSingle();
-            
-            if(!weekData) {
+
+            if (!weekData) {
                 await db.from('academic_weeks').insert({ week_start_date: startStr, course: adminState.assignedCourse, is_active: true });
                 adminState.weekIsActive = true;
             } else {
@@ -363,16 +444,16 @@
             const { data: marks } = await db.from('attendance').select('*').gte('date', startStr).lte('date', endStr).in('admission_no', students.map(s => s.admission_no));
 
             const markMap = {};
-            (marks||[]).forEach(m => markMap[`${m.admission_no}_${m.date}`] = m.status);
+            (marks || []).forEach(m => markMap[`${m.admission_no}_${m.date}`] = m.status);
 
             const dates = [];
-            for(let i=0; i<5; i++) {
+            for (let i = 0; i < 5; i++) {
                 const d = new Date(adminState.currentWeekStart); d.setDate(d.getDate() + i);
                 dates.push(d.toISOString().split('T')[0]);
             }
 
             const disabledClass = adminState.weekIsActive ? '' : 'opacity-50 pointer-events-none bg-gray-100';
-            
+
             let html = `
                 <div class="flex justify-between items-center mb-4 p-4 bg-white rounded-lg border shadow-sm">
                     <div class="flex items-center gap-4">
@@ -389,13 +470,13 @@
                     </div>
                 </div>
                 <div class="overflow-x-auto bg-white rounded-lg shadow border ${disabledClass}">
-                    <table class="min-w-full text-sm"><thead class="bg-gray-50"><tr><th class="p-3 text-left sticky left-0 bg-gray-50 z-10">Student</th>${dates.map(d => `<th class="p-3 text-center min-w-[100px]">${new Date(d).toLocaleDateString('en-US', {weekday:'short', day:'numeric'})}</th>`).join('')}</tr></thead><tbody class="divide-y">
+                    <table class="min-w-full text-sm"><thead class="bg-gray-50"><tr><th class="p-3 text-left sticky left-0 bg-gray-50 z-10">Student</th>${dates.map(d => `<th class="p-3 text-center min-w-[100px]">${new Date(d).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}</th>`).join('')}</tr></thead><tbody class="divide-y">
                         ${students.map(s => `<tr><td class="p-3 sticky left-0 bg-white z-10 font-medium border-r shadow-sm">${s.first_name} ${s.last_name}<br><span class="text-xs text-gray-500">${s.admission_no}</span></td>
                             ${dates.map(d => {
-                                const status = markMap[`${s.admission_no}_${d}`] || '';
-                                const color = status === 'Present' ? 'text-green-600' : status === 'Absent' ? 'text-red-600' : status === 'Late' ? 'text-yellow-600' : status === 'Excused' ? 'text-blue-600' : 'text-gray-400';
-                                return `<td class="p-2 text-center"><select onchange="updateAttendance('${s.admission_no}', '${d}', this.value)" class="border rounded p-1 text-xs font-bold ${color} focus:outline-none w-full"><option value="" ${status===''?'selected':''}>-</option><option value="Present" ${status==='Present'?'selected':''} class="text-green-600">Present</option><option value="Absent" ${status==='Absent'?'selected':''} class="text-red-600">Absent</option><option value="Late" ${status==='Late'?'selected':''} class="text-yellow-600">Late</option><option value="Excused" ${status==='Excused'?'selected':''} class="text-blue-600">Excused</option></select></td>`;
-                            }).join('')}
+                const status = markMap[`${s.admission_no}_${d}`] || '';
+                const color = status === 'Present' ? 'text-green-600' : status === 'Absent' ? 'text-red-600' : status === 'Late' ? 'text-yellow-600' : status === 'Excused' ? 'text-blue-600' : 'text-gray-400';
+                return `<td class="p-2 text-center"><select onchange="updateAttendance('${s.admission_no}', '${d}', this.value)" class="border rounded p-1 text-xs font-bold ${color} focus:outline-none w-full"><option value="" ${status === '' ? 'selected' : ''}>-</option><option value="Present" ${status === 'Present' ? 'selected' : ''} class="text-green-600">Present</option><option value="Absent" ${status === 'Absent' ? 'selected' : ''} class="text-red-600">Absent</option><option value="Late" ${status === 'Late' ? 'selected' : ''} class="text-yellow-600">Late</option><option value="Excused" ${status === 'Excused' ? 'selected' : ''} class="text-blue-600">Excused</option></select></td>`;
+            }).join('')}
                         </tr>`).join('')}
                     </tbody></table>
                 </div>`;
@@ -403,14 +484,14 @@
             lucide.createIcons();
         }
 
-        window.changeWeek = function(days) {
+        window.changeWeek = function (days) {
             const newDate = new Date(adminState.currentWeekStart);
             newDate.setDate(newDate.getDate() + days);
             adminState.currentWeekStart = newDate;
             loadAttendance();
         };
 
-        window.toggleWeekActive = async function(isActive) {
+        window.toggleWeekActive = async function (isActive) {
             const startStr = adminState.currentWeekStart.toISOString().split('T')[0];
             setLoading(true, "Updating Week...");
             await db.from('academic_weeks').update({ is_active: isActive }).eq('week_start_date', startStr).eq('course', adminState.assignedCourse);
@@ -418,11 +499,11 @@
             loadAttendance();
         };
 
-        window.updateAttendance = async function(adm, date, status) {
-            if(status === "") await db.from('attendance').delete().eq('admission_no', adm).eq('date', date);
+        window.updateAttendance = async function (adm, date, status) {
+            if (status === "") await db.from('attendance').delete().eq('admission_no', adm).eq('date', date);
             else {
                 const { data: exist } = await db.from('attendance').select('id').eq('admission_no', adm).eq('date', date).maybeSingle();
-                if(exist) await db.from('attendance').update({ status: status }).eq('id', exist.id);
+                if (exist) await db.from('attendance').update({ status: status }).eq('id', exist.id);
                 else await db.from('attendance').insert({ admission_no: adm, date: date, status: status, marked_by: (await db.auth.getUser()).data.user.id });
             }
         };
@@ -430,98 +511,99 @@
         // 6. SCORES
         async function loadScoreSubjects() {
             const { data } = await db.from('subjects').select('*').eq('program', adminState.assignedCourse);
-            document.getElementById('scoreSubjectSelect').innerHTML = '<option value="">-- Choose Subject --</option>' + (data||[]).map(s => `<option value="${s.course_code}">${s.course_code}</option>`).join('');
+            document.getElementById('scoreSubjectSelect').innerHTML = '<option value="">-- Choose Subject --</option>' + (data || []).map(s => `<option value="${s.course_code}">${s.course_code}</option>`).join('');
         }
-        window.loadGradeSheet = async function() {
+        window.loadGradeSheet = async function () {
             const course = document.getElementById('scoreSubjectSelect').value;
             const container = document.getElementById('gradeSheetBody');
             const sheet = document.getElementById('gradeSheetContainer');
-            if(!course) { sheet.classList.add('hidden'); return; }
+            if (!course) { sheet.classList.add('hidden'); return; }
             sheet.classList.remove('hidden');
             const { data: students } = await db.from('students').select('*').eq('course_applied', adminState.assignedCourse);
             const { data: scores } = await db.from('scores').select('*').eq('course_code', course);
-            const scoreMap = {}; (scores||[]).forEach(s => scoreMap[s.admission_no] = s);
+            const scoreMap = {}; (scores || []).forEach(s => scoreMap[s.admission_no] = s);
             container.innerHTML = students.map(s => {
                 const sc = scoreMap[s.admission_no] || { ca_score: 0, exam_score: 0, total_score: 0 };
                 return `<tr><td class="px-6 py-4">${s.first_name} ${s.last_name}<br><span class="text-xs text-gray-500">${s.admission_no}</span></td><td class="px-6 py-4"><input type="number" id="ca-${s.admission_no}" value="${sc.ca_score}" class="w-16 border rounded p-1" max="30"></td><td class="px-6 py-4"><input type="number" id="ex-${s.admission_no}" value="${sc.exam_score}" class="w-16 border rounded p-1" max="70"></td><td class="px-6 py-4" id="tot-${s.admission_no}">${sc.total_score}</td><td class="px-6 py-4"><button onclick="saveScore('${s.admission_no}', '${course}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs">Save</button></td></tr>`;
             }).join('');
         };
-        window.saveScore = async function(admNo, course) {
+        window.saveScore = async function (admNo, course) {
             const ca = document.getElementById(`ca-${admNo}`).value; const ex = document.getElementById(`ex-${admNo}`).value; const total = parseInt(ca) + parseInt(ex);
-            let grade = 'F'; if(total >= 70) grade = 'A'; else if(total >= 60) grade = 'B'; else if(total >= 50) grade = 'C'; else if(total >= 45) grade = 'D';
+            let grade = 'F'; if (total >= 70) grade = 'A'; else if (total >= 60) grade = 'B'; else if (total >= 50) grade = 'C'; else if (total >= 45) grade = 'D';
             document.getElementById(`tot-${admNo}`).innerText = total;
             const { data: existing } = await db.from('scores').select('id').eq('admission_no', admNo).eq('course_code', course).single();
-            if(existing) await db.from('scores').update({ ca_score: ca, exam_score: ex, grade: grade }).eq('id', existing.id);
+            if (existing) await db.from('scores').update({ ca_score: ca, exam_score: ex, grade: grade }).eq('id', existing.id);
             else await db.from('scores').insert({ admission_no: admNo, course_code: course, ca_score: ca, exam_score: ex, grade: grade });
         };
 
         // --- CORE UI ---
         function toggleSidebar() { adminState.isSidebarOpen = !adminState.isSidebarOpen; render(AdminDashboard); loadDashboardData(); }
         function changeTab(t) { adminState.activeTab = t; render(AdminDashboard); lucide.createIcons(); loadDashboardData(); }
-        function setLoading(s, m) { const el=document.getElementById('loadingOverlay'); document.getElementById('loadingText').innerText=m; if(s){el.classList.remove('hidden');el.classList.add('flex')}else{el.classList.add('hidden');el.classList.remove('flex')} }
-        function showModal(t, m, e) { 
+        function setLoading(s, m) { const el = document.getElementById('loadingOverlay'); document.getElementById('loadingText').innerText = m; if (s) { el.classList.remove('hidden'); el.classList.add('flex') } else { el.classList.add('hidden'); el.classList.remove('flex') } }
+        function showModal(t, m, e) {
             const icon = e ? `<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>` : `<svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
             document.getElementById('modalIcon').innerHTML = icon;
-            document.getElementById('modalTitle').innerText=t; 
-            document.getElementById('modalMessage').innerText=m; 
-            document.getElementById('messageModal').classList.remove('hidden'); 
-            document.getElementById('messageModal').classList.add('flex'); 
+            document.getElementById('modalTitle').innerText = t;
+            document.getElementById('modalMessage').innerText = m;
+            document.getElementById('messageModal').classList.remove('hidden');
+            document.getElementById('messageModal').classList.add('flex');
         }
         function closeModal() { document.getElementById('messageModal').classList.add('hidden'); document.getElementById('messageModal').classList.remove('flex'); }
-        function showConfirm(t, m, c) { document.getElementById('confirmTitle').innerText=t; document.getElementById('confirmMessage').innerText=m; confirmCallback=c; document.getElementById('confirmModal').classList.remove('hidden'); document.getElementById('confirmModal').classList.add('flex'); }
+        function showConfirm(t, m, c) { document.getElementById('confirmTitle').innerText = t; document.getElementById('confirmMessage').innerText = m; confirmCallback = c; document.getElementById('confirmModal').classList.remove('hidden'); document.getElementById('confirmModal').classList.add('flex'); }
         function closeConfirm() { document.getElementById('confirmModal').classList.add('hidden'); document.getElementById('confirmModal').classList.remove('flex'); }
-        function executeConfirm() { if(confirmCallback) confirmCallback(); closeConfirm(); }
-        function render(component) { document.getElementById('app').innerHTML = component(); lucide.createIcons(); if(adminState.isLoggedIn) { if(adminState.activeTab === 'subjects') loadSubjects(); if(adminState.activeTab === 'results') loadScoreSubjects(); if(adminState.activeTab === 'attendance') loadAttendance(); }}
+        function executeConfirm() { if (confirmCallback) confirmCallback(); closeConfirm(); }
+        function render(component) { document.getElementById('app').innerHTML = component(); lucide.createIcons(); if (adminState.isLoggedIn) { if (adminState.activeTab === 'subjects') loadSubjects(); if (adminState.activeTab === 'results') loadScoreSubjects(); if (adminState.activeTab === 'attendance') loadAttendance(); } }
 
         // --- COMPONENTS ---
         function AdminLogin() {
-            return `<div class="min-h-screen flex items-center justify-center bg-gray-100 p-4"><div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"><h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Admin Portal</h2><form onsubmit="window.handleAdminLogin(event)" class="space-y-4"><input name="username" type="email" placeholder="Admin Email" required class="w-full p-3 border rounded-lg"><input name="password" type="password" placeholder="Password" required class="w-full p-3 border rounded-lg"><button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700">Login</button></form></div></div>`;
+            return `<div class="min-h-screen flex items-center justify-center bg-gray-100 p-4"><div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"><h2 class="text-2xl font-bold text-center mb-6 text-green-800">Admin Portal</h2><p class="text-1xl font-normal text-center mb-6 text-gray-600">Student Management System</p><form onsubmit="window.handleAdminLogin(event)" class="space-y-4"><input name="username" type="email" placeholder="Admin Email" required class="w-full p-3 border rounded-lg"><input name="password" type="password" placeholder="Password" required class="w-full p-3 border rounded-lg"><button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700">Login</button></form></div></div>`;
         }
 
         function AdminDashboard() {
             const tabs = [
-                {id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard'},
-                {id: 'students', label: 'Students', icon: 'users'},
-                {id: 'subjects', label: 'Subjects', icon: 'book-open'},
-                {id: 'announcements', label: 'News & Posts', icon: 'megaphone'},
-                {id: 'assignments', label: 'Assignments', icon: 'clipboard-list'},
-                {id: 'exams', label: 'CBT Exams', icon: 'monitor'},
-                {id: 'results', label: 'Score Input', icon: 'calculator'},
-                {id: 'attendance', label: 'Attendance', icon: 'calendar-check'},
+                { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
+                { id: 'students', label: 'Students', icon: 'users' },
+                { id: 'subjects', label: 'Subjects', icon: 'book-open' },
+                { id: 'announcements', label: 'News & Posts', icon: 'megaphone' },
+                { id: 'assignments', label: 'Assignments', icon: 'clipboard-list' },
+                { id: 'exams', label: 'CBT Exams', icon: 'monitor' },
+                { id: 'results', label: 'Score Input', icon: 'calculator' },
+                { id: 'attendance', label: 'Attendance', icon: 'calendar-check' },
             ];
             return `
             <div class="min-h-screen flex bg-gray-50">
-                <div class="fixed inset-0 bg-black/50 z-40 md:hidden ${adminState.isSidebarOpen?'':'hidden'}" onclick="toggleSidebar()"></div>
-                <div id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gray-900 text-white z-50 transform ${adminState.isSidebarOpen?'translate-x-0':'-translate-x-full'} md:translate-x-0 transition duration-300 flex flex-col">
+                <div class="fixed inset-0 bg-black/50 z-40 md:hidden ${adminState.isSidebarOpen ? '' : 'hidden'}" onclick="toggleSidebar()"></div>
+                <div id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gray-900 text-white z-50 transform ${adminState.isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition duration-300 flex flex-col">
                     <div class="p-6 font-bold text-xl border-b border-gray-700 flex justify-between"><span>Admin Panel</span><button onclick="toggleSidebar()" class="md:hidden"><i data-lucide="x"></i></button></div>
                     <div class="p-4 border-b border-gray-700 bg-gray-800"><p class="text-sm font-bold truncate">${adminState.username}</p><p class="text-xs text-gray-400 truncate">${adminState.assignedCourse}</p></div>
-                    <nav class="flex-grow p-4 space-y-1 overflow-y-auto">${tabs.map(t => `<div onclick="changeTab('${t.id}')" class="flex items-center p-3 rounded cursor-pointer ${adminState.activeTab===t.id?'bg-emerald-600 text-white':'text-gray-400 hover:bg-gray-800 hover:text-white'}"><i data-lucide="${t.icon}" class="w-5 h-5 mr-3"></i>${t.label}</div>`).join('')}</nav>
+                    <nav class="flex-grow p-4 space-y-1 overflow-y-auto">${tabs.map(t => `<div onclick="changeTab('${t.id}')" class="flex items-center p-3 rounded cursor-pointer ${adminState.activeTab === t.id ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}"><i data-lucide="${t.icon}" class="w-5 h-5 mr-3"></i>${t.label}</div>`).join('')}</nav>
                     <div class="p-4 border-t border-gray-700"><button onclick="handleLogout()" class="w-full p-2 text-red-400 hover:bg-gray-800 rounded flex items-center justify-center"><i data-lucide="log-out" class="w-5 h-5 mr-2"></i> Logout</button></div>
                 </div>
                 <main class="flex-grow md:ml-64 h-screen overflow-y-auto flex flex-col">
-                    <header class="bg-white border-b p-4 flex items-center md:hidden"><button onclick="toggleSidebar()" class="mr-4"><i data-lucide="menu"></i></button><h1 class="font-bold text-lg">${tabs.find(t=>t.id===adminState.activeTab).label}</h1></header>
+                    <header class="bg-white border-b p-4 flex items-center md:hidden"><button onclick="toggleSidebar()" class="mr-4"><i data-lucide="menu"></i></button><h1 class="font-bold text-lg">${tabs.find(t => t.id === adminState.activeTab).label}</h1></header>
                     <div class="p-6 md:p-10 flex-grow">${renderContent()}</div>
                 </main>
             </div>`;
         }
 
         function renderContent() {
-            if(adminState.activeTab === 'dashboard') return `
+            if (adminState.activeTab === 'dashboard') return `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500"><p class="text-gray-500 text-sm">Total Students</p><h2 id="count-students" class="text-3xl font-bold text-gray-800">...</h2></div>
                     <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500"><p class="text-gray-500 text-sm">Announcements</p><h2 id="count-news" class="text-3xl font-bold text-gray-800">...</h2></div>
                     <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500"><p class="text-gray-500 text-sm">Assignments</p><h2 id="count-ass" class="text-3xl font-bold text-gray-800">...</h2></div>
                 </div>
                 <div class="bg-blue-50 border border-blue-200 rounded-xl p-6"><h3 class="font-bold text-blue-800 text-lg mb-2">Welcome Back!</h3><p class="text-blue-600">Managing <strong>${adminState.assignedCourse}</strong>.</p></div>`;
-            if(adminState.activeTab === 'students') return `<div class="bg-white rounded-xl shadow-sm border overflow-hidden"><div class="p-4 bg-gray-50 border-b font-bold">Student Directory</div><div id="studentTable" class="overflow-x-auto">Loading...</div></div>`;
-            if(adminState.activeTab === 'subjects') return `<div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm border h-fit"><h3 class="font-bold mb-4">Add Course</h3><form onsubmit="window.handleAddSubject(event)" class="space-y-4"><input name="code" placeholder="Code" class="w-full p-2 border rounded" required><input name="title" placeholder="Title" class="w-full p-2 border rounded" required><input name="unit" type="number" placeholder="Unit" class="w-full p-2 border rounded" required><button class="w-full bg-emerald-600 text-white py-2 rounded font-bold">Add</button></form></div><div class="md:col-span-2 bg-white rounded-xl shadow-sm border p-4"><h3 class="font-bold mb-4">Course List</h3><div id="subjectList">Loading...</div></div></div>`;
-            if(adminState.activeTab === 'exams') return `<div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm border h-fit"><h3 class="font-bold mb-4">Create CBT Exam</h3><form onsubmit="window.handleCreateExam(event)" class="space-y-4"><input name="title" placeholder="Exam Title" class="w-full p-2 border rounded" required><input name="duration" type="number" placeholder="Duration (Minutes)" class="w-full p-2 border rounded" required><button class="w-full bg-blue-600 text-white py-2 rounded font-bold">Create Exam</button></form></div><div class="md:col-span-2"><h3 class="font-bold mb-4">Manage Exams</h3><div id="examList">Loading...</div></div></div>`;
-            if(adminState.activeTab === 'announcements') return `<div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm border h-fit"><h3 class="font-bold mb-4">Post News</h3><form onsubmit="window.handleAddPost(event, 'news')" class="space-y-4"><input name="title" placeholder="Title" class="w-full p-2 border rounded" required><textarea name="content" rows="4" placeholder="Message..." class="w-full p-2 border rounded" required></textarea><select name="visibility" class="w-full p-2 border rounded"><option value="public">Public (Homepage)</option><option value="private">Portal Only</option></select><button class="w-full bg-emerald-600 text-white py-2 rounded font-bold">Post</button></form></div><div class="md:col-span-2"><h3 class="font-bold mb-4">Recent Posts</h3><div id="newsList">Loading...</div></div></div>`;
-            if(adminState.activeTab === 'assignments') return `<div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm border h-fit"><h3 class="font-bold mb-4">New Assignment</h3><form onsubmit="window.handleAddPost(event, 'assignment')" class="space-y-4"><input name="title" placeholder="Title" class="w-full p-2 border rounded" required><textarea name="description" rows="4" placeholder="Instructions..." class="w-full p-2 border rounded" required></textarea><label class="block text-xs font-bold">Due Date</label><input type="date" name="dueDate" class="w-full p-2 border rounded" required><button class="w-full bg-blue-600 text-white py-2 rounded font-bold">Assign</button></form></div><div class="md:col-span-2 bg-white rounded-xl shadow-sm border p-4"><h3 class="font-bold mb-4">Active Assignments</h3><div id="assignmentList">Loading...</div></div></div>`;
-            if(adminState.activeTab === 'attendance') return `<div id="attendanceContainer" class="max-w-6xl mx-auto"></div>`;
-            if(adminState.activeTab === 'results') return `<div class="max-w-6xl mx-auto"><div class="bg-white p-6 rounded-xl shadow-sm border mb-6"><h2 class="text-xl font-bold mb-4">Input Scores</h2><div class="grid md:grid-cols-2 gap-4"><div><label class="block text-sm font-bold text-gray-700 mb-1">Select Subject</label><select id="scoreSubjectSelect" onchange="window.loadGradeSheet()" class="w-full p-2.5 border rounded-lg"><option>Loading...</option></select></div></div></div><div id="gradeSheetContainer" class="bg-white rounded-xl shadow-sm border overflow-hidden hidden"><div class="p-4 border-b bg-gray-50"><h3 class="font-bold">Students</h3></div><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs uppercase">Student</th><th class="px-6 py-3 w-24">CA</th><th class="px-6 py-3 w-24">Exam</th><th class="px-6 py-3 w-24">Total</th><th class="px-6 py-3">Action</th></tr></thead><tbody id="gradeSheetBody" class="divide-y"></tbody></table></div></div>`;
+            if (adminState.activeTab === 'students') return `<div class="bg-white rounded-xl shadow-sm border overflow-hidden"><div class="p-4 bg-gray-50 border-b font-bold">Student Directory</div><div id="studentTable" class="overflow-x-auto">Loading...</div></div>`;
+            if (adminState.activeTab === 'subjects') return `<div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm border h-fit"><h3 class="font-bold mb-4">Add Course</h3><form onsubmit="window.handleAddSubject(event)" class="space-y-4"><input name="code" placeholder="Code" class="w-full p-2 border rounded" required><input name="title" placeholder="Title" class="w-full p-2 border rounded" required><input name="unit" type="number" placeholder="Unit" class="w-full p-2 border rounded" required><button class="w-full bg-emerald-600 text-white py-2 rounded font-bold">Add</button></form></div><div class="md:col-span-2 bg-white rounded-xl shadow-sm border p-4"><h3 class="font-bold mb-4">Course List</h3><div id="subjectList">Loading...</div></div></div>`;
+            if (adminState.activeTab === 'exams') return `<div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm border h-fit"><h3 class="font-bold mb-4">Create CBT Exam</h3><form onsubmit="window.handleCreateExam(event)" class="space-y-4"><input name="title" placeholder="Exam Title" class="w-full p-2 border rounded" required><input name="duration" type="number" placeholder="Duration (Minutes)" class="w-full p-2 border rounded" required><button class="w-full bg-blue-600 text-white py-2 rounded font-bold">Create Exam</button></form></div><div class="md:col-span-2"><h3 class="font-bold mb-4">Manage Exams</h3><div id="examList">Loading...</div></div></div>`;
+            if (adminState.activeTab === 'announcements') return `<div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm border h-fit"><h3 class="font-bold mb-4">Post News</h3><form onsubmit="window.handleAddPost(event, 'news')" class="space-y-4"><input name="title" placeholder="Title" class="w-full p-2 border rounded" required><textarea name="content" rows="4" placeholder="Message..." class="w-full p-2 border rounded" required></textarea><select name="visibility" class="w-full p-2 border rounded"><option value="public">Public (Homepage)</option><option value="private">Portal Only</option></select><button class="w-full bg-emerald-600 text-white py-2 rounded font-bold">Post</button></form></div><div class="md:col-span-2"><h3 class="font-bold mb-4">Recent Posts</h3><div id="newsList">Loading...</div></div></div>`;
+            if (adminState.activeTab === 'assignments') return `<div class="grid md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm border h-fit"><h3 class="font-bold mb-4">New Assignment</h3><form onsubmit="window.handleAddPost(event, 'assignment')" class="space-y-4"><input name="title" placeholder="Title" class="w-full p-2 border rounded" required><textarea name="description" rows="4" placeholder="Instructions..." class="w-full p-2 border rounded" required></textarea><label class="block text-xs font-bold">Due Date</label><input type="date" name="dueDate" class="w-full p-2 border rounded" required><button class="w-full bg-blue-600 text-white py-2 rounded font-bold">Assign</button></form></div><div class="md:col-span-2 bg-white rounded-xl shadow-sm border p-4"><h3 class="font-bold mb-4">Active Assignments</h3><div id="assignmentList">Loading...</div></div></div>`;
+            if (adminState.activeTab === 'attendance') return `<div id="attendanceContainer" class="max-w-6xl mx-auto"></div>`;
+            if (adminState.activeTab === 'results') return `<div class="max-w-6xl mx-auto"><div class="bg-white p-6 rounded-xl shadow-sm border mb-6"><h2 class="text-xl font-bold mb-4">Input Scores</h2><div class="grid md:grid-cols-2 gap-4"><div><label class="block text-sm font-bold text-gray-700 mb-1">Select Subject</label><select id="scoreSubjectSelect" onchange="window.loadGradeSheet()" class="w-full p-2.5 border rounded-lg"><option>Loading...</option></select></div></div></div><div id="gradeSheetContainer" class="bg-white rounded-xl shadow-sm border overflow-hidden hidden"><div class="p-4 border-b bg-gray-50"><h3 class="font-bold">Students</h3></div><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs uppercase">Student</th><th class="px-6 py-3 w-24">CA</th><th class="px-6 py-3 w-24">Exam</th><th class="px-6 py-3 w-24">Total</th><th class="px-6 py-3">Action</th></tr></thead><tbody id="gradeSheetBody" class="divide-y"></tbody></table></div></div>`;
             return '';
         }
     </script>
 </body>
+
 </html>

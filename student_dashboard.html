@@ -999,41 +999,28 @@ We congratulate you on your admission and look forward to welcoming you to the c
 
         document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
-  <script>
-    // --- 1. REGISTER SERVICE WORKER (REQUIRED FOR PWA) ---
-    // This must run first to make the app installable
+<script>
+    // --- 1. REGISTER SERVICE WORKER ---
     if ('serviceWorker' in navigator) {
-        // We use './sw.js' because the file is in your root folder
         navigator.serviceWorker.register('./sw.js')
             .then(() => console.log('Service Worker Registered'))
             .catch((err) => console.log('SW Registration Failed', err));
     }
 
-    // --- 2. INSTALL POPUP LOGIC ---
+    // --- 2. AGGRESSIVE INSTALL POPUP LOGIC ---
     let deferredPrompt;
     const installModal = document.getElementById('installModal');
     const confirmBtn = document.getElementById('confirmInstallBtn');
     const closeBtn = document.getElementById('closeModalBtn');
-
-    // Configuration: How long to wait before showing again (24 hours)
-    const HIDE_DURATION = 24 * 60 * 60 * 1000; // milliseconds
-    const STORAGE_KEY = 'arrida_install_dismissed';
 
     window.addEventListener('beforeinstallprompt', (e) => {
         // Prevent Chrome from showing the mini-infobar
         e.preventDefault();
         deferredPrompt = e;
 
-        // Check LocalStorage: Did they click "Later" recently?
-        const lastDismissed = localStorage.getItem(STORAGE_KEY);
-        const now = Date.now();
-
-        if (lastDismissed && (now - parseInt(lastDismissed) < HIDE_DURATION)) {
-            console.log('User dismissed prompt less than 24h ago. Staying hidden.');
-            return; 
-        }
-
-        // If enough time has passed, show the modal
+        // --- CHANGE: No checks for LocalStorage or Time ---
+        // As soon as the browser says "This can be installed", we show the modal.
+        // It will show on every single page load unless they install it.
         installModal.classList.remove('hidden');
     });
 
@@ -1041,38 +1028,32 @@ We congratulate you on your admission and look forward to welcoming you to the c
     confirmBtn.addEventListener('click', async () => {
         if (!deferredPrompt) return;
         
-        // Hide modal immediately
         installModal.classList.add('hidden');
-        
-        // Show native prompt
         deferredPrompt.prompt();
         
         const { outcome } = await deferredPrompt.userChoice;
         console.log(`User response: ${outcome}`);
-        
         deferredPrompt = null;
-        
-        // Clear the "Later" timer since they actually installed it
-        localStorage.removeItem(STORAGE_KEY);
     });
 
     // Handle "Later"
     closeBtn.addEventListener('click', () => {
+        // Just hide it for this specific session.
+        // Since we are NOT saving anything to localStorage, 
+        // it will pop up again exactly as soon as they refresh the page.
         installModal.classList.add('hidden');
-        
-        // Save the current time so we don't bother them for 24h
-        localStorage.setItem(STORAGE_KEY, Date.now().toString());
     });
 
+    // If installed successfully, ensure modal is gone forever
     window.addEventListener('appinstalled', () => {
         installModal.classList.add('hidden');
         deferredPrompt = null;
-        console.log('PWA was installed');
     });
 </script>
 </body>
 
 </html>
+
 
 
 

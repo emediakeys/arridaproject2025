@@ -200,6 +200,28 @@
     <img id="schoolLetterhead" src="admission_template.jpg" alt="Letterhead" style="display: none;"
         crossorigin="anonymous">
 
+    <div id="installModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75 backdrop-blur-sm p-4 transition-opacity duration-300">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100">
+        <div class="text-center mb-5">
+            <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900">Get the App</h3>
+            <p class="text-gray-500 mt-2 text-sm">Install the Arrida Portal for a better experience and faster access.</p>
+        </div>
+
+        <div class="flex flex-col gap-3">
+            <button id="confirmInstallBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+                Install Now
+            </button>
+            <button id="closeModalBtn" class="w-full bg-transparent text-gray-500 font-medium py-2 px-4 rounded-lg hover:text-gray-700 hover:bg-gray-100 transition-colors">
+                Later
+            </button>
+        </div>
+    </div>
+</div>
     <script>
         // --- 1. CONFIGURATION ---
         const SUPABASE_URL = 'https://adhbsmbmeigfcieofrkq.supabase.co';
@@ -977,8 +999,64 @@ We congratulate you on your admission and look forward to welcoming you to the c
 
         document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
+    <script>
+    let deferredPrompt;
+    const installModal = document.getElementById('installModal');
+    const confirmBtn = document.getElementById('confirmInstallBtn');
+    const closeBtn = document.getElementById('closeModalBtn');
+
+    // Configuration: How long to wait before showing again (24 hours)
+    const HIDE_DURATION = 24 * 60 * 60 * 1000; // milliseconds
+    const STORAGE_KEY = 'arrida_install_dismissed';
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+
+        // 1. Check LocalStorage: Did they click "Later" recently?
+        const lastDismissed = localStorage.getItem(STORAGE_KEY);
+        const now = Date.now();
+
+        if (lastDismissed && (now - parseInt(lastDismissed) < HIDE_DURATION)) {
+            console.log('User dismissed prompt less than 24h ago. Staying hidden.');
+            return; // Stop here, do not show modal
+        }
+
+        // 2. If enough time has passed (or never dismissed), show modal
+        installModal.classList.remove('hidden');
+    });
+
+    // Handle "Install Now"
+    confirmBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        installModal.classList.add('hidden');
+        deferredPrompt.prompt();
+        
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response: ${outcome}`);
+        deferredPrompt = null;
+        
+        // If they installed, clear the "Later" timer so it doesn't block future checks (optional)
+        localStorage.removeItem(STORAGE_KEY);
+    });
+
+    // Handle "Later"
+    closeBtn.addEventListener('click', () => {
+        installModal.classList.add('hidden');
+        
+        // 3. Save the current time to LocalStorage
+        localStorage.setItem(STORAGE_KEY, Date.now().toString());
+        console.log('Dismissed. Will remind again in 24 hours.');
+    });
+
+    window.addEventListener('appinstalled', () => {
+        installModal.classList.add('hidden');
+        deferredPrompt = null;
+    });
+</script>
 </body>
 
 </html>
+
 
 

@@ -627,34 +627,40 @@
         }
     </script>
 
-    <script>
+   <script>
+    // --- 1. REGISTER SERVICE WORKER ---
+    // We use the SAME sw.js file for both apps.
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('Service Worker Registered'))
+            .catch((err) => console.log('SW Registration Failed', err));
+    }
+
+    // --- 2. INSTALL POPUP LOGIC ---
     let deferredPrompt;
     const installModal = document.getElementById('installModal');
     const confirmBtn = document.getElementById('confirmInstallBtn');
     const closeBtn = document.getElementById('closeModalBtn');
 
     // Configuration: How long to wait before showing again (24 hours)
-    const HIDE_DURATION = 24 * 60 * 60 * 1000; // milliseconds
-    const STORAGE_KEY = 'arrida_install_dismissed';
+    const HIDE_DURATION = 24 * 60 * 60 * 1000; 
+    const STORAGE_KEY = 'arrida_admin_install_dismissed'; // Note: I changed the key name so Admin preferences don't mix with Student preferences
 
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
 
-        // 1. Check LocalStorage: Did they click "Later" recently?
         const lastDismissed = localStorage.getItem(STORAGE_KEY);
         const now = Date.now();
 
         if (lastDismissed && (now - parseInt(lastDismissed) < HIDE_DURATION)) {
             console.log('User dismissed prompt less than 24h ago. Staying hidden.');
-            return; // Stop here, do not show modal
+            return; 
         }
 
-        // 2. If enough time has passed (or never dismissed), show modal
         installModal.classList.remove('hidden');
     });
 
-    // Handle "Install Now"
     confirmBtn.addEventListener('click', async () => {
         if (!deferredPrompt) return;
         installModal.classList.add('hidden');
@@ -664,17 +670,12 @@
         console.log(`User response: ${outcome}`);
         deferredPrompt = null;
         
-        // If they installed, clear the "Later" timer so it doesn't block future checks (optional)
         localStorage.removeItem(STORAGE_KEY);
     });
 
-    // Handle "Later"
     closeBtn.addEventListener('click', () => {
         installModal.classList.add('hidden');
-        
-        // 3. Save the current time to LocalStorage
         localStorage.setItem(STORAGE_KEY, Date.now().toString());
-        console.log('Dismissed. Will remind again in 24 hours.');
     });
 
     window.addEventListener('appinstalled', () => {

@@ -1007,52 +1007,63 @@ We congratulate you on your admission and look forward to welcoming you to the c
             .catch((err) => console.log('SW Registration Failed', err));
     }
 
-    // --- 2. AGGRESSIVE INSTALL POPUP LOGIC ---
-    let deferredPrompt;
+    // --- 2. FORCE SHOW POPUP LOGIC ---
+    let deferredPrompt; // Holds the "Signal" from Chrome
     const installModal = document.getElementById('installModal');
     const confirmBtn = document.getElementById('confirmInstallBtn');
     const closeBtn = document.getElementById('closeModalBtn');
 
+    // A. Listen for the signal (Android/Chrome)
     window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevent Chrome from showing the mini-infobar
         e.preventDefault();
-        deferredPrompt = e;
-
-        // --- CHANGE: No checks for LocalStorage or Time ---
-        // As soon as the browser says "This can be installed", we show the modal.
-        // It will show on every single page load unless they install it.
-        installModal.classList.remove('hidden');
+        deferredPrompt = e; // Save the signal for later
+        console.log("✅ Install Signal Received");
     });
 
-    // Handle "Install Now"
+    // B. Show Popup Immediately (Don't wait for signal)
+    window.addEventListener('DOMContentLoaded', () => {
+        // Check if app is NOT already installed
+        const isApp = window.matchMedia('(display-mode: standalone)').matches;
+        if (!isApp) {
+            setTimeout(() => {
+                installModal.classList.remove('hidden');
+            }, 2000); // Wait 2 seconds so it doesn't jar the user instantly
+        }
+    });
+
+    // C. Handle "Install Now" Click
     confirmBtn.addEventListener('click', async () => {
-        if (!deferredPrompt) return;
-        
-        installModal.classList.add('hidden');
-        deferredPrompt.prompt();
-        
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response: ${outcome}`);
-        deferredPrompt = null;
+        if (deferredPrompt) {
+            // Scenario 1: We have the signal (Android/Chrome) -> Auto Install
+            installModal.classList.add('hidden');
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response: ${outcome}`);
+            deferredPrompt = null;
+        } else {
+            // Scenario 2: No signal (iPhone or Chrome not ready) -> Manual Instructions
+            alert("To install:\n\n1. Tap the Browser Menu (⋮ or Share Icon)\n2. Select 'Add to Home Screen' or 'Install App'");
+            // We keep the modal open or close it, depending on preference. 
+            // Here we close it to let them find the menu.
+            installModal.classList.add('hidden');
+        }
     });
 
-    // Handle "Later"
+    // D. Handle "Later"
     closeBtn.addEventListener('click', () => {
-        // Just hide it for this specific session.
-        // Since we are NOT saving anything to localStorage, 
-        // it will pop up again exactly as soon as they refresh the page.
         installModal.classList.add('hidden');
     });
 
-    // If installed successfully, ensure modal is gone forever
+    // E. Cleanup on Install
     window.addEventListener('appinstalled', () => {
         installModal.classList.add('hidden');
         deferredPrompt = null;
+        console.log('PWA was installed');
     });
-</script>
-</body>
+</script></body>
 
 </html>
+
 
 
 

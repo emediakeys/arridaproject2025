@@ -17,105 +17,131 @@
     <script src="https://js.paystack.co/v1/inline.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
         
-        .step-panel { display: none; }
-        .step-panel.active { display: block; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Step Animations */
+        .step-panel { display: none; opacity: 0; }
+        .step-panel.active { display: block; animation: fadeInRight 0.4s ease-out forwards; }
+        @keyframes fadeInRight { 
+            from { opacity: 0; transform: translateX(15px); } 
+            to { opacity: 1; transform: translateX(0); } 
+        }
 
-        .form-input { @apply mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 transition-all duration-200 outline-none; }
-        .form-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
-        .form-input.error { border-color: #ef4444; background-color: #fef2f2; }
+        /* Form Input Core Styles (Required by your JS) */
+        .form-input { 
+            @apply mt-1 block w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl shadow-sm px-4 py-3 transition-all duration-200 outline-none focus:bg-white; 
+        }
+        .form-input:focus { 
+            border-color: #2563eb; 
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); 
+        }
+        .form-input.error { 
+            border-color: #ef4444; 
+            background-color: #fef2f2; 
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+        }
 
-        .step-dot { @apply w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 z-10 border-2; }
-        .step-dot.active { @apply bg-blue-600 text-white border-blue-600 shadow-md; }
-        .step-dot.completed { @apply bg-green-500 text-white border-green-500; }
-        .step-dot.pending { @apply bg-white text-gray-400 border-gray-200; }
+        /* Stepper Styles */
+        .step-dot { @apply w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-500 z-10 border-2 bg-white relative; }
+        .step-dot.active { @apply bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200 ring-4 ring-blue-50 transform scale-110; }
+        .step-dot.completed { @apply bg-emerald-500 text-white border-emerald-500 shadow-md; }
+        .step-dot.pending { @apply text-slate-400 border-slate-200; }
 
-        .modal-overlay { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 50; }
+        .modal-overlay { background-color: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 50; }
         @media print { .print-hidden { display: none !important; } }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen py-10 px-4">
+<body class="min-h-screen py-8 px-4 sm:px-6 flex items-center justify-center text-slate-800">
 
-<div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden relative">
+<div class="max-w-4xl w-full mx-auto bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 overflow-hidden relative border border-slate-100">
     
-    <a href="index.html" class="absolute top-4 right-4 z-40 bg-white border border-gray-200 text-gray-400 hover:text-red-600 hover:border-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1 print-hidden">
-        <i class="fas fa-times-circle"></i> EXIT
+    <a href="index.html" class="absolute top-5 right-5 z-40 bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white hover:text-red-600 px-4 py-2 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-2 print-hidden">
+        <i class="fas fa-times"></i> Close
     </a>
 
-    <header class="bg-blue-800 p-8 text-center text-white print-hidden">
-        <h1 class="text-3xl font-extrabold">Student Application</h1>
-        <p class="text-blue-200 text-sm mt-1">Complete your registration in 4 easy steps</p>
+    <header class="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 p-10 text-center text-white print-hidden relative overflow-hidden">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIvPjwvc3ZnPg==')] opacity-30"></div>
+        <div class="relative z-10">
+            <div class="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/20">
+                <i class="fas fa-university text-3xl text-blue-100"></i>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Student Application</h1>
+            <p class="text-blue-200 text-sm mt-2 font-medium">Complete your registration for the 2026 Academic Session</p>
+        </div>
     </header>
 
-    <div class="px-8 pt-8 pb-4 print-hidden">
-        <div class="relative flex justify-between items-center max-w-lg mx-auto">
-            <div class="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -z-0 rounded-full"></div>
-            <div id="progressLine" class="absolute top-1/2 left-0 h-1 bg-blue-600 -z-0 rounded-full transition-all duration-500" style="width: 0%"></div>
+    <div class="px-6 sm:px-12 pt-8 pb-2 print-hidden">
+        <div class="relative flex justify-between items-center max-w-2xl mx-auto">
+            <div class="absolute top-1/2 left-0 w-full h-1.5 bg-slate-100 -z-0 rounded-full"></div>
+            <div id="progressLine" class="absolute top-1/2 left-0 h-1.5 bg-blue-600 -z-0 rounded-full transition-all duration-700 ease-in-out" style="width: 0%"></div>
 
-            <div class="flex flex-col items-center gap-2">
+            <div class="flex flex-col items-center gap-3">
                 <div class="step-dot active" id="dot-1">1</div>
-                <span class="text-[10px] font-bold text-blue-600 uppercase">Biodata</span>
+                <span class="text-[11px] font-bold text-blue-700 tracking-wider uppercase">Biodata</span>
             </div>
-            <div class="flex flex-col items-center gap-2">
+            <div class="flex flex-col items-center gap-3">
                 <div class="step-dot pending" id="dot-2">2</div>
-                <span class="text-[10px] font-bold text-gray-400 uppercase">Contact</span>
+                <span class="text-[11px] font-bold text-slate-400 tracking-wider uppercase">Contact</span>
             </div>
-            <div class="flex flex-col items-center gap-2">
+            <div class="flex flex-col items-center gap-3">
                 <div class="step-dot pending" id="dot-3">3</div>
-                <span class="text-[10px] font-bold text-gray-400 uppercase">Documents</span>
+                <span class="text-[11px] font-bold text-slate-400 tracking-wider uppercase">Documents</span>
             </div>
-            <div class="flex flex-col items-center gap-2">
+            <div class="flex flex-col items-center gap-3">
                 <div class="step-dot pending" id="dot-4">4</div>
-                <span class="text-[10px] font-bold text-gray-400 uppercase">Payment</span>
+                <span class="text-[11px] font-bold text-slate-400 tracking-wider uppercase">Payment</span>
             </div>
         </div>
     </div>
 
-    <div class="p-6 sm:p-10">
+    <div class="p-6 sm:p-12">
         <form id="admissionForm">
             
             <div id="step-1" class="step-panel active">
-                <h3 class="text-lg font-bold text-gray-800 mb-6 border-b pb-2 flex items-center gap-2">
-                    <i class="fas fa-user-circle text-blue-600"></i> Biodata & Passport
-                </h3>
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fas fa-user"></i></div>
+                        Personal Biodata
+                    </h3>
+                    <p class="text-slate-500 text-sm mt-1 ml-13">Enter your details exactly as they appear on your official documents.</p>
+                </div>
                 
-                <div class="mb-6 flex flex-col md:flex-row gap-6 items-center">
-                    <div class="relative group">
-                        <div class="w-32 h-32 rounded-full border-4 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 overflow-hidden" id="passportBox">
+                <div class="mb-8 bg-slate-50 border border-slate-100 rounded-2xl p-6 flex flex-col md:flex-row gap-6 items-center shadow-sm">
+                    <div class="relative group cursor-pointer">
+                        <div class="w-32 h-32 rounded-full border-4 border-white shadow-lg flex items-center justify-center bg-slate-100 overflow-hidden ring-4 ring-slate-50 transition-all group-hover:ring-blue-100" id="passportBox" onclick="document.getElementById('passport').click()">
                             <img id="passportPreview" src="" class="w-full h-full object-cover hidden">
-                            <i class="fas fa-camera text-gray-300 text-3xl" id="cameraIcon"></i>
+                            <i class="fas fa-camera text-slate-300 text-3xl group-hover:scale-110 transition-transform" id="cameraIcon"></i>
                         </div>
                         <input type="file" id="passport" accept="image/*" class="hidden">
-                        <button type="button" onclick="document.getElementById('passport').click()" class="absolute bottom-0 right-0 bg-blue-600 text-white w-8 h-8 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition">
-                            <i class="fas fa-plus text-xs"></i>
-                        </button>
+                        <div class="absolute bottom-1 right-1 bg-blue-600 text-white w-9 h-9 rounded-full shadow-lg flex items-center justify-center border-2 border-white pointer-events-none">
+                            <i class="fas fa-plus text-sm"></i>
+                        </div>
                     </div>
                     <div class="flex-1 w-full text-center md:text-left">
-                        <p class="text-sm font-bold text-gray-700">Upload Passport Photo</p>
-                        <p class="text-xs text-gray-400 mt-1">Ensure your face is clearly visible. Max 2MB.</p>
+                        <p class="text-base font-bold text-slate-800">Upload Passport Photo <span class="text-red-500">*</span></p>
+                        <p class="text-sm text-slate-500 mt-1">Recent color passport photograph. Ensure your face is clearly visible with a plain background.</p>
+                        <p class="text-xs font-semibold text-blue-600 mt-2 bg-blue-50 inline-block px-3 py-1 rounded-full">JPG or PNG, Max 2MB</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">First Name</label>
-                        <input type="text" id="firstName" name="firstName" required class="form-input">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">First Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="firstName" name="firstName" required class="form-input" placeholder="e.g. John">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Last Name</label>
-                        <input type="text" id="lastName" name="lastName" required class="form-input">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Last Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="lastName" name="lastName" required class="form-input" placeholder="e.g. Doe">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Date of Birth</label>
-                        <input type="date" id="dob" name="dob" required class="form-input">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Date of Birth <span class="text-red-500">*</span></label>
+                        <input type="date" id="dob" name="dob" required class="form-input text-slate-600">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Gender</label>
-                        <select id="gender" name="gender" required class="form-input">
-                            <option value="">Select...</option>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Gender <span class="text-red-500">*</span></label>
+                        <select id="gender" name="gender" required class="form-input text-slate-600 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394a3b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:0.7rem_auto] bg-[position:right_1rem_center] bg-no-repeat">
+                            <option value="">Select gender...</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                         </select>
@@ -124,36 +150,54 @@
             </div>
 
             <div id="step-2" class="step-panel">
-                <h3 class="text-lg font-bold text-gray-800 mb-6 border-b pb-2 flex items-center gap-2">
-                    <i class="fas fa-address-book text-blue-600"></i> Contact & Login
-                </h3>
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fas fa-map-marker-alt"></i></div>
+                        Contact & Account
+                    </h3>
+                    <p class="text-slate-500 text-sm mt-1 ml-13">Where can we reach you, and how will you log in?</p>
+                </div>
                 
-                <div class="mb-5">
-                    <label class="block text-sm font-medium text-gray-700">Home Address</label>
-                    <textarea id="address" name="address" rows="2" required class="form-input" placeholder="Enter full residential address"></textarea>
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Home Address <span class="text-red-500">*</span></label>
+                    <textarea id="address" name="address" rows="3" required class="form-input resize-none" placeholder="Enter your full residential address..."></textarea>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Email Address</label>
-                        <input type="email" id="email" name="email" required class="form-input" placeholder="example@email.com">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Email Address <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-envelope text-slate-400"></i>
+                            </div>
+                            <input type="email" id="email" name="email" required class="form-input pl-11" placeholder="example@email.com">
+                        </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Create Dashboard Password</label>
-                        <input type="password" id="password" name="password" required class="form-input" placeholder="Minimum 6 characters">
-                        <p class="text-[10px] text-gray-400 mt-1">This will be used to log in to your portal.</p>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Create Dashboard Password <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-slate-400"></i>
+                            </div>
+                            <input type="password" id="password" name="password" required class="form-input pl-11" placeholder="Min. 6 characters">
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2 font-medium"><i class="fas fa-info-circle mr-1"></i> You will use this email and password to check your admission status.</p>
                     </div>
                 </div>
             </div>
 
             <div id="step-3" class="step-panel">
-                <h3 class="text-lg font-bold text-gray-800 mb-6 border-b pb-2 flex items-center gap-2">
-                    <i class="fas fa-graduation-cap text-blue-600"></i> Course & Background
-                </h3>
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fas fa-graduation-cap"></i></div>
+                        Academic Profile
+                    </h3>
+                    <p class="text-slate-500 text-sm mt-1 ml-13">Select your desired course and provide your academic records.</p>
+                </div>
 
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700">Choose Academic Program</label>
-                    <select name="course" id="course" required class="form-input font-semibold text-blue-900">
+                <div class="mb-8 p-6 bg-blue-50 border border-blue-100 rounded-2xl">
+                    <label class="block text-sm font-bold text-blue-900 mb-2">Program of Choice <span class="text-red-500">*</span></label>
+                    <select name="course" id="course" required class="form-input border-blue-200 text-blue-900 font-semibold shadow-inner appearance-none bg-white">
                         <option value="">-- Select Course --</option>
                         <option value="Community Health Extension Workers">Community Health Extension Workers</option>
                         <option value="Public Health">Public Health</option>
@@ -162,57 +206,97 @@
                     </select>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-                    <div class="bg-gray-50 p-4 rounded-xl border-2 border-dashed border-gray-200">
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Birth Certificate</label>
-                        <input type="file" id="birthCert" accept=".pdf, image/*" required class="text-xs w-full">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                    <div class="relative border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-all rounded-2xl p-6 text-center group">
+                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-blue-500 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-file-pdf text-xl"></i>
+                        </div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1 cursor-pointer after:absolute after:inset-0">Birth Certificate <span class="text-red-500">*</span></label>
+                        <p class="text-xs text-slate-500 mb-3">Upload clear PDF or Image</p>
+                        <input type="file" id="birthCert" accept=".pdf, image/*" required class="text-xs w-full relative z-10 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer">
                     </div>
-                    <div class="bg-gray-50 p-4 rounded-xl border-2 border-dashed border-gray-200">
-                        <label class="block text-sm font-bold text-gray-700 mb-1">O'Level Result</label>
-                        <input type="file" id="olevel" accept=".pdf, image/*" required class="text-xs w-full">
+                    
+                    <div class="relative border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 transition-all rounded-2xl p-6 text-center group">
+                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-blue-500 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-certificate text-xl"></i>
+                        </div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1 cursor-pointer after:absolute after:inset-0">O'Level Result <span class="text-red-500">*</span></label>
+                        <p class="text-xs text-slate-500 mb-3">WAEC / NECO / NABTEB</p>
+                        <input type="file" id="olevel" accept=".pdf, image/*" required class="text-xs w-full relative z-10 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div><label class="form-label text-xs uppercase text-gray-400">NOK Name</label><input type="text" name="nokName" class="form-input text-sm" required></div>
-                    <div><label class="form-label text-xs uppercase text-gray-400">NOK Phone</label><input type="tel" name="nokPhone" class="form-input text-sm" required></div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label class="form-label text-xs uppercase text-gray-400">Sponsor</label><input type="text" name="sponsor" class="form-input text-sm" required></div>
-                    <div><label class="form-label text-xs uppercase text-gray-400">Prev School</label><input type="text" name="prevSchool" class="form-input text-sm" required></div>
+                <div class="space-y-5 border-t border-slate-100 pt-6">
+                    <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Next of Kin & Background</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">NOK Name <span class="text-red-500">*</span></label>
+                            <input type="text" name="nokName" class="form-input" required placeholder="Full Name">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">NOK Phone <span class="text-red-500">*</span></label>
+                            <input type="tel" name="nokPhone" class="form-input" required placeholder="Phone Number">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Financial Sponsor <span class="text-red-500">*</span></label>
+                            <input type="text" name="sponsor" class="form-input" required placeholder="Who pays the fees?">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Previous School <span class="text-red-500">*</span></label>
+                            <input type="text" name="prevSchool" class="form-input" required placeholder="Last school attended">
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div id="step-4" class="step-panel text-center">
-                <div class="py-8 px-4 bg-yellow-50 rounded-2xl border border-yellow-100 max-w-sm mx-auto">
-                    <div class="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl">
-                        <i class="fas fa-credit-card"></i>
+            <div id="step-4" class="step-panel">
+                <div class="text-center max-w-md mx-auto mt-4">
+                    <div class="py-10 px-6 bg-white rounded-3xl border border-slate-200 shadow-xl relative overflow-hidden">
+                        
+                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-yellow-50 rounded-full blur-2xl"></div>
+                        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-50 rounded-full blur-2xl"></div>
+
+                        <div class="relative z-10">
+                            <div class="w-20 h-20 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-5 text-white text-3xl shadow-lg shadow-yellow-200">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <h3 class="text-2xl font-extrabold text-slate-800 mb-2">Application Fee</h3>
+                            <p class="text-sm text-slate-500 mb-6 font-medium px-4">Secure your spot by completing the non-refundable application fee payment.</p>
+                            
+                            <div class="bg-slate-50 rounded-2xl py-6 mb-8 border border-slate-100">
+                                <p class="text-5xl font-black text-blue-900 tracking-tight">₦7,500<span class="text-xl font-bold text-slate-400">.00</span></p>
+                            </div>
+                            
+                            <button type="button" id="payBtn" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition-all transform hover:-translate-y-1 active:scale-95 flex justify-center items-center gap-2 text-lg">
+                                <i class="fas fa-lock"></i> Pay Securely Now
+                            </button>
+                            
+                            <div id="payment-status" class="mt-6 p-4 bg-emerald-50 rounded-xl border border-emerald-100 hidden">
+                                <p class="text-emerald-700 font-bold flex items-center justify-center gap-2">
+                                    <i class="fas fa-check-circle text-xl"></i> Payment Verified
+                                </p>
+                                <p class="text-xs text-emerald-600 mt-1">You may now submit your application.</p>
+                            </div>
+                            
+                            <div class="mt-6 flex items-center justify-center gap-4 opacity-50 grayscale">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Mastercard-logo.png/1200px-Mastercard-logo.png" class="h-6 object-contain" alt="Mastercard">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" class="h-4 object-contain" alt="Visa">
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-800">Review & Pay</h3>
-                    <p class="text-sm text-gray-500 mb-6">Your total application fee is:</p>
-                    <p class="text-4xl font-extrabold text-blue-900 mb-6">₦7,500<span class="text-lg font-normal text-gray-400">.00</span></p>
-                    
-                    <button type="button" id="payBtn" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition transform hover:-translate-y-1">
-                        Pay Securely Now
-                    </button>
-                    
-                    <p id="payment-status" class="mt-4 text-green-700 font-bold hidden flex items-center justify-center gap-2">
-                        <i class="fas fa-check-circle"></i> Payment Verified
-                    </p>
                 </div>
             </div>
 
-            <div class="mt-12 flex justify-between items-center print-hidden">
-                <button type="button" id="prevBtn" class="px-8 py-3 rounded-xl border border-gray-300 text-gray-500 font-bold hover:bg-gray-50 transition hidden">
-                    <i class="fas fa-arrow-left mr-2"></i> Previous
+            <div class="mt-10 pt-6 border-t border-slate-100 flex justify-between items-center print-hidden">
+                <button type="button" id="prevBtn" class="px-6 py-3 rounded-xl border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 hover:text-slate-900 transition-all hidden flex items-center gap-2">
+                    <i class="fas fa-arrow-left"></i> Back
                 </button>
                 <div class="flex-1"></div>
-                <button type="button" id="nextBtn" class="px-10 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-blue-200 shadow-xl transition transform active:scale-95">
-                    Next Step <i class="fas fa-arrow-right ml-2"></i>
+                <button type="button" id="nextBtn" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-all transform active:scale-95 flex items-center gap-2">
+                    Continue <i class="fas fa-arrow-right"></i>
                 </button>
-                <button type="submit" id="submitBtn" class="hidden px-10 py-3 bg-blue-800 hover:bg-blue-900 text-white font-extrabold rounded-xl shadow-xl transition transform active:scale-95 disabled:opacity-50" disabled>
-                    Submit Application
+                <button type="submit" id="submitBtn" class="hidden px-8 py-4 bg-blue-900 hover:bg-blue-950 text-white font-extrabold rounded-xl shadow-xl shadow-blue-200 transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto flex items-center justify-center gap-2" disabled>
+                    <i class="fas fa-paper-plane"></i> Submit Application
                 </button>
             </div>
 
@@ -220,17 +304,19 @@
     </div>
 
     <div id="loading" class="hidden fixed inset-0 modal-overlay flex flex-col items-center justify-center text-white">
-        <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-        <p class="font-bold text-lg">Processing Application...</p>
-        <p class="text-xs text-blue-200">Please do not refresh the page.</p>
+        <div class="bg-slate-900/80 p-8 rounded-3xl flex flex-col items-center backdrop-blur-md border border-slate-700">
+            <div class="w-16 h-16 border-4 border-blue-900/50 border-t-blue-500 rounded-full animate-spin mb-5"></div>
+            <p class="font-bold text-xl mb-1">Processing...</p>
+            <p class="text-sm text-slate-300 font-medium">Securing your data. Do not refresh.</p>
+        </div>
     </div>
 </div>
 
 <div id="customPopup" class="modal-overlay fixed inset-0 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center">
-        <div id="popupIcon" class="mb-4"></div>
-        <h3 id="popupTitle" class="text-xl font-bold text-gray-900 mb-2"></h3>
-        <p id="popupMessage" class="text-gray-600 mb-8 text-sm leading-relaxed"></p>
+    <div class="bg-white rounded-[2rem] shadow-2xl p-8 max-w-sm w-full text-center border border-slate-100 transform transition-all">
+        <div id="popupIcon" class="mb-5"></div>
+        <h3 id="popupTitle" class="text-2xl font-extrabold text-slate-800 mb-2"></h3>
+        <p id="popupMessage" class="text-slate-500 mb-8 text-sm leading-relaxed font-medium"></p>
         <div id="popupActions" class="flex flex-col gap-3"></div>
     </div>
 </div>
@@ -238,7 +324,7 @@
 <script>
     // --- 1. CONFIGURATION ---
     const SUPABASE_URL = 'https://adhbsmbmeigfcieofrkq.supabase.co'; 
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaGJzbWJtZWlnZmNpZW9mcmtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODc1ODcsImV4cCI6MjA4MTI2MzU4N30.wpOMUUJ2PcEJbuHHFbG-gUjVoxttnxA5UxZJttChJ1s'; // <--- PASTE KEY
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaGJzbWJtZWlnZmNpZW9mcmtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODc1ODcsImV4cCI6MjA4MTI2MzU4N30.wpOMUUJ2PcEJbuHHFbG-gUjVoxttnxA5UxZJttChJ1s'; 
     const PAYSTACK_PUBLIC_KEY = "pk_test_34033a8e8865add5341146621b171d687d606024"; 
 
     // Initialize Supabase (Renamed 'db' to prevent conflicts)
@@ -355,7 +441,7 @@
         handler.openIframe();
     };
 
-    // --- 5. SUBMISSION LOGIC (Corrected) ---
+    // --- 5. SUBMISSION LOGIC ---
     document.getElementById('admissionForm').onsubmit = async function(e) {
         e.preventDefault();
         if(!transactionReference) return showCustomPopup("Payment required.", 'error');
@@ -446,17 +532,17 @@
         document.getElementById('popupTitle').innerText = title;
         document.getElementById('popupMessage').innerText = msg;
         document.getElementById('popupIcon').innerHTML = type === 'success' ? 
-            '<div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto"><i class="fas fa-check text-2xl"></i></div>' : 
-            '<div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto"><i class="fas fa-exclamation text-2xl"></i></div>';
+            '<div class="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-inner"><i class="fas fa-check text-3xl"></i></div>' : 
+            '<div class="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto shadow-inner"><i class="fas fa-exclamation text-3xl"></i></div>';
         
         const container = document.getElementById('popupActions');
         container.innerHTML = '';
         
-        if(actions.length === 0) actions.push({ text: 'OK', handler: () => document.getElementById('customPopup').classList.replace('flex', 'hidden'), primary: true });
+        if(actions.length === 0) actions.push({ text: 'Got it', handler: () => document.getElementById('customPopup').classList.replace('flex', 'hidden'), primary: true });
 
         actions.forEach(a => {
             const btn = document.createElement('button');
-            btn.className = a.primary ? 'w-full py-3 bg-blue-600 text-white font-bold rounded-xl' : 'w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl';
+            btn.className = a.primary ? 'w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-md active:scale-95' : 'w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all active:scale-95';
             btn.innerText = a.text;
             btn.onclick = a.handler;
             container.appendChild(btn);

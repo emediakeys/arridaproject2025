@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CBT Portal - Live Exam Environment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .hidden-view { display: none !important; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 transition-all duration-500" id="bodyElement">
+
+    <div id="toast" class="fixed top-5 right-5 px-6 py-3 rounded-lg shadow-lg text-white font-bold opacity-0 transition-opacity duration-300 pointer-events-none z-50 bg-blue-600"></div>
+
+    <!-- Auth Container -->
+    <div id="authContainer" class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+        <div id="loginView">
+            <h2 class="text-2xl font-bold text-center mb-8">Student Login</h2>
+            <form id="loginForm" class="space-y-5">
+                <input type="email" id="loginEmail" required placeholder="Email" class="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="loginPassword" required placeholder="Password" class="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" id="loginSubmitBtn" class="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-lg">Start Exam</button>
+            </form>
+            <p class="mt-6 text-center text-sm">Don't have an account? <button onclick="window.toggleAuthView('register')" type="button" class="text-blue-600 font-bold">Register here</button></p>
+        </div>
+
+        <div id="registerView" class="hidden-view">
+            <h2 class="text-2xl font-bold text-center mb-6">Register</h2>
+            <form id="registerForm" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" id="regFirstName" placeholder="First Name" required class="px-3 py-2 border rounded-lg">
+                    <input type="text" id="regLastName" placeholder="Last Name" required class="px-3 py-2 border rounded-lg">
+                </div>
+                
+                <input type="text" id="regMatric" placeholder="Matric No" required class="w-full px-3 py-2 border rounded-lg">
+                <p id="matricWarnText" class="text-xs text-red-500 font-medium"></p>
+                
+                <input type="email" id="regEmail" placeholder="Email" required class="w-full px-3 py-2 border rounded-lg">
+                <p id="emailWarnText" class="text-xs text-red-500 font-medium"></p>
+                
+                <input type="password" id="regPassword" placeholder="Password" required class="w-full px-3 py-2 border rounded-lg">
+                <input type="password" id="regConfirmPassword" placeholder="Confirm Password" required class="w-full px-3 py-2 border rounded-lg">
+                <p id="pwdReqText" class="text-xs text-red-500 font-medium"></p>
+                <p id="pwdMatchText" class="text-xs font-medium"></p>
+                
+                <button type="submit" id="regSubmitBtn" disabled class="w-full py-3 bg-green-600 text-white font-bold rounded-xl opacity-50 cursor-not-allowed">Complete Registration</button>
+            </form>
+            <p class="mt-4 text-center text-sm">Already registered? <button onclick="window.toggleAuthView('login')" type="button" class="text-blue-600 font-bold">Log in</button></p>
+        </div>
+    </div>
+
+    <!-- Exam Container -->
+    <div id="examContainer" class="hidden-view w-full h-screen flex flex-col bg-gray-50 absolute inset-0">
+        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+            <div>
+                <h2 class="text-xl font-bold">Paper I Examination</h2>
+                <p id="studentInfoDisplay" class="text-sm text-blue-600">Loading...</p>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="bg-blue-50 px-5 py-2 rounded-xl border border-blue-200">
+                    <span id="timerDisplay" class="text-2xl font-mono font-bold text-blue-600">02:00:00</span>
+                </div>
+                <button onclick="window.logoutSession()" class="text-red-600 font-bold">Save & Logout</button>
+            </div>
+        </header>
+
+        <main class="flex-grow p-6">
+            <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border p-8">
+                <div class="mb-8 flex justify-between items-center border-b pb-6">
+                    <h3 class="text-lg font-bold">Question <span id="currentQIndex" class="text-blue-600">1</span> of <span id="totalQs">100</span></h3>
+                    <div class="w-1/2 bg-gray-100 rounded-full h-3">
+                        <div id="progressBar" class="bg-blue-600 h-full rounded-full transition-all" style="width: 1%"></div>
+                    </div>
+                </div>
+                <div id="examContentArea">
+                    <p id="questionText" class="text-xl font-medium mb-8"></p>
+                    <div id="optionsArea" class="space-y-4"></div>
+                    <div class="flex justify-between items-center pt-8 border-t mt-8">
+                        <button id="prevBtn" onclick="window.navigateQuestion(-1)" class="px-6 py-3 bg-gray-100 rounded-xl disabled:opacity-50">Previous</button>
+                        <button id="nextBtn" onclick="window.navigateQuestion(1)" class="px-8 py-3 bg-blue-600 text-white rounded-xl">Next</button>
+                        <button id="submitExamBtn" onclick="window.submitFinalExam()" class="hidden-view px-8 py-3 bg-green-600 text-white rounded-xl">Submit Exam</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let dbClient; 
+        
+        let currentUserId = null;
+        let currentStudentData = null;
+        let currentQuestionIndex = 0;
+        let timerInterval;
+        let studentAnswers = {};
+        let parsedExamQuestions = [];
+
+        let isEmailUnique = true;
+        let isMatricUnique = true;
+        let debounceTimer;
+
+        const SUPABASE_URL = 'https://adhbsmbmeigfcieofrkq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaGJzbWJtZWlnZmNpZW9mcmtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODc1ODcsImV4cCI6MjA4MTI2MzU4N30.wpOMUUJ2PcEJbuHHFbG-gUjVoxttnxA5UxZJttChJ1s';
+
+        // RAW EXAM TEXT (PAPER I)
+        const rawExamText = `
+1. One of the following is NOT an acceptable behavior a professional should have.
+  A. Generally positive attitude towards work with a cheerful personality.
+  B. Genuine desire to help people.
+  C. Should offer explanation to patients on charges for services in an honest manner.
+  D. Flare up with patients.
+
+2. NACHPN MEANS
+  A. National Association of Community Health Practitioners of Nigeria.
+  B. National Association of Country Health Practitioners of Nigeria.
+  C. National Association of Community Health Practice of the Nation.
+  D. National Association of Concerned of community Health Practitioner.
+
+3. Which of the following is not a code of conduct of community health Practitioner.
+  A. Set a high standard.
+  B. Use of standing Orders.
+  C. Knowing your colleague.
+  D. Maintaining two way referral systems.
+
+4. One of the following is NOT types of marriage.
+  A. Ghost marriage.
+  B. Levirate marriage.
+  C. Bigamy marriage.
+  D. Social marriage.
+
+5. A person who always does not conform with the norms of the society is called:
+  A. Uncompromising.
+  B. Deviant.
+  C. Extrovert.
+  D. Aggressive.
+
+6. One of the following is NOT a form of defense mechanisms.
+  A. Denial.
+  B. Protection.
+  C. Institution.
+  D. Regression.
+
+7. A person who send message is known as:
+  A. Decoder.
+  B. Encoder.
+  C. Receiver.
+  D. Messenger.
+
+8. One of the following is NOT an advantage of teaching a aids:
+  A. Arouse Interest.
+  B. Welcoming of the participants.
+  C. Helps teacher to make his points clear.
+  D. Helps teacher to consolidate his point.
+
+9. One of these is NOT a barrier to effective communication:
+  A. Personality.
+  B. Poor listening.
+  C. Poor planning adequate knowledge.
+  D. Adequate knowledge.
+
+10. There is no sudden bout of chewing without any reason.
+  A. True
+  B. False
+
+11. Handicapping is including with normal functioning of the body system.
+  A. True
+  B. False
+
+12. Which of the following constitute a positive development in the Nigeria health system.
+  A. Making PHC pivot of National Health Policy.
+  B. Preventive.
+  C. Curative care.
+  D. Infrastructural development.
+
+13. One of the following is an advantage of team work in health care delivery:
+  A. It is difficult to operate.
+  B. It create a vacuum.
+  C. Personality difference among members of the team.
+  D. Promotes effective health care.
+
+14. Which of these is not a factor affecting health of Nigerians?
+  A. Environmental factors.
+  B. Social factors.
+  C. Cultural factors.
+  D. Professional factors.
+
+15. Clinic based function of CHEW does not include:
+  A. Spending 70% of time in clinic attending to patients.
+  B. Carry out day to day clinic administration with CHO.
+  C. Collect and collate monitoring and evaluation data.
+  D. Provide integrated PHC services.
+
+16. One of these is not a component of PHC:
+  A. Maternal and child health care.
+  B. Exclusive breast feeding.
+  C. Treatment of minor diseases and injuries.
+  D. Provision of essential drugs.
+
+17. Conflict model means:
+  A. Having professional wrangling.
+  B. A system that works competitively to produce justice.
+  C. Working together.
+  D. Conflict resolution.
+
+18. All are steps in conducting community diagnosis EXCEPT:
+  A. Entry into the community through L.G.A
+  B. Identify the boundaries of the community.
+  C. Make sketch map of the community.
+  D. Make unimportant notes of community landmark.
+
+19. Steps in planning for situation analysis include the following EXCEPT:
+  A. Contacting the development committee.
+  B. Obtaining men, materials and instruments to be used.
+  C. Excluding members of the community in planning.
+  D. Arranging logistic for interviews.
+
+20. Community involvement means;
+  A. Identifying the demographic pattern of the community.
+  B. Community participation in planning and implementation of programme.
+  C. Identify social, economic and environmental factors in a community.
+  D. Identifying work done by the community.
+
+21. Pharmaco-vigilance is also known as:
+  A. Drug interaction 
+  B. Drug safety 
+  C. Drug composition
+  D. Drug allergy 
+
+22. One of the following is not classified according to function:
+  A. Antimalarial 
+  B. Antibiotics
+  C. Capsule 
+  D. Antiemetic 
+
+23. All are sources of drugs except:
+  A. Right time
+  B. Right dosage
+  C. Right patient
+  D. Right cost
+
+24. One of the following is an step in setting drug revolving fund (DRF):
+  A. Provide accountability in drug management
+  B. Identify sources of fund initial seed stock 
+  C. Reduce self-medication
+  D. Facilitates the availability of essential drugs
+
+25. One of the following is not a reason for requisition of essential drugs:
+  A. Number of clinics in the area
+  B. Pattern of prevalent diseases 
+  C. Financial resources
+  D. Demographic profile 
+
+26. In PHC essential drugs are:
+  A. Expensive drugs
+  B. Drugs given in adequate dosage 
+  C. Drugs used in the treatment of rare diseases
+  D. Drugs that was indispensable for health care needs of the majority
+
+27. All are reasons of establishing essential drug list except:
+  A. Drug wastage
+  B. Drug abuse
+  C. National drug policy
+  D. High cost of health care
+
+28. The referral of patient from primary to higher level is said to be complete when:
+  A. The patient fully recovered
+  B. The patient dies
+  C. There is feedback 
+  D. The patient partially recovered 
+
+29. The purpose of two way referral is to:
+  A. Make for good flow of patient 
+  B. Ensure continuity of care
+  C. Make supervision easy and fair
+  D. Explain to the patient how to take drugs 
+
+30. Nutrient that does not protect against anemia is:
+  A. Iron
+  B. Meat
+  C. Yam
+  D. Egg 
+
+31. Amino acids are produced as a result of the breakdown of:
+  A. Vitamins
+  B. Sugar
+  C. Proteins
+  D. Fat 
+
+32. One of the following is not a format in using standing orders:
+  A. Complaints, examination, clinical judgement and action
+  B. Action, complaints, examination and clinical judgement
+  C. Examination, clinical judgement, action and complaints
+  D. Clinical judgement, examination, complaints and action
+
+33. The normal body temperature in ⁰F is:
+  A. 98.6 ⁰F
+  B. 96.8 ⁰F
+  C. 86.9 ⁰F
+  D. 89.6 ⁰F
+
+34. Touching to feel for an organ in a patient is referred to as:
+  A. Auscultation 
+  B. Percussion
+  C. Inspection
+  D. Palpation
+
+35. Open multi-dose vial policy has the following conditions except:
+  A. The expiry data has not passed
+  B. The vaccine is not contaminated
+  C. There are too many patients
+  D. The vial have been stored under appropriate cold chain condition 
+
+36. Blood is not made up of:
+  A. Leucocytes
+  B. Osteocytes 
+  C. Erythrocytes
+  D. Thrombocytes 
+
+37. The internal environment of the body is control by:
+  A. Homeostasis
+  B. Negative feed-back mechanism 
+  C. Temperature regulation
+  D. Positive feedback 
+
+38. The lining of the heart muscles are named from inside to outside as: 
+  A. Myocardium, pericardium, endocardium
+  B. Pericardium, myocardium, endocardium
+  C. Endocardium, pericardium, myocardium
+
+39. The total number of vertebral in human is:
+  A. 29
+  B. 33
+  C. 60
+  D. 81
+
+40. The power house of the cell is: 
+  A. Nucleus
+  B. Cellucose
+  C. Mitochondria 
+  D. Chloroplast 
+
+41. Of microorganism is not:
+  A. Photosynthesis
+  B. Breaking down waste
+  C. Independent existence 
+  D. Inspecting other organism
+
+42. One of the following is not a types of media commonly used to culture microorganism:
+  A. Food agent
+  B. Nutrient broth 
+  C. Nutrient agent
+  D. Blood agent 
+
+43. Contusion is another name for:
+  A. Abrasion
+  B. Incised wound 
+  C. Bruises 
+  D. Laceration 
+
+44. Normal pulse rate of new born baby is about:
+  A. 60 beats per minute 
+  B. 120 beats per minute
+  C. 90 beats per minute
+  D. 80 beats per minute 
+
+45. The site for assessing the nutritional status of a child with stratus step is:
+  A. Mid-lower arm circumference
+  B. Mid fermium circumference
+  C. Mid-upper arm circumference
+  D. Mid arm circumference
+
+46. Urine specimen to be used in the laboratory for test are obtain from the following so except:
+  A. Terminal urine
+  B. Mid-night urine
+  C. First carly morning urine
+
+47. One of the following is not on-the job training method:
+  A. Internship
+  B. In-service training 
+  C. Meeting
+  D. Job rotation 
+
+48. One of these is not a reason for conducting human resource training programme:
+  A. To ensure job satisfaction 
+  B. To promote staff development
+  C. To update knowledge and skills of health worker
+  D. To encourage truancy among staff
+
+49. Management is defined as:
+  A. Getting things done with people 
+  B. Getting things done by delegation 
+  C. Getting things done with resources
+  D. Getting things done with people through effective use of resources 
+
+50. The aspect of management which is concerned with comparing achievement with objective is:
+  A. Evaluation
+  B. Programming 
+  C. Decision making
+  D. Monitoring 
+
+51. The purpose of supervision is:
+  A. Operating simple accounting system 
+  B. Resource allocation 
+  C. To ensure achievement of objectives 
+  D. Developing health plans 
+
+52. Delegation means:
+  A. Pushing all the work to a competent person
+  B. Assigning responsibility to a subordinate
+  C. Doing less at work and directing others to do more
+  D. Selecting a person you like and assign responsibilities
+
+53. The book of original entry in account include the following except:
+  A. Sales book
+  B. Purchase book
+  C. Cash book
+  D. Store ledger 
+
+54. All are fixed assets except:
+  A. Fixture and fittings
+  B. Building 
+  C. Plants and machine 
+  D. Goods 
+
+55. Health indicators are grouped under the following subheading except:
+  A. Health policy indicators
+  B. Political and geographical indicators
+  C. Health status indicators
+  D. Social and economic indicators
+
+56. All are levels of data collection in National Health Management Information System (NHMIS) at PHC except:
+  A. Home level
+  B. Community level health facility level 
+  C. Hospital level 
+
+57. In statistics range is defined as this:
+  A. Average of two numbers 
+  B. Difference between two numbers
+  C. Difference between the highest and the lowest score 
+  D. Commonest numbers
+
+58. Which of the following is not the function of the skin:
+  A. Secretion of sebum
+  B. Protection against harmful stressors
+  C. Help in the formation of vitamin E when exposed to sunlight
+  D. Act as the sense organ of touch
+
+59. The orgah that help us to maintain balance is located at the:
+  A. Skin 
+  B. Eye
+  C. Ear
+  D. Lags 
+
+60. The component of environmental health as outlined by the World Health Organization (WHO) does not include:
+  A. Vector and pest control
+  B. Food hygiene and safety
+  C. Improved medical services 
+  D. Adequate water supply and basic sanitation 
+
+61. Physical hazard consists of:
+  A. Bacteria fungi and virus
+  B. Heat, light and sound
+  C. Plants and animals
+  D. Reagents, elements pesticides 
+
+62. The elements of reproductive health does not include:
+  A. Safe motherhood including breastfeeding
+  B. Adolescent reproductive health
+  C. Healthy sexual development
+  D. Prevention and management of abortion 
+
+63. The following are the tests that could be performed on an expectant mother at the ante natal clinic except:
+  A. Blood pressure measurement 
+  B. Cancer screening test
+  C. Weighing
+  D. Palpation 
+
+64. Which of the following female reproductive organ is not affected during female genital mutilation:
+  A. Labia majora
+  B. Labia minora
+  C. Clitoris 
+  D. Cervix
+
+65. One of these is sued for the control of pre-eclampsia in pregnant women:
+  A. Magnesium sulphate
+  B. Magnesium sulphite
+  C. Magnesium choride 
+  D. Magnesium fluoride 
+
+66. The signs and symptoms of hyperemesis gravidarum include the following except:
+  A. Ante partum haemorrhage 
+  B. The urine is dark 
+  C. The eyes are dull and sunken 
+  D. The breath is offensive and smells acetone 
+
+67. One of these is not likely to benefit from family planning services:
+  A. Women over 30 years of age
+  B. Post-menopausal women 
+  C. Women under 20 years of age 
+  D. Women age 13–50 years
+
+68. All are disease of the oral cavity except:
+  A. Cleft palate
+  B. Periodontitis
+  C. Dental caries
+  D. Calculus
+
+69. At birth a baby is said to be under-weight if his/her weight is below:
+  A. 2.5 kg
+  B. 3.5 kg
+  C. 2.0 kg
+  D. 3.0 kg 
+
+70. Swelling at the scalp of a new born baby is known as:
+  A. Caput heamatoma 
+  B. Caput succedaneum
+  C. Cephalic heamatoma
+  D. Cephalic succedaneum
+
+71. The following factors may influence the development of a child except:
+  A. Hereditary 
+  B. Environment 
+  C. Obstetric care during labour and delivery 
+  D. Post-partum haemorrhage 
+
+72. The occupational disease commonly seen among textile company workers is:
+  A. Asbestosis 
+  B. Byssinosis
+  C. Silicosis 
+  D. Bagasosis 
+
+73. One of these is not a preventive measure against occupational hazard:
+  A. Use of protective devices
+  B. Pre-employment medical examination
+  C. Removing those that are affected with a disease
+  D. Regular medical check-up 
+
+74. Aimless wandering, hoarding of rubbish, are symptoms of one of the following:
+  A. Simple schizophrenia 
+  B. Catatonic schizophrenia 
+  C. Paranoid schizophrenia
+  D. Pseudo neurotic schizophrenia 
+
+75. On the following drugs is not used for the treatment of mental disorder:
+  A. Chlorpromazine 
+  B. Promethazine 
+  C. Haloperidol 
+  D. Diazepam
+
+76. Objectives of school health programme does not include:
+  A. Continuing appraisal of each child’s health status
+  B. Counselling of pupils, their parents and teachers 
+  C. Simple laboratory investigation 
+  D. Detection and correction of all defects and disorders
+
+77. The following are the element of school health services except:
+  A. Medical inspection of school children 
+  B. Screening for defects of hearing and sight
+  C. Nutrition 
+  D. Sporting activities 
+
+78. Common health problem/challenges of the school child does not includes:
+  A. Tuberculosis 
+  B. Ringworm
+  C. Scabies
+  D. Tinea capitis 
+
+79. A good food vendor must possess the following qualities except:
+  A. Neatness 
+  B. Free from any disease
+  C. Knowledgeable on food combination and preparation
+  D. Must have children in the school
+
+80. Leprosy is an infectious disease caused by:
+  A. Viruses 
+  B. Bacilli
+  C. Rakettisia
+  D. Protozoa 
+
+81. The characteristics of non-communicable disease include the following except:
+  A. The disease commonly affect the rich
+  B. The cause is idiopathic
+  C. The disease develop slowly over a period of years
+  D They can be controlled or treated is detected in early stage
+
+82. The reason for first aid is not:
+  A. To prevent minor illness from becoming major
+  B. To preserve the life of the patient
+  C. To complicate the condition 
+  D. To immobilize the affected patient 
+
+83. The following are emergency situation that needs prompt attention except:
+  A. Acute abdomen 
+  B. Severe haemorrhage
+  C. Asphyxia 
+  D. Blurred vision
+
+84. The study of ear, nose and throat is known as:
+  A. Rhinology 
+  B. Neurology 
+  C. Otology 
+  D. Otolaryngology 
+
+85. Prevention and control of ear, nose and throat problems could best be done by all the following except:
+  A.  History taking 
+  B. Treatment of ear problem promptly 
+  C. Physical examination
+  D. Health education 
+
+86. Opthalmia Neonatorum cannot be prevented by:
+  A. Proper antenatal care
+  B. Immunization
+  C. Improved personal hygiene
+  D. Prompt treatment of sexually transmitted diseases 
+
+87. The following factors are suspected to be responsible for cataract except:
+  A. Ageing 
+  B. Congenital
+  C. Long term treatment with corticosteroids
+  D. Frequent use of sun glasses 
+
+88. The services available to the aged are the following except:
+  A. Good neighbourhood schemes 
+  B. Early payment of pensions and gratuities
+  C. Vigorous sporting activities
+  D. Home visiting 
+
+89. One of these is a characteristics of mentally retarded person except:
+  A. Lack of abstract thinking.
+  B. Slow speed of learning 
+  C. Lack of muscular co-ordination
+  D. Takes alcohol frequently 
+
+90. Which of the following is not a long bone:
+  A. Femur
+  B. Innominate bones
+  C. Humerus 
+  D. Tibia
+
+91. One of the following is not a gram-negative organism:
+  A. Klesiella pnuemonea
+  B. Neisseria gonorrhea 
+  C. Yersinia pest 
+  D. Streptococci pnuemoena
+
+92. The following are reasons for haemoglobin estimation except:
+  A. A patient suffered a long time fever 
+  B. When patient losses blood as a result of accident
+  C. A mother with post-partum hemorrhage 
+  D. Obesity 
+
+93. Training implies:
+  A. Going to school to acquire certificate
+  B. Learning a skill only
+  C. A way of preparing someone to acquire knowledge and skills 
+  D. Act of learning a job
+
+94. An important attribute of training objective is:
+  A. Irrelevant 
+  B. Non specific 
+  C. Ambiguous 
+  D. Realistic 
+
+95. A standard job description consist of the following except:
+  A. Job summary
+  B. Qualification 
+  C. Duties 
+  D. Curriculum vitae 
+
+96. Coverage, outcome and efficiency are features usually measured at what level of management:
+  A. Evaluation
+  B. Implementation 
+  C. Planning
+  D. Supervision 
+
+97. The function of management that is applicable at all levels of management in an organization is:
+  A. Organization 
+  B. Controlling 
+  C. Staffing 
+  D. Planning 
+
+98. The principle book of account is:
+  A. Cash book
+  B. Ledger
+  C. Journal 
+  D. Petty cash book 
+
+99. One of the following is not a book of account:
+  A. Trial balance 
+  B. Balance sheet
+  C. Allocation ledger 
+  D. Day book 
+
+100. The following are books of prime entry in accounting except:
+  A. Ledger 
+  B. Cash receipts book 
+  C. Cash book 
+  D. Journal 
+`;
+
+        const aiAnswerKey = ["D", "A", "C", "D", "B", "C", "B", "B", "D", "B", "A", "A", "D", "D", "A", "B", "B", "D", "C", "B", "B", "C", "D", "B", "A", "D", "A", "C", "B", "C", "C", "B", "A", "D", "C", "B", "A", "C", "B", "C", "D", "A", "C", "B", "C", "B", "C", "D", "D", "A", "C", "B", "D", "D", "B", "A", "C", "C", "C", "C", "B", "D", "B", "D", "A", "A", "B", "A", "A", "B", "D", "B", "C", "A", "B", "C", "D", "A", "D", "B", "D", "C", "D", "D", "A", "B", "D", "C", "A", "B", "D", "D", "C", "A", "D", "A", "D", "B", "C", "A"];
+
+        window.toggleAuthView = (v) => {
+            document.getElementById('loginView').classList.toggle('hidden-view', v !== 'login');
+            document.getElementById('registerView').classList.toggle('hidden-view', v !== 'register');
+        };
+
+        window.showToast = (msg, err = false) => {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `fixed top-5 right-5 px-6 py-3 rounded-lg text-white font-bold transition-opacity z-50 ${err ? 'bg-red-600' : 'bg-green-600'}`;
+            t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 3000);
+        };
+
+        window.checkDuplicates = async () => {
+            if (!dbClient) return;
+            const email = document.getElementById('regEmail').value.trim();
+            const matric = document.getElementById('regMatric').value.trim();
+
+            if (email) {
+                const { data } = await dbClient.from('students').select('email').eq('email', email).maybeSingle();
+                isEmailUnique = !data;
+                document.getElementById('emailWarnText').textContent = isEmailUnique ? "" : "This Email is already registered.";
+            } else {
+                isEmailUnique = true;
+                document.getElementById('emailWarnText').textContent = "";
+            }
+
+            if (matric) {
+                const { data } = await dbClient.from('students').select('admission_no').eq('admission_no', matric).maybeSingle();
+                isMatricUnique = !data;
+                document.getElementById('matricWarnText').textContent = isMatricUnique ? "" : "This Matric No is already registered.";
+            } else {
+                isMatricUnique = true;
+                document.getElementById('matricWarnText').textContent = "";
+            }
+            window.liveValidate();
+        };
+
+        window.debouncedCheck = () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                window.checkDuplicates();
+            }, 500); 
+        };
+
+        window.liveValidate = () => {
+            const p = document.getElementById('regPassword').value;
+            const c = document.getElementById('regConfirmPassword').value;
+            const btn = document.getElementById('regSubmitBtn');
+            const valid = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/.test(p);
+            const match = p === c && p !== '';
+            document.getElementById('pwdReqText').textContent = valid ? "" : "Min 6 chars, letters & numbers.";
+            document.getElementById('pwdMatchText').textContent = match ? "Match" : "No match";
+            
+            btn.disabled = !(valid && match && isEmailUnique && isMatricUnique);
+            btn.style.opacity = btn.disabled ? '0.5' : '1';
+        };
+
+        function parseExam() {
+            const qBlocks = rawExamText.trim().split(/\n(?=\d+\.)/);
+            return qBlocks.map((b, i) => {
+                const lines = b.split('\n').map(l => l.trim()).filter(l => l);
+                const opts = {};
+                lines.slice(1).forEach(l => {
+                    const m = l.match(/^([A-D])\.\s*(.*)/i);
+                    if (m) opts[m[1].toUpperCase()] = m[2];
+                });
+                return { question: lines[0].replace(/^\d+\.\s*/, ''), options: opts, ans: aiAnswerKey[i] || "A" };
+            });
+        }
+
+        window.renderCurrentQuestion = () => {
+            const q = parsedExamQuestions[currentQuestionIndex];
+            document.getElementById('currentQIndex').textContent = currentQuestionIndex + 1;
+            document.getElementById('questionText').textContent = q.question;
+            document.getElementById('progressBar').style.width = `${((currentQuestionIndex + 1) / parsedExamQuestions.length) * 100}%`;
+            
+            let html = "";
+            for (let key in q.options) {
+                const sel = studentAnswers[currentQuestionIndex] === key;
+                html += `<label class="block p-4 border rounded-xl cursor-pointer ${sel ? 'bg-blue-50 border-blue-500' : ''}">
+                    <input type="radio" name="opt" value="${key}" ${sel ? 'checked' : ''} onchange="window.recordAnswer('${key}')" class="mr-2">${key}. ${q.options[key]}
+                </label>`;
+            }
+            document.getElementById('optionsArea').innerHTML = html;
+            document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
+            const last = currentQuestionIndex === parsedExamQuestions.length - 1;
+            document.getElementById('nextBtn').classList.toggle('hidden-view', last);
+            document.getElementById('submitExamBtn').classList.toggle('hidden-view', !last);
+        };
+
+        window.recordAnswer = (k) => {
+            studentAnswers[currentQuestionIndex] = k;
+            window.renderCurrentQuestion();
+        };
+
+        window.navigateQuestion = (d) => {
+            currentQuestionIndex += d;
+            window.renderCurrentQuestion();
+        };
+
+        window.submitFinalExam = async () => {
+            if(!confirm("Are you sure you want to submit your exam?")) return;
+            clearInterval(timerInterval);
+            let score = 0;
+            parsedExamQuestions.forEach((q, i) => { if(studentAnswers[i] === q.ans) score++; });
+            
+            document.getElementById('examContentArea').innerHTML = `
+                <div class="text-center py-16">
+                    <p class="text-lg text-gray-500">Securely transmitting results...</p>
+                </div>
+            `;
+
+            const { error } = await dbClient.from('results').insert({ user_id: currentUserId, admission_no: currentStudentData.admission_no, score: score, total_questions: parsedExamQuestions.length });
+            if(error) return window.showToast("Error saving results", true);
+            
+            localStorage.removeItem(`cbt_exam_end_${currentUserId}`);
+            localStorage.removeItem(`cbt_answers_${currentUserId}`);
+            
+            document.getElementById('examContentArea').innerHTML = `
+                <div class="text-center py-16">
+                    <h2 class='text-center text-3xl font-bold text-green-600 mb-4'>Exam Submitted Successfully</h2>
+                    <p class="mb-8">Your responses have been recorded.</p>
+                    <button onclick="window.logoutSession()" class="px-8 py-3 bg-blue-600 text-white rounded-xl">Secure Logout</button>
+                </div>
+            `;
+        };
+
+        window.logoutSession = async () => {
+            clearInterval(timerInterval);
+            if(dbClient) await dbClient.auth.signOut();
+            window.location.reload();
+        };
+
+        window.startCountdownTimer = (endTime) => {
+            timerInterval = setInterval(() => {
+                const now = new Date().getTime();
+                const dist = endTime - now;
+                if (dist <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Time is up! Submitting exam.");
+                    window.submitFinalExam();
+                    return;
+                }
+                const h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((dist % (1000 * 60)) / 1000);
+                document.getElementById('timerDisplay').textContent = `${h < 10 ? '0'+h : h}:${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+            }, 1000);
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('regPassword').oninput = window.liveValidate;
+            document.getElementById('regConfirmPassword').oninput = window.liveValidate;
+            document.getElementById('regEmail').addEventListener('input', window.debouncedCheck);
+            document.getElementById('regMatric').addEventListener('input', window.debouncedCheck);
+            
+            if(window.supabase) {
+                dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+
+            document.getElementById('registerForm').onsubmit = async (e) => {
+                e.preventDefault();
+                if(!dbClient) return window.showToast("Database error", true);
+                
+                const btn = document.getElementById('regSubmitBtn');
+                btn.textContent = "Processing..."; btn.disabled = true;
+
+                try {
+                    const email = document.getElementById('regEmail').value.trim();
+                    const pwd = document.getElementById('regPassword').value;
+                    const { data, error: aErr } = await dbClient.auth.signUp({ email, password: pwd });
+                    if(aErr) throw aErr;
+                    
+                    const { error: dbErr } = await dbClient.from('students').insert({ 
+                        user_id: data.user.id, 
+                        first_name: document.getElementById('regFirstName').value.trim(), 
+                        last_name: document.getElementById('regLastName').value.trim(), 
+                        admission_no: document.getElementById('regMatric').value.trim(),
+                        email: email 
+                    });
+                    if(dbErr) throw dbErr;
+                    
+                    window.showToast("Registered! Please login.");
+                    document.getElementById('registerForm').reset();
+                    window.liveValidate();
+                    window.toggleAuthView('login');
+                } catch (error) {
+                    window.showToast(error.message, true);
+                    btn.textContent = "Complete Registration"; btn.disabled = false;
+                }
+            };
+
+            // NEW: Added interception for multiple attempts
+            document.getElementById('loginForm').onsubmit = async (e) => {
+                e.preventDefault();
+                
+                const btn = document.getElementById('loginSubmitBtn');
+                btn.textContent = "Authenticating..."; btn.disabled = true;
+
+                if(!dbClient) {
+                    btn.textContent = "Start Exam"; btn.disabled = false;
+                    return window.showToast("Database error", true);
+                }
+                
+                try {
+                    const { data, error } = await dbClient.auth.signInWithPassword({
+                        email: document.getElementById('loginEmail').value.trim(),
+                        password: document.getElementById('loginPassword').value
+                    });
+                    if(error) throw new Error("Invalid credentials");
+                    
+                    currentUserId = data.user.id;
+
+                    // THE NEW CHECK: Verify if the user already submitted the exam
+                    const { data: existingResult } = await dbClient.from('results').select('id').eq('user_id', currentUserId).maybeSingle();
+                    if (existingResult) {
+                        await dbClient.auth.signOut(); // Force log them out
+                        throw new Error("Access Denied: You have already submitted this exam.");
+                    }
+
+                    const { data: sData, error: sErr } = await dbClient.from('students').select('*').eq('user_id', currentUserId).single();
+                    if(sErr) throw new Error("Error fetching profile");
+                    
+                    currentStudentData = sData;
+                    parsedExamQuestions = parseExam();
+                    
+                    document.getElementById('authContainer').classList.add('hidden-view');
+                    document.getElementById('bodyElement').classList.replace('items-center', 'items-start');
+                    document.getElementById('bodyElement').classList.remove('p-4');
+                    document.getElementById('examContainer').classList.remove('hidden-view');
+                    document.getElementById('studentInfoDisplay').textContent = `${sData.first_name} ${sData.last_name} | ${sData.admission_no}`;
+                    
+                    let endTime = localStorage.getItem(`cbt_exam_end_${currentUserId}`);
+                    if (!endTime || new Date().getTime() > endTime) {
+                        endTime = new Date().getTime() + (2 * 60 * 60 * 1000);
+                        localStorage.setItem(`cbt_exam_end_${currentUserId}`, endTime);
+                    }
+                    const savedAns = localStorage.getItem(`cbt_answers_${currentUserId}`);
+                    if(savedAns) studentAnswers = JSON.parse(savedAns);
+
+                    window.startCountdownTimer(endTime);
+                    window.renderCurrentQuestion();
+
+                } catch (error) {
+                    window.showToast(error.message, true);
+                    btn.textContent = "Start Exam"; btn.disabled = false;
+                }
+            };
+        });
+    </script>
+</body>
+</html>

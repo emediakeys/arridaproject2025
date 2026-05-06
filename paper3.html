@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CBT Portal - Live Exam Environment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .hidden-view { display: none !important; }
+        
+        /* Custom Scrollbar for the Question Grid */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 transition-all duration-500" id="bodyElement">
+
+    <!-- Global Toast Notification -->
+    <div id="toast" class="fixed top-5 right-5 px-6 py-3 rounded-lg shadow-lg text-white font-bold opacity-0 transition-opacity duration-300 pointer-events-none z-50 bg-blue-600"></div>
+
+    <!-- ========================================== -->
+    <!-- CUSTOM SLEEK MODAL                         -->
+    <!-- ========================================== -->
+    <div id="customModal" class="hidden-view fixed inset-0 bg-gray-900/60 z-[100] flex items-center justify-center backdrop-blur-sm px-4 transition-all duration-300">
+        <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 md:p-8 transform transition-all scale-100 opacity-100">
+            <div id="modalIconContainer" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5">
+                <!-- Icon injected via JS -->
+            </div>
+            <h3 id="modalTitle" class="text-xl md:text-2xl font-extrabold text-center text-gray-900 mb-2"></h3>
+            <p id="modalMessage" class="text-center text-gray-500 mb-8 font-medium"></p>
+            <div id="modalButtons" class="flex gap-3 justify-center">
+                <!-- Buttons injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- AUTHENTICATION CONTAINER                   -->
+    <!-- ========================================== -->
+    <div id="authContainer" class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+        <div id="loginView">
+            <h2 class="text-2xl font-bold text-center mb-8">Paper III Login</h2>
+            <form id="loginForm" class="space-y-5">
+                <input type="email" id="loginEmail" required placeholder="Email" class="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="loginPassword" required placeholder="Password" class="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" id="loginSubmitBtn" class="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-lg">Start Paper III</button>
+            </form>
+            <p class="mt-6 text-center text-sm">Don't have an account? <button onclick="window.toggleAuthView('register')" type="button" class="text-blue-600 font-bold">Register here</button></p>
+        </div>
+
+        <div id="registerView" class="hidden-view">
+            <h2 class="text-2xl font-bold text-center mb-6">Register</h2>
+            <form id="registerForm" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" id="regFirstName" placeholder="First Name" required class="px-3 py-2 border rounded-lg">
+                    <input type="text" id="regLastName" placeholder="Last Name" required class="px-3 py-2 border rounded-lg">
+                </div>
+                <input type="text" id="regMatric" placeholder="Matric No" required class="w-full px-3 py-2 border rounded-lg">
+                <p id="matricWarnText" class="text-xs text-red-500 font-medium"></p>
+                <input type="email" id="regEmail" placeholder="Email" required class="w-full px-3 py-2 border rounded-lg">
+                <p id="emailWarnText" class="text-xs text-red-500 font-medium"></p>
+                <input type="password" id="regPassword" placeholder="Password" required class="w-full px-3 py-2 border rounded-lg">
+                <input type="password" id="regConfirmPassword" placeholder="Confirm Password" required class="w-full px-3 py-2 border rounded-lg">
+                <p id="pwdReqText" class="text-xs text-red-500 font-medium"></p>
+                <p id="pwdMatchText" class="text-xs font-medium"></p>
+                <button type="submit" id="regSubmitBtn" disabled class="w-full py-3 bg-green-600 text-white font-bold rounded-xl opacity-50 cursor-not-allowed transition-all">Complete Registration</button>
+            </form>
+            <p class="mt-4 text-center text-sm">Already registered? <button onclick="window.toggleAuthView('login')" type="button" class="text-blue-600 font-bold">Log in</button></p>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- EXAM INTERFACE CONTAINER                   -->
+    <!-- ========================================== -->
+    <div id="examContainer" class="hidden-view w-full h-screen flex flex-col bg-gray-50 absolute inset-0">
+        <!-- Header -->
+        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
+            <div>
+                <h2 class="text-xl font-bold">Paper III Examination</h2>
+                <p id="studentInfoDisplay" class="text-sm font-medium text-blue-600">Loading...</p>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="bg-blue-50 px-5 py-2 rounded-xl border border-blue-200">
+                    <span id="timerDisplay" class="text-2xl font-mono font-bold text-blue-600 tracking-tight">00:40:00</span>
+                </div>
+                <button onclick="window.requestLogout()" class="text-gray-500 hover:text-red-600 font-bold transition">Save & Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Body (Grid Layout) -->
+        <main class="flex-grow p-4 md:p-6 overflow-y-auto">
+            <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-4 gap-6 h-full items-start">
+                
+                <!-- Exam Area (Left side) -->
+                <div class="lg:col-span-3 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-10 relative h-full">
+                    <div class="mb-6 flex justify-between items-center border-b pb-6 shrink-0">
+                        <h3 class="text-lg font-bold">Question <span id="currentQIndex" class="text-blue-600">1</span> of <span id="totalQs">100</span></h3>
+                        <div class="w-1/2 bg-gray-100 rounded-full h-3">
+                            <div id="progressBar" class="bg-blue-600 h-full rounded-full transition-all duration-300" style="width: 1%"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="examContentArea" class="flex-grow flex flex-col">
+                        <p id="questionText" class="text-xl font-semibold mb-8 text-gray-800 leading-relaxed"></p>
+                        <div id="optionsArea" class="space-y-3 flex-grow"></div>
+                        
+                        <div class="flex justify-between items-center pt-8 border-t mt-8 shrink-0">
+                            <button id="prevBtn" onclick="window.navigateQuestion(-1)" class="px-6 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl disabled:opacity-50 hover:bg-gray-200 transition">Previous</button>
+                            <button id="nextBtn" onclick="window.navigateQuestion(1)" class="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md transition">Next</button>
+                            <button id="submitExamBtn" onclick="window.requestFinalSubmit()" class="hidden-view px-8 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-md transition">Submit Final Exam</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigator Area (Right side) -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-6 flex flex-col max-h-[85vh]">
+                    <h3 class="font-extrabold text-gray-800 mb-4 shrink-0">Question Navigator</h3>
+                    
+                    <!-- Legend -->
+                    <div class="flex items-center justify-between mb-6 text-xs font-semibold text-gray-600 shrink-0 bg-gray-50 p-3 rounded-lg border">
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-green-500 rounded-sm"></div> Answered</div>
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-white border border-gray-300 rounded-sm"></div> Pending</div>
+                    </div>
+                    
+                    <!-- Number Grid -->
+                    <div id="questionGrid" class="grid grid-cols-5 gap-2 overflow-y-auto custom-scroll pr-2 pb-4">
+                        <!-- Boxes injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT LOGIC & SUPABASE                -->
+    <!-- ========================================== -->
+    <script>
+        let dbClient; 
+        let currentUserId = null;
+        let currentStudentData = null;
+        let currentQuestionIndex = 0;
+        let timerInterval;
+        let studentAnswers = {};
+        let parsedExamQuestions = [];
+
+        let isEmailUnique = true;
+        let isMatricUnique = true;
+        let debounceTimer;
+
+        const SUPABASE_URL = 'https://adhbsmbmeigfcieofrkq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaGJzbWJtZWlnZmNpZW9mcmtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODc1ODcsImV4cCI6MjA4MTI2MzU4N30.wpOMUUJ2PcEJbuHHFbG-gUjVoxttnxA5UxZJttChJ1s';
+
+        // RAW EXAM TEXT (PAPER III)
+        const rawExamText = `
+1. The statement “Any collection of components that work together to achieve a common objective” best describe 
+  A. System. 
+  B. Health System. 
+  C. Information. 
+  D. Management. 
+
+2. Meaningless point in space and time, without reference to its surroundings is referred to 
+  A. Knowledge. 
+  B. Data. 
+  C. Information. 
+  D. Wisdom. 
+
+3. Which of the following best describe information 
+  A. Just Data collection. 
+  B. Understanding of the relationship between pieces of data. 
+  C. Data with reference to its context. 
+  D. Facts and figure without context. 
+
+4. The ultimate objective of health management information system is to improve health through 
+  A. Evidence based decision making. 
+  B. Providing management tool. 
+  C. Option appraisal. 
+  D. Quality control 
+
+5. Health Information Technology is used in a hospital for all of the following aspects except 
+  A. Knowledge Management 
+  B. Decision making. 
+  C. Communication. 
+  D. Clinical management. 
+  E. Sterilization. 
+
+6. Telemedicine, Tele-radiology, Patient e-mail and Presentation are related to: 
+  A. Communication. 
+  B. Decision Support. 
+  C. Knowledge Management. 
+  D. Sterilization. 
+
+7. A manger could use information for all of the following except 
+  A. Health policy formulation. 
+  B. Program planning. 
+  C. Resource mobilization and allocation. 
+  D. Running a biochemical in micro analyzer. 
+
+8. The Central level (Ministry of Health) use health information mostly for 
+  A. Health policy formulation. 
+  B. Implementation of BHU services. 
+  C. Treatment of patient. 
+  D. Billing. 
+
+9. Which one of the following records pertaining to the health is more comprehensive 
+  A. Electronic Medical Record (EMR). 
+  B. Electronic Health Record (HER). 
+  C. Computerized patient records (CPRs).  
+  D. Personal Health record (PHR). 
+
+10. All of the following are limitations paper record except 
+  A. The handwriting is unreadable. 
+  B. Expensive to copy. 
+  C. Easy to analyze. 
+  D. Missing of important documents. 
+
+11. Field of management that focuses on designing and implementing computer based information use by management is called 
+  A. Marketing management. 
+  B. Health management Information System. 
+  C. Operations management. 
+  D. Management information system. 
+
+12. The organizational communication network that use internet technology and allows authorized user inside the organization to communicate with each other with in the institute is called 
+  A. Intranet. 
+  B. Extranet. 
+  C. Video-conference. 
+  D. E-mail. 
+
+13. The purpose of decision support systems is to: 
+  A. Replace a manager’s judgment during the decision-making process. 
+  B. Provide a predefined sequence of analysis during the process of problem solving. 
+  C. Provide interactive assistance during the process of problem solving. 
+  D. Automate a manager’s decision-making process. 
+
+14. Routine HMIS data collection methods consist of: 
+  A. Health Unit data collection. 
+  B. Community data collection. 
+  C. Civil Registration. 
+  D. All of the above. 
+
+15. HMIS data like; service delivery records, planning and management of main services provided, aggregated reports, resources management records indicate which of the following? 
+  A. Patient/Client management instruments. 
+  B. Health unit management Instruments. 
+  C. System management instruments. 
+  D. None of the above. 
+
+16. Renovation the data among the independent parties in health care system to ensure administrative, political and management decision are based on best available information called 
+  A. Data Transmission. 
+  B. Data Process. 
+  C. Data analysis. 
+  D. Data interpretation. 
+
+17. Data transmission between actors and consumers at the same level represent the 
+  A. Vertical transmission. 
+  B. Horizontal transmission. 
+  C. Dissemination of message. 
+  D. Line transmission. 
+
+18. The routine HMIS should support______________ type of Management Function 
+  A. Client/Patient Perspectives. 
+  B. Health Unit Management Perspective. 
+  C. Organizational/ Health System Management Perspective. 
+  D. All of the above. 
+
+19. ________________Provide the skeletal for population based health and their supporting information system programs 
+  A. Epidemiology. 
+  B. Program content. 
+  C. Research. 
+  D. Policy. 
+
+20. Which type of telemedicine requires the presence of both parties at the same time and a communications link between them that allows a real-time interaction to take place 
+  A. Real Time Telemedicine. 
+  B. Store-and-Forward. 
+  C. Synchronous. 
+  D. A & C are correct. 
+
+21. The following registers are necessary for data collection in the health facility: 
+  A. Laboratory register 
+  B. Family planning register  
+  C. Out-patient register  
+  D. TBA labour and delivery register 
+
+22. The statistics of events relating to birth, death, marriage and the likes are best referred to as: 
+  A. Health statistics 
+  B. Biostatistics  
+  C. Vital statistics  
+  D. Demography statistics  
+
+23. Allocation of subjects to experiment or control group as to reduce element of bias is: 
+  A. Randomization  
+  B. Manipulation  
+  C. Experimentation 
+  D. Sampling  
+
+24. The following vaccine should not be frozen except: 
+  A. Pentavalent vaccine 
+  B. Tetanus toxoid vaccine 
+  C. Hepatitis B vaccine 
+  D. Oral polio vaccine  
+
+25. Vital statistics deals with the record of: 
+  A. Death 
+  B. Sickness  
+  C. Out-patient record 
+  D. Number of health facilities  
+
+26. The following are importance of proper specimen collection except: 
+  A. To avoid contamination of the specimen 
+  B. To ensure proper diagnosis 
+  C. To ensure proper labeling of specimen 
+  D. To ensure proper layout of the laboratory equipment  
+
+27. One of the following does not affect population: 
+  A. Increase in birth rate 
+  B. Immigration  
+  C. Decrease in death rate 
+  D. Census 
+
+28. A direct method of aasessing child’s nutritional status is: 
+  A. Breast feeding pattern  
+  B. Pattern of weight gain 
+  C. Family food budget  
+  D. Mother’s level of education 
+
+29. Anthropods of public health importance are generally known as: 
+  A. Insects 
+  B. Vectors  
+  C. Rodents  
+  D. Mosquitoes  
+
+30. The unit for the measurement of noise is: 
+  A. Barometer  
+  B. Dosimeter 
+  C. Decibel  
+  D. Sound level metre  
+
+31. Send waste of food, vegetable and animal products are called: 
+  A. Rubbish  
+  B. Trash 
+  C. Carbage 
+  D. Waste  
+
+32. Which of the following obstetrics and emergency drugs is no longer in use because of its effect on blood pressure: 
+  A. Ergometrine 
+  B. Misoprostol  
+  C. Oxytocin 
+  D. Magnesium sulphate  
+
+33. The presence of one of the following in a pregnant women is not indicative of pre-eclampsia: 
+  A. Protein in urine 
+  B. Raised blood pressure 
+  C. Glucose in urine 
+  D. Bilateral pitting pedal oedema 
+
+34. Play in the second stage of labour could be caused by following except: 
+  A. Pre-eclampsia 
+  B. Poor material effort 
+  C. Cord around the neck 
+  D. Compound presentation 
+
+35. Anti-partum haemorrhage is caused by the following except: 
+  A. Placenta previa 
+  B. Uterine trauma 
+  C. Placenta abruption 
+  D. Abnormal presentation  
+
+36. The hormone that initiates the production of breast milk in the body is: 
+  A. Prolactin 
+  B. Oxytocin  
+  C. Andrenatin  
+  D. Progesterone  
+
+37. The nutritional status of a child can be accessed directly by all the following except: 
+  A. Weighing the child 
+  B. Measuring the mid-upper arm circumference (MUAC) 
+  C. Pattern of breast feeding  
+  D. General physical examination  
+
+38. In management of Marasmus in child the mother is encouraged to feed the child with: 
+  A. Rice, maize, beans, plantain, groundnut 
+  B. Beans, yam, rice, meat and carrot 
+  C. Rice, porridge, potatoes, vegetable 
+  D. Millet, vegetable, beans, fish and fruits 
+
+39. Exclusive breastfeeding (EBF) means: 
+  A. Feeding child on breast milk only for the first six months 
+  B. Feeding child on breast milk only for the first 2 – 3 months 
+  C. Feeding child on breast milk only for the first one year of life 
+  D. Feeding child on breast milk only for five months 
+
+40. A child is in grave danger if: 
+  A. He/she is feeding well  
+  B. Haemoglobin is above 12g/dl 
+  C. Child has moderate anaemia 
+  D. Child has stiff neck  
+
+41. The following are importance of growth monitoring except: 
+  A. Is to monitor good nutrition 
+  B. Monitoring weight gain 
+  C. Identifying children at risk of malnutrition 
+  D. Is to monitor his/her mother nutrition status  
+
+42. One of the following is not the scope of occupational health services: 
+  A. Proving corporation and provision of accommodation for workers 
+  B. Pre-employment medical examination 
+  C. Control of work environment  
+  D. Control of work place effluent to protect the community for hazardous waste  
+
+43. The following are the causes of industrial accidents except: 
+  A. Poor layout and construction of factories 
+  B. Accidental injuries 
+  C. Poor legislation  
+  D. Faulty machine  
+
+44. Medical conditions to observe when conducting physical examination for school pupils include the following except: 
+  A. Tinea capatis  
+  B. Conjunctivitis  
+  C. Nasal discharge  
+  D. Arthritis 
+
+45. School services can be evaluated through the following except: 
+  A. Through interviewing the market women 
+  B. Through interviewing the teacher 
+  C. By direct observation  
+  D. Use of existing records  
+
+46. The causative agent of plague is: 
+  A. Plague virus  
+  B. Trepanoma palladium 
+  C. Yersina pesti  
+  D. Chlamydia trachomalis  
+
+47. One of the following is not a helminthic disease: 
+  A. Paragonomiasis 
+  B. Bilhaziasis  
+  C. Onchocerciasis  
+  D. Amoebiasis  
+
+48. The features of non-communicable disease exclude: 
+  A. Multi factorial origin 
+  B. Long period of care 
+  C. Permanent residual effects 
+  D. Must be of a pathogenic cause  
+
+49. Male circumcision is: 
+  A. Widening of the urethral orifice 
+  B. Removal of the glands of the penis 
+  C. Removal of prepuce of the penis 
+  D. Removal of the clitoris  
+
+50. Which of these is not a symptom of snake bite: 
+  A. Deformity  
+  B. Pain 
+  C. Fainting/dizziness 
+  D. Difficult breathing  
+
+51. The following are emergency condition except: 
+  A. Shock  
+  B. Dysentery 
+  C. Asphysia  
+  D. 3rd degree burns 
+
+52. One of the following is not a type of fracture: 
+  A. Green stick fracture 
+  B. Contused fracture 
+  C. Depressed fracture 
+  D. Pathological fracture  
+
+53. All are sign and symptoms of cataract except: 
+  A. Clouded vision  
+  B. Blurred vision 
+  C. Difficulty with vision at night  
+  D. Itching of the conjunctive 
+
+54. The following are the causes of blindness except: 
+  A. Using dark glasses to protect the eyes 
+  B. Diabetes 
+  C. Macular degeneration 
+  D. Traumatic injury to the eye 
+
+55. One of the following is not the health benefits of exercise in the elderly: 
+  A. Improvement of cardio respiratory functions 
+  B. Increase the muscle strength and flexibility of joints 
+  C. Increased sociability and social interaction 
+  D. Provide financial support  
+
+56. Social problems of the aged include all but one: 
+  A. Reduced mobility 
+  B. Loneliness 
+  C. Poverty  
+  D. Poor housing  
+
+57. The following are common handicapping conditions that can be found in the community except: 
+  A. Mental retardation 
+  B. Malnutrition 
+  C. Sickle cell disease  
+  D. Deafness  
+
+58. All the steps that can be taken to reduce incidence of handicapping condition in the community except: 
+  A. Immunization  
+  B. Good management of labour 
+  C. Rejection of the handicaps by the families 
+  D. Pre-employment and periodic medical examination for workers 
+
+59. Which of the following is a deficiency disease of ascabic acid? 
+  A. Pellagra 
+  B. Beri–beri 
+  C. Scurry 
+  D. Rockette 
+
+60. All of the following factors can influence individual needs of nutrients except. 
+  A. Physiologic condition 
+  B. Physical activities 
+  C. Growth and maturity 
+  D. Educational qualification 
+
+61. One of the following is not a function of the family. 
+  A. Sexual regulation function 
+  B. Economic support 
+  C. Socialization function 
+  D. Mechanical function 
+
+62. The main unit of socialization of a child is. 
+  A. School 
+  B. Society 
+  C. Family 
+  D. Mosque/church 
+
+63. An attitude of a person or reaction to others is. 
+  A. Behavior 
+  B. Psychology 
+  C. Sociology 
+  D. Personality 
+
+64. Psychologically, a CHEW is not likely to each confidence of a client through 
+  A. Maintaining privacy 
+  B. Neglect of client 
+  C. Reassurance 
+  D. Professionally dressed 
+
+65. PHC is an essential care because. 
+  A. Uses available resources 
+  B. Uses appropriate technology 
+  C. Encourage community participation 
+  D. It takes care of the basic health needs of the population. 
+
+66. The fat soluble vitamins amongst under listed groups are: 
+  a. B1. B6. and B12. 
+  b. A. D. E. K. 
+  c. A. C. D. E. 
+  d. D. E. K. C. 
+
+67. Which of the following is not an objective in use of standing orders. 
+  A. Managing cases 
+  B. Illegal backing 
+  C. Uniformity care 
+  D. Increasing learning ability. 
+
+68. The supply of blood to the heart is through: 
+  A. Carotid artery 
+  B. Pulmonary artery 
+  C. Coronary artery 
+  D. Systemic vein 
+
+69. The anterior lobe of the pituitary gland is also called. 
+  A. Adenohypophysis 
+  B. Hypophysis cerebrei 
+  C. Neurohypophysis 
+  D. Hypothalamus 
+
+70. The electron microscopes are used to examine which one of the following organisms: 
+  A. Algae 
+  B. Rickettsia 
+  C. Fungi 
+  D. Virus 
+
+71. The following are features of good leadership except: 
+  A. Continuity 
+  B. Consistency 
+  C. Conspiracy 
+  D. Commitment 
+
+72. The financial documents issued to a consumer on supply of goods and services is. 
+  A. Voucher 
+  B. Receipt 
+  C. Invoice 
+  D. Cheque 
+
+73. The following are records/data collection forms at the community level except: 
+  A. VVHWs/TBAs pictorial record of work. 
+  B. Clinic master card 
+  C. Community demographic profile 
+  D. Community family planning profile 
+
+74. The number of death in mothers due to pregnancy. Labour and delivery preparation in a year of thousand of the population of the total birth (live/still) is. 
+  A. Infant mortality rate 
+  B. Maternal morbidity rate 
+  C. Maternal mortality rate 
+  D. Still birth rate 
+
+75. The branch of statistics that deals with life events is: 
+  A. Physical statistics 
+  B. Population statistics 
+  C. Vital statistics 
+  D. Social statistics 
+
+76. Which of the following books is not used in accounting in PHC. 
+  A. Receipt 
+  B. Stock account book 
+  C. Voucher sheet 
+  D. Cash books. 
+
+77. Which one of the following can be used to assess training need of a staff. 
+  A. Lecture 
+  B. Testing skill 
+  C. Post test 
+  D. Rationalization 
+
+78. The process of determining a disorder by a community health practitioner is: 
+  A. Examination 
+  B. History taking 
+  C. Diagnosis 
+  D. Screening 
+
+79. Who amongst the under listed person developed the oral polio–vaccine  
+  A. Jonas Salk 
+  B. Albert sabin 
+  C. Edward Jenner 
+  D. Louis pasteur 
+
+80. The type of immunity acquired through sub–clinical infection in which immunity is against the specific infection is. 
+  A. Natural passive immunity 
+  B. Active natural acquired immunity 
+  C. Passive natural acquired immunity 
+  D. Passive artificial immunity 
+
+81. One of the following is not a function of the skeletal system 
+  A. Provide muscle attachment 
+  B. Forms the body frame 
+  C. Aids in blood circulation 
+  D. Protect delicate ogans 
+
+82. The simple hardening and narrowing of an artery is called. 
+  A. Thrombosis 
+  B. Embolism 
+  C. Arterosclerosis 
+  D. Atherosclerosis 
+
+83. In PHC management. The process of selecting goals and objectives and determine how to achieve them is. 
+  A. Planning 
+  B. Directing 
+  C. Organizing 
+  D. Controlling. 
+
+84. The principle of accounting methods all but one 
+  A. Business entry concept 
+  B. Accurate concept 
+  C. Costs concept 
+  D. Health concept 
+
+85. The most appropriate definition of surveillance in HMIS is. 
+  A. The use of survey tools to examine community. 
+  B. Continuous collection of data on a particular disease condition In a population 
+  C. The survey carried out in a community to identify their health needs  
+  D. The survey on manpower needs of a facility. 
+
+86. The level of health condition In a community can be measured by the following: 
+  A. Health policy indicator 
+  B. Health status indicator 
+  C. Socio–economic indicator 
+  D. Community survey by National bodies and NGOs. 
+
+87. The characteristics of the population units are called. 
+  A. Data. 
+  B.. Statistics. 
+  C. Variable. 
+  D. Number. 
+
+88. The two types of variables are_______and_______ 
+  A. Discrete and continuous 
+  B. Datum and Discrete. 
+  C. Continuous and data. 
+  D. Data and Datum. 
+
+89. A fraction or portion of a population is referred to as ______ 
+  A. Population. 
+  B. Portion. 
+  C. Sample. 
+  D. Size.  
+
+90. Purposive sampling is also referred to as ______ sampling. 
+ A. Judgemental. 
+  B. Simple random. 
+  C. Snowball. 
+  D. Systematic. 
+
+91. All are serious developmental disorders in autism except: 
+  A. Social interaction 
+  B. Cognitive enhancement 
+  C. Ability to communicate 
+  D. Severity of variables 
+
+92. One of the following is a caused of autism. 
+  A. Mentally retarded mother 
+  B. Environmental economy 
+  C. Parental societal group 
+  D. Metabolic imbalance 
+
+93. All the following are signs and symptoms of autism except one: 
+  A. Lapping movement. 
+  B. Seizure disorder 
+  C. Sleeping habit 
+  D. Eating habit 
+
+94. One among the following is a management of autism: 
+  A. Anger management 
+  B. Analgesic only 
+  C. Antibiotics only 
+  D. Penebarbitone daily 
+
+95. A medical condition with difference in blood development and brain activity that affect attention is called: 
+  A. AAHD 
+  B. ADHD 
+  C. ADDH 
+  D. HDAD 
+
+96. All are causes of hypertension but one is not: 
+  A. Heredity 
+  B. Lifestyle  
+  C. Imbalance diet 
+  D. Alcohol abuse 
+
+97.  A condition known as affecting movement and maintain imbalance is: 
+  A. Cerebral palsy 
+  B. Motor movement 
+  C. Good posture 
+  D. Motor neural 
+
+98. Cerebral palsy happen before a child is: 
+  A. Wean 
+  B. Born  
+  C. Sick  
+  D. Infected 
+
+99. What is a developmental disability significantly affecting verbal and nonverbal communication? 
+  A. Autism  
+  B. Cerebrum  
+  C. Cerebral palsy 
+  D. Cliff 
+
+100. Body building food include the following except: 
+  A. fish  
+  B. Beans  
+  C. Meat  
+  D. Sweet potato  
+`;
+
+        // THE AI ANSWER KEY (PAPER III)
+        const aiAnswerKey = [
+            "A", "B", "C", "A", "E", "A", "D", "A", "B", "C",
+            "D", "A", "C", "D", "B", "A", "B", "D", "A", "D",
+            "C", "C", "A", "D", "A", "D", "D", "B", "B", "C",
+            "A", "D", "C", "A", "D", "A", "C", "A", "A", "D",
+            "D", "A", "B", "A", "C", "C", "C", "D", "C", "A",
+            "B", "B", "D", "A", "D", "A", "B", "C", "C", "D",
+            "D", "C", "D", "B", "D", "B", "B", "C", "A", "D",
+            "C", "C", "B", "C", "C", "B", "B", "C", "B", "B",
+            "C", "D", "A", "D", "B", "B", "C", "A", "C", "A",
+            "B", "D", "D", "A", "B", "A", "A", "B", "A", "D"
+        ];
+
+        /* --- UI HELPERS --- */
+        window.toggleAuthView = (v) => {
+            document.getElementById('loginView').classList.toggle('hidden-view', v !== 'login');
+            document.getElementById('registerView').classList.toggle('hidden-view', v !== 'register');
+        };
+
+        window.showToast = (msg, err = false) => {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `fixed top-5 right-5 px-6 py-3 rounded-lg text-white font-bold transition-opacity z-50 ${err ? 'bg-red-600' : 'bg-green-600'}`;
+            t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 3000);
+        };
+
+        window.showModal = (type, title, message, confirmText, onConfirm) => {
+            const modal = document.getElementById('customModal');
+            const iconContainer = document.getElementById('modalIconContainer');
+            const titleEl = document.getElementById('modalTitle');
+            const messageEl = document.getElementById('modalMessage');
+            const buttonsEl = document.getElementById('modalButtons');
+
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            modal.classList.remove('hidden-view');
+
+            if (type === 'confirm') {
+                iconContainer.className = 'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 bg-yellow-100 text-yellow-600';
+                iconContainer.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                
+                buttonsEl.innerHTML = `
+                    <button onclick="window.closeModal()" class="flex-1 py-3 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition">Cancel</button>
+                    <button id="modalConfirmBtn" class="flex-1 py-3 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md transition">${confirmText}</button>
+                `;
+            } else if (type === 'alert') {
+                iconContainer.className = 'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 bg-red-100 text-red-600';
+                iconContainer.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                
+                buttonsEl.innerHTML = `
+                    <button id="modalConfirmBtn" class="w-full py-3 px-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-md transition">${confirmText}</button>
+                `;
+            }
+
+            document.getElementById('modalConfirmBtn').onclick = () => {
+                window.closeModal();
+                if(onConfirm) onConfirm();
+            };
+        };
+
+        window.closeModal = () => {
+            document.getElementById('customModal').classList.add('hidden-view');
+        };
+
+        /* --- VALIDATION --- */
+        window.checkDuplicates = async () => {
+            if (!dbClient) return;
+            const email = document.getElementById('regEmail').value.trim();
+            const matric = document.getElementById('regMatric').value.trim();
+
+            if (email) {
+                const { data } = await dbClient.from('students').select('email').eq('email', email).maybeSingle();
+                isEmailUnique = !data;
+                document.getElementById('emailWarnText').textContent = isEmailUnique ? "" : "This Email is already registered.";
+            } else {
+                isEmailUnique = true;
+                document.getElementById('emailWarnText').textContent = "";
+            }
+
+            if (matric) {
+                const { data } = await dbClient.from('students').select('admission_no').eq('admission_no', matric).maybeSingle();
+                isMatricUnique = !data;
+                document.getElementById('matricWarnText').textContent = isMatricUnique ? "" : "This Matric No is already registered.";
+            } else {
+                isMatricUnique = true;
+                document.getElementById('matricWarnText').textContent = "";
+            }
+            window.liveValidate();
+        };
+
+        window.debouncedCheck = () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => window.checkDuplicates(), 500); 
+        };
+
+        window.liveValidate = () => {
+            const p = document.getElementById('regPassword').value;
+            const c = document.getElementById('regConfirmPassword').value;
+            const btn = document.getElementById('regSubmitBtn');
+            const valid = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/.test(p);
+            const match = p === c && p !== '';
+            document.getElementById('pwdReqText').textContent = valid ? "" : "Min 6 chars, letters & numbers.";
+            document.getElementById('pwdMatchText').textContent = match ? "Match" : "No match";
+            
+            btn.disabled = !(valid && match && isEmailUnique && isMatricUnique);
+            btn.style.opacity = btn.disabled ? '0.5' : '1';
+        };
+
+        /* --- EXAM LOGIC --- */
+        function parseExam() {
+            const qBlocks = rawExamText.trim().split(/\n(?=\d+\.)/);
+            return qBlocks.map((b, i) => {
+                const lines = b.split('\n').map(l => l.trim()).filter(l => l);
+                const opts = {};
+                lines.slice(1).forEach(l => {
+                    const m = l.match(/^([A-Ea-e])\.\s*(.*)/i);
+                    if (m) opts[m[1].toUpperCase()] = m[2];
+                });
+                return { question: lines[0].replace(/^\d+\.\s*/, ''), options: opts, ans: aiAnswerKey[i] || "A" };
+            });
+        }
+
+        window.renderCurrentQuestion = () => {
+            const q = parsedExamQuestions[currentQuestionIndex];
+            document.getElementById('currentQIndex').textContent = currentQuestionIndex + 1;
+            document.getElementById('questionText').textContent = q.question;
+            document.getElementById('progressBar').style.width = `${((currentQuestionIndex + 1) / parsedExamQuestions.length) * 100}%`;
+            
+            let html = "";
+            for (let key in q.options) {
+                const sel = studentAnswers[currentQuestionIndex] === key;
+                html += `<label class="block p-4 border rounded-xl cursor-pointer transition-all ${sel ? 'bg-blue-50 border-blue-500 shadow-sm' : 'hover:bg-gray-50'}">
+                    <input type="radio" name="opt" value="${key}" ${sel ? 'checked' : ''} onchange="window.recordAnswer('${key}')" class="mr-3 w-5 h-5 text-blue-600 cursor-pointer">
+                    <span class="font-bold mr-1 text-gray-800">${key}.</span> <span class="text-gray-700">${q.options[key]}</span>
+                </label>`;
+            }
+            document.getElementById('optionsArea').innerHTML = html;
+            document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
+            const last = currentQuestionIndex === parsedExamQuestions.length - 1;
+            document.getElementById('nextBtn').classList.toggle('hidden-view', last);
+            document.getElementById('submitExamBtn').classList.toggle('hidden-view', !last);
+            
+            window.renderQuestionGrid();
+        };
+
+        window.renderQuestionGrid = () => {
+            const grid = document.getElementById('questionGrid');
+            let html = '';
+            for (let i = 0; i < parsedExamQuestions.length; i++) {
+                const isAnswered = studentAnswers.hasOwnProperty(i);
+                const isCurrent = i === currentQuestionIndex;
+                
+                let baseClasses = "w-10 h-10 flex items-center justify-center rounded-lg font-bold text-sm cursor-pointer transition-all duration-200 ";
+                
+                if (isCurrent) {
+                    baseClasses += "ring-2 ring-offset-2 ring-blue-600 bg-blue-600 text-white shadow-md";
+                } else if (isAnswered) {
+                    baseClasses += "bg-green-500 text-white hover:bg-green-600 shadow-sm";
+                } else {
+                    baseClasses += "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300";
+                }
+                
+                html += `<div onclick="window.navigateQuestion(${i - currentQuestionIndex})" class="${baseClasses}">${i + 1}</div>`;
+            }
+            grid.innerHTML = html;
+        };
+
+        window.recordAnswer = (k) => {
+            studentAnswers[currentQuestionIndex] = k;
+            localStorage.setItem(`cbt_answers_paper3_${currentUserId}`, JSON.stringify(studentAnswers));
+            window.renderCurrentQuestion();
+        };
+
+        window.navigateQuestion = (d) => {
+            currentQuestionIndex += d;
+            window.renderCurrentQuestion();
+        };
+
+        window.requestLogout = () => {
+            window.showModal('confirm', 'Pause & Logout?', 'Your progress and remaining time will be saved. You can log back in later to finish your exam.', 'Yes, Logout', async () => {
+                clearInterval(timerInterval);
+                if(dbClient) await dbClient.auth.signOut();
+                window.location.reload();
+            });
+        };
+
+        window.requestFinalSubmit = () => {
+            const answeredCount = Object.keys(studentAnswers).length;
+            const message = answeredCount < parsedExamQuestions.length 
+                ? `You have only answered ${answeredCount} out of ${parsedExamQuestions.length} questions. Are you ABSOLUTELY sure you want to submit?` 
+                : `Are you sure you want to submit your Paper III exam? You cannot undo this action.`;
+            
+            window.showModal('confirm', 'Submit Final Exam?', message, 'Yes, Submit', () => {
+                window.executeDatabaseSubmission();
+            });
+        };
+
+        window.executeDatabaseSubmission = async () => {
+            clearInterval(timerInterval);
+            let score = 0;
+            parsedExamQuestions.forEach((q, i) => { if(studentAnswers[i] === q.ans) score++; });
+            
+            document.getElementById('examContentArea').innerHTML = `
+                <div class="text-center py-20 flex flex-col items-center">
+                    <svg class="animate-spin h-10 w-10 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <p class="text-lg text-gray-500 font-bold">Securely transmitting results...</p>
+                </div>
+            `;
+
+            const { error } = await dbClient.from('results').insert({ 
+                user_id: currentUserId, 
+                admission_no: currentStudentData.admission_no, 
+                score: score, 
+                total_questions: parsedExamQuestions.length,
+                paper_type: 'Paper III' 
+            });
+            
+            if(error) return window.showToast("Error saving results. Please call admin.", true);
+            
+            // Clean up timers and answers completely once submitted
+            localStorage.removeItem(`cbt_time_left_paper3_${currentUserId}`);
+            localStorage.removeItem(`cbt_answers_paper3_${currentUserId}`);
+            
+            document.getElementById('examContentArea').innerHTML = `
+                <div class="text-center py-16">
+                    <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h2 class='text-center text-3xl font-bold text-gray-900 mb-4'>Paper III Submitted Successfully</h2>
+                    <p class="mb-8 text-gray-500 font-medium">Your responses have been securely recorded.</p>
+                    <button onclick="window.location.reload()" class="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md">Secure Logout</button>
+                </div>
+            `;
+        };
+
+        // NEW: Countdown Engine uses milliseconds directly instead of a fixed end time.
+        // It updates the remaining time in LocalStorage every second.
+        window.startCountdownTimer = (initialTimeLeftMs) => {
+            let endTime = new Date().getTime() + initialTimeLeftMs;
+
+            timerInterval = setInterval(() => {
+                const now = new Date().getTime();
+                const dist = endTime - now;
+                
+                // Keep the exact milliseconds remaining saved. If they logout, this is what is re-loaded.
+                localStorage.setItem(`cbt_time_left_paper3_${currentUserId}`, dist);
+
+                if (dist <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('timerDisplay').textContent = "00:00:00";
+                    window.showModal('alert', 'Time is Up!', 'Your exam duration has elapsed. Your answers will now be submitted automatically.', 'Understood', () => {
+                        window.executeDatabaseSubmission();
+                    });
+                    return;
+                }
+                const h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((dist % (1000 * 60)) / 1000);
+                document.getElementById('timerDisplay').textContent = `${h < 10 ? '0'+h : h}:${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+            }, 1000);
+        };
+
+        /* --- INITIALIZATION --- */
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('regPassword').oninput = window.liveValidate;
+            document.getElementById('regConfirmPassword').oninput = window.liveValidate;
+            document.getElementById('regEmail').addEventListener('input', window.debouncedCheck);
+            document.getElementById('regMatric').addEventListener('input', window.debouncedCheck);
+            
+            if(window.supabase) {
+                dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+
+            document.getElementById('registerForm').onsubmit = async (e) => {
+                e.preventDefault();
+                if(!dbClient) return window.showToast("Database error", true);
+                
+                const btn = document.getElementById('regSubmitBtn');
+                btn.textContent = "Processing..."; btn.disabled = true;
+
+                try {
+                    const email = document.getElementById('regEmail').value.trim();
+                    const pwd = document.getElementById('regPassword').value;
+                    const { data, error: aErr } = await dbClient.auth.signUp({ email, password: pwd });
+                    if(aErr) throw aErr;
+                    
+                    const { error: dbErr } = await dbClient.from('students').insert({ 
+                        user_id: data.user.id, 
+                        first_name: document.getElementById('regFirstName').value.trim(), 
+                        last_name: document.getElementById('regLastName').value.trim(), 
+                        admission_no: document.getElementById('regMatric').value.trim(),
+                        email: email 
+                    });
+                    if(dbErr) throw dbErr;
+                    
+                    window.showToast("Registered! Please login.");
+                    document.getElementById('registerForm').reset();
+                    window.liveValidate();
+                    window.toggleAuthView('login');
+                } catch (error) {
+                    window.showToast(error.message, true);
+                    btn.textContent = "Complete Registration"; btn.disabled = false;
+                }
+            };
+
+            document.getElementById('loginForm').onsubmit = async (e) => {
+                e.preventDefault();
+                
+                const btn = document.getElementById('loginSubmitBtn');
+                btn.textContent = "Authenticating..."; btn.disabled = true;
+
+                if(!dbClient) {
+                    btn.textContent = "Start Paper III"; btn.disabled = false;
+                    return window.showToast("Database error", true);
+                }
+                
+                try {
+                    const { data, error } = await dbClient.auth.signInWithPassword({
+                        email: document.getElementById('loginEmail').value.trim(),
+                        password: document.getElementById('loginPassword').value
+                    });
+                    if(error) throw new Error("Invalid credentials");
+                    
+                    currentUserId = data.user.id;
+
+                    const { data: existingResult } = await dbClient.from('results').select('id').eq('user_id', currentUserId).eq('paper_type', 'Paper III').maybeSingle();
+                    if (existingResult) {
+                        await dbClient.auth.signOut(); 
+                        throw new Error("Access Denied: You have already submitted Paper III.");
+                    }
+
+                    const { data: sData, error: sErr } = await dbClient.from('students').select('*').eq('user_id', currentUserId).single();
+                    if(sErr) throw new Error("Error fetching profile");
+                    
+                    currentStudentData = sData;
+                    parsedExamQuestions = parseExam();
+                    
+                    document.getElementById('authContainer').classList.add('hidden-view');
+                    document.getElementById('bodyElement').classList.replace('items-center', 'items-start');
+                    document.getElementById('bodyElement').classList.remove('p-4');
+                    document.getElementById('examContainer').classList.remove('hidden-view');
+                    document.getElementById('studentInfoDisplay').textContent = `${sData.first_name} ${sData.last_name} | ${sData.admission_no}`;
+                    
+                    // NEW: Time loading check. If they don't have a saved time, give them exactly 40 minutes (2400000ms).
+                    let savedTimeLeftMs = localStorage.getItem(`cbt_time_left_paper3_${currentUserId}`);
+                    if (!savedTimeLeftMs) {
+                        savedTimeLeftMs = 40 * 60 * 1000; // 40 mins
+                        localStorage.setItem(`cbt_time_left_paper3_${currentUserId}`, savedTimeLeftMs);
+                    } else {
+                        savedTimeLeftMs = parseInt(savedTimeLeftMs, 10);
+                    }
+
+                    const savedAns = localStorage.getItem(`cbt_answers_paper3_${currentUserId}`);
+                    if(savedAns) studentAnswers = JSON.parse(savedAns);
+
+                    window.startCountdownTimer(savedTimeLeftMs);
+                    window.renderCurrentQuestion();
+
+                } catch (error) {
+                    window.showToast(error.message, true);
+                    btn.textContent = "Start Paper III"; btn.disabled = false;
+                }
+            };
+        });
+    </script>
+</body>
+</html>

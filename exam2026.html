@@ -3,35 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBT Portal - Live Exam Environment</title>
+    <title>CBT Portal - Paper I</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="icon.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="icon.jpg">
+  <link rel="apple-touch-icon" href="icon.jpg">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" sizes="32x32" href="icon.jpg">
-      <link rel="icon" type="image/png" sizes="16x16" href="icon.jpg">
-      <link rel="apple-touch-icon" href="icon.jpg">
-
-    <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .hidden-view { display: none !important; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        /* Custom Scrollbar for the Question Grid */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 transition-all duration-500" id="bodyElement">
 
+    <!-- Global Toast Notification -->
     <div id="toast" class="fixed top-5 right-5 px-6 py-3 rounded-lg shadow-lg text-white font-bold opacity-0 transition-opacity duration-300 pointer-events-none z-50 bg-blue-600"></div>
 
-    <!-- Auth Container -->
+    <!-- ========================================== -->
+    <!-- CUSTOM SLEEK MODAL                         -->
+    <!-- ========================================== -->
+    <div id="customModal" class="hidden-view fixed inset-0 bg-gray-900/60 z-[100] flex items-center justify-center backdrop-blur-sm px-4 transition-all duration-300">
+        <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 md:p-8 transform transition-all scale-100 opacity-100">
+            <div id="modalIconContainer" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5">
+                <!-- Icon injected via JS -->
+            </div>
+            <h3 id="modalTitle" class="text-xl md:text-2xl font-extrabold text-center text-gray-900 mb-2"></h3>
+            <p id="modalMessage" class="text-center text-gray-500 mb-8 font-medium"></p>
+            <div id="modalButtons" class="flex gap-3 justify-center">
+                <!-- Buttons injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- AUTHENTICATION CONTAINER                   -->
+    <!-- ========================================== -->
     <div id="authContainer" class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
         <div id="loginView">
-            <h2 class="text-2xl font-bold text-center mb-8">Student Login</h2>
+            <h2 class="text-2xl font-bold text-center mb-8">Paper I Login</h2>
             <form id="loginForm" class="space-y-5">
                 <input type="email" id="loginEmail" required placeholder="Email" class="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
                 <input type="password" id="loginPassword" required placeholder="Password" class="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                <button type="submit" id="loginSubmitBtn" class="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-lg">Start Exam</button>
+                <button type="submit" id="loginSubmitBtn" class="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-lg">Start Paper I</button>
             </form>
             <p class="mt-6 text-center text-sm">Don't have an account? <button onclick="window.toggleAuthView('register')" type="button" class="text-blue-600 font-bold">Register here</button></p>
         </div>
@@ -43,63 +64,87 @@
                     <input type="text" id="regFirstName" placeholder="First Name" required class="px-3 py-2 border rounded-lg">
                     <input type="text" id="regLastName" placeholder="Last Name" required class="px-3 py-2 border rounded-lg">
                 </div>
-                
                 <input type="text" id="regMatric" placeholder="Matric No" required class="w-full px-3 py-2 border rounded-lg">
                 <p id="matricWarnText" class="text-xs text-red-500 font-medium"></p>
-                
                 <input type="email" id="regEmail" placeholder="Email" required class="w-full px-3 py-2 border rounded-lg">
                 <p id="emailWarnText" class="text-xs text-red-500 font-medium"></p>
-                
                 <input type="password" id="regPassword" placeholder="Password" required class="w-full px-3 py-2 border rounded-lg">
                 <input type="password" id="regConfirmPassword" placeholder="Confirm Password" required class="w-full px-3 py-2 border rounded-lg">
                 <p id="pwdReqText" class="text-xs text-red-500 font-medium"></p>
                 <p id="pwdMatchText" class="text-xs font-medium"></p>
-                
-                <button type="submit" id="regSubmitBtn" disabled class="w-full py-3 bg-green-600 text-white font-bold rounded-xl opacity-50 cursor-not-allowed">Complete Registration</button>
+                <button type="submit" id="regSubmitBtn" disabled class="w-full py-3 bg-green-600 text-white font-bold rounded-xl opacity-50 cursor-not-allowed transition-all">Complete Registration</button>
             </form>
             <p class="mt-4 text-center text-sm">Already registered? <button onclick="window.toggleAuthView('login')" type="button" class="text-blue-600 font-bold">Log in</button></p>
         </div>
     </div>
 
-    <!-- Exam Container -->
+    <!-- ========================================== -->
+    <!-- EXAM INTERFACE CONTAINER                   -->
+    <!-- ========================================== -->
     <div id="examContainer" class="hidden-view w-full h-screen flex flex-col bg-gray-50 absolute inset-0">
-        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+        <!-- Header -->
+        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10 shrink-0">
             <div>
                 <h2 class="text-xl font-bold">Paper I Examination</h2>
-                <p id="studentInfoDisplay" class="text-sm text-blue-600">Loading...</p>
+                <p id="studentInfoDisplay" class="text-sm font-medium text-blue-600">Loading...</p>
             </div>
             <div class="flex items-center gap-6">
                 <div class="bg-blue-50 px-5 py-2 rounded-xl border border-blue-200">
-                    <span id="timerDisplay" class="text-2xl font-mono font-bold text-blue-600">02:00:00</span>
+                    <span id="timerDisplay" class="text-2xl font-mono font-bold text-blue-600 tracking-tight">02:00:00</span>
                 </div>
-                <button onclick="window.logoutSession()" class="text-red-600 font-bold">Save & Logout</button>
+                <button onclick="window.requestLogout()" class="text-gray-500 hover:text-red-600 font-bold transition">Save & Logout</button>
             </div>
         </header>
 
-        <main class="flex-grow p-6">
-            <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border p-8">
-                <div class="mb-8 flex justify-between items-center border-b pb-6">
-                    <h3 class="text-lg font-bold">Question <span id="currentQIndex" class="text-blue-600">1</span> of <span id="totalQs">100</span></h3>
-                    <div class="w-1/2 bg-gray-100 rounded-full h-3">
-                        <div id="progressBar" class="bg-blue-600 h-full rounded-full transition-all" style="width: 1%"></div>
+        <!-- Main Body (Grid Layout) -->
+        <main class="flex-grow p-4 md:p-6 overflow-y-auto">
+            <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-4 gap-6 h-full items-start">
+                
+                <!-- Exam Area (Left side) -->
+                <div class="lg:col-span-3 flex flex-col bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-10 relative h-full">
+                    <div class="mb-6 flex justify-between items-center border-b pb-6 shrink-0">
+                        <h3 class="text-lg font-bold">Question <span id="currentQIndex" class="text-blue-600">1</span> of <span id="totalQs">100</span></h3>
+                        <div class="w-1/2 bg-gray-100 rounded-full h-3">
+                            <div id="progressBar" class="bg-blue-600 h-full rounded-full transition-all duration-300" style="width: 1%"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="examContentArea" class="flex-grow flex flex-col">
+                        <p id="questionText" class="text-xl font-semibold mb-8 text-gray-800 leading-relaxed"></p>
+                        <div id="optionsArea" class="space-y-3 flex-grow"></div>
+                        
+                        <div class="flex justify-between items-center pt-8 border-t mt-8 shrink-0">
+                            <button id="prevBtn" onclick="window.navigateQuestion(-1)" class="px-6 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl disabled:opacity-50 hover:bg-gray-200 transition">Previous</button>
+                            <button id="nextBtn" onclick="window.navigateQuestion(1)" class="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md transition">Next</button>
+                            <button id="submitExamBtn" onclick="window.requestFinalSubmit()" class="hidden-view px-8 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-md transition">Submit Final Exam</button>
+                        </div>
                     </div>
                 </div>
-                <div id="examContentArea">
-                    <p id="questionText" class="text-xl font-medium mb-8"></p>
-                    <div id="optionsArea" class="space-y-4"></div>
-                    <div class="flex justify-between items-center pt-8 border-t mt-8">
-                        <button id="prevBtn" onclick="window.navigateQuestion(-1)" class="px-6 py-3 bg-gray-100 rounded-xl disabled:opacity-50">Previous</button>
-                        <button id="nextBtn" onclick="window.navigateQuestion(1)" class="px-8 py-3 bg-blue-600 text-white rounded-xl">Next</button>
-                        <button id="submitExamBtn" onclick="window.submitFinalExam()" class="hidden-view px-8 py-3 bg-green-600 text-white rounded-xl">Submit Exam</button>
+
+                <!-- Navigator Area (Right side) -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-6 flex flex-col max-h-[85vh]">
+                    <h3 class="font-extrabold text-gray-800 mb-4 shrink-0">Question Navigator</h3>
+                    
+                    <!-- Legend -->
+                    <div class="flex items-center justify-between mb-6 text-xs font-semibold text-gray-600 shrink-0 bg-gray-50 p-3 rounded-lg border">
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-green-500 rounded-sm"></div> Answered</div>
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-white border border-gray-300 rounded-sm"></div> Pending</div>
+                    </div>
+                    
+                    <!-- Number Grid -->
+                    <div id="questionGrid" class="grid grid-cols-5 gap-2 overflow-y-auto custom-scroll pr-2 pb-4">
+                        <!-- Boxes injected via JS -->
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT LOGIC & SUPABASE                -->
+    <!-- ========================================== -->
     <script>
         let dbClient; 
-        
         let currentUserId = null;
         let currentStudentData = null;
         let currentQuestionIndex = 0;
@@ -710,8 +755,10 @@
   D. Journal 
 `;
 
+        // THE AI ANSWER KEY (PAPER I)
         const aiAnswerKey = ["D", "A", "C", "D", "B", "C", "B", "B", "D", "B", "A", "A", "D", "D", "A", "B", "B", "D", "C", "B", "B", "C", "D", "B", "A", "D", "A", "C", "B", "C", "C", "B", "A", "D", "C", "B", "A", "C", "B", "C", "D", "A", "C", "B", "C", "B", "C", "D", "D", "A", "C", "B", "D", "D", "B", "A", "C", "C", "C", "C", "B", "D", "B", "D", "A", "A", "B", "A", "A", "B", "D", "B", "C", "A", "B", "C", "D", "A", "D", "B", "D", "C", "D", "D", "A", "B", "D", "C", "A", "B", "D", "D", "C", "A", "D", "A", "D", "B", "C", "A"];
 
+        /* --- UI HELPERS --- */
         window.toggleAuthView = (v) => {
             document.getElementById('loginView').classList.toggle('hidden-view', v !== 'login');
             document.getElementById('registerView').classList.toggle('hidden-view', v !== 'register');
@@ -725,6 +772,45 @@
             setTimeout(() => t.style.opacity = '0', 3000);
         };
 
+        window.showModal = (type, title, message, confirmText, onConfirm) => {
+            const modal = document.getElementById('customModal');
+            const iconContainer = document.getElementById('modalIconContainer');
+            const titleEl = document.getElementById('modalTitle');
+            const messageEl = document.getElementById('modalMessage');
+            const buttonsEl = document.getElementById('modalButtons');
+
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            modal.classList.remove('hidden-view');
+
+            if (type === 'confirm') {
+                iconContainer.className = 'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 bg-yellow-100 text-yellow-600';
+                iconContainer.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                
+                buttonsEl.innerHTML = `
+                    <button onclick="window.closeModal()" class="flex-1 py-3 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition">Cancel</button>
+                    <button id="modalConfirmBtn" class="flex-1 py-3 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md transition">${confirmText}</button>
+                `;
+            } else if (type === 'alert') {
+                iconContainer.className = 'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 bg-red-100 text-red-600';
+                iconContainer.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                
+                buttonsEl.innerHTML = `
+                    <button id="modalConfirmBtn" class="w-full py-3 px-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-md transition">${confirmText}</button>
+                `;
+            }
+
+            document.getElementById('modalConfirmBtn').onclick = () => {
+                window.closeModal();
+                if(onConfirm) onConfirm();
+            };
+        };
+
+        window.closeModal = () => {
+            document.getElementById('customModal').classList.add('hidden-view');
+        };
+
+        /* --- VALIDATION --- */
         window.checkDuplicates = async () => {
             if (!dbClient) return;
             const email = document.getElementById('regEmail').value.trim();
@@ -752,9 +838,7 @@
 
         window.debouncedCheck = () => {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                window.checkDuplicates();
-            }, 500); 
+            debounceTimer = setTimeout(() => window.checkDuplicates(), 500); 
         };
 
         window.liveValidate = () => {
@@ -770,13 +854,14 @@
             btn.style.opacity = btn.disabled ? '0.5' : '1';
         };
 
+        /* --- EXAM LOGIC --- */
         function parseExam() {
             const qBlocks = rawExamText.trim().split(/\n(?=\d+\.)/);
             return qBlocks.map((b, i) => {
                 const lines = b.split('\n').map(l => l.trim()).filter(l => l);
                 const opts = {};
                 lines.slice(1).forEach(l => {
-                    const m = l.match(/^([A-D])\.\s*(.*)/i);
+                    const m = l.match(/^([A-Ea-e])\.\s*(.*)/i);
                     if (m) opts[m[1].toUpperCase()] = m[2];
                 });
                 return { question: lines[0].replace(/^\d+\.\s*/, ''), options: opts, ans: aiAnswerKey[i] || "A" };
@@ -792,8 +877,9 @@
             let html = "";
             for (let key in q.options) {
                 const sel = studentAnswers[currentQuestionIndex] === key;
-                html += `<label class="block p-4 border rounded-xl cursor-pointer ${sel ? 'bg-blue-50 border-blue-500' : ''}">
-                    <input type="radio" name="opt" value="${key}" ${sel ? 'checked' : ''} onchange="window.recordAnswer('${key}')" class="mr-2">${key}. ${q.options[key]}
+                html += `<label class="block p-4 border rounded-xl cursor-pointer transition-all ${sel ? 'bg-blue-50 border-blue-500 shadow-sm' : 'hover:bg-gray-50'}">
+                    <input type="radio" name="opt" value="${key}" ${sel ? 'checked' : ''} onchange="window.recordAnswer('${key}')" class="mr-3 w-5 h-5 text-blue-600 cursor-pointer">
+                    <span class="font-bold mr-1 text-gray-800">${key}.</span> <span class="text-gray-700">${q.options[key]}</span>
                 </label>`;
             }
             document.getElementById('optionsArea').innerHTML = html;
@@ -801,10 +887,35 @@
             const last = currentQuestionIndex === parsedExamQuestions.length - 1;
             document.getElementById('nextBtn').classList.toggle('hidden-view', last);
             document.getElementById('submitExamBtn').classList.toggle('hidden-view', !last);
+            
+            window.renderQuestionGrid();
+        };
+
+        window.renderQuestionGrid = () => {
+            const grid = document.getElementById('questionGrid');
+            let html = '';
+            for (let i = 0; i < parsedExamQuestions.length; i++) {
+                const isAnswered = studentAnswers.hasOwnProperty(i);
+                const isCurrent = i === currentQuestionIndex;
+                
+                let baseClasses = "w-10 h-10 flex items-center justify-center rounded-lg font-bold text-sm cursor-pointer transition-all duration-200 ";
+                
+                if (isCurrent) {
+                    baseClasses += "ring-2 ring-offset-2 ring-blue-600 bg-blue-600 text-white shadow-md";
+                } else if (isAnswered) {
+                    baseClasses += "bg-green-500 text-white hover:bg-green-600 shadow-sm";
+                } else {
+                    baseClasses += "bg-white text-gray-600 hover:bg-gray-100 border border-gray-300";
+                }
+                
+                html += `<div onclick="window.navigateQuestion(${i - currentQuestionIndex})" class="${baseClasses}">${i + 1}</div>`;
+            }
+            grid.innerHTML = html;
         };
 
         window.recordAnswer = (k) => {
             studentAnswers[currentQuestionIndex] = k;
+            localStorage.setItem(`cbt_answers_paper1_${currentUserId}`, JSON.stringify(studentAnswers));
             window.renderCurrentQuestion();
         };
 
@@ -813,56 +924,98 @@
             window.renderCurrentQuestion();
         };
 
-        window.submitFinalExam = async () => {
-            if(!confirm("Are you sure you want to submit your exam?")) return;
+        window.requestLogout = () => {
+            window.showModal('confirm', 'Pause & Logout?', 'Your progress and remaining time will be saved. You can log back in later to finish your exam.', 'Yes, Logout', async () => {
+                clearInterval(timerInterval);
+                
+                const now = new Date().getTime();
+                const dist = window.currentEndTime - now;
+                if(dist > 0) localStorage.setItem(`cbt_time_left_paper1_${currentUserId}`, dist);
+                
+                if(dbClient) await dbClient.auth.signOut();
+                window.location.reload();
+            });
+        };
+
+        window.requestFinalSubmit = () => {
+            const answeredCount = Object.keys(studentAnswers).length;
+            const message = answeredCount < parsedExamQuestions.length 
+                ? `You have only answered ${answeredCount} out of ${parsedExamQuestions.length} questions. Are you ABSOLUTELY sure you want to submit?` 
+                : `Are you sure you want to submit your Paper I exam? You cannot undo this action.`;
+            
+            window.showModal('confirm', 'Submit Final Exam?', message, 'Yes, Submit', () => {
+                window.executeDatabaseSubmission();
+            });
+        };
+
+        window.executeDatabaseSubmission = async () => {
             clearInterval(timerInterval);
             let score = 0;
             parsedExamQuestions.forEach((q, i) => { if(studentAnswers[i] === q.ans) score++; });
             
             document.getElementById('examContentArea').innerHTML = `
-                <div class="text-center py-16">
-                    <p class="text-lg text-gray-500">Securely transmitting results...</p>
+                <div class="text-center py-20 flex flex-col items-center">
+                    <svg class="animate-spin h-10 w-10 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <p class="text-lg text-gray-500 font-bold">Securely transmitting results...</p>
                 </div>
             `;
 
-            const { error } = await dbClient.from('results').insert({ user_id: currentUserId, admission_no: currentStudentData.admission_no, score: score, total_questions: parsedExamQuestions.length });
-            if(error) return window.showToast("Error saving results", true);
+            // Submission specific to Paper I
+            const { error } = await dbClient.from('results').insert({ 
+                user_id: currentUserId, 
+                admission_no: currentStudentData.admission_no, 
+                score: score, 
+                total_questions: parsedExamQuestions.length,
+                paper_type: 'Paper I' 
+            });
             
-            localStorage.removeItem(`cbt_exam_end_${currentUserId}`);
-            localStorage.removeItem(`cbt_answers_${currentUserId}`);
+            if(error) return window.showToast("Error saving results. Please call admin.", true);
+            
+            localStorage.removeItem(`cbt_time_left_paper1_${currentUserId}`);
+            localStorage.removeItem(`cbt_answers_paper1_${currentUserId}`);
             
             document.getElementById('examContentArea').innerHTML = `
                 <div class="text-center py-16">
-                    <h2 class='text-center text-3xl font-bold text-green-600 mb-4'>Exam Submitted Successfully</h2>
-                    <p class="mb-8">Your responses have been recorded.</p>
-                    <button onclick="window.logoutSession()" class="px-8 py-3 bg-blue-600 text-white rounded-xl">Secure Logout</button>
+                    <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h2 class='text-center text-3xl font-bold text-gray-900 mb-4'>Paper I Submitted Successfully</h2>
+                    <p class="mb-8 text-gray-500 font-medium">Your responses have been securely recorded.</p>
+                    <button onclick="window.location.reload()" class="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md">Secure Logout</button>
                 </div>
             `;
         };
 
-        window.logoutSession = async () => {
-            clearInterval(timerInterval);
-            if(dbClient) await dbClient.auth.signOut();
-            window.location.reload();
-        };
+        window.startCountdownTimer = (initialTimeLeftMs) => {
+            window.currentEndTime = new Date().getTime() + initialTimeLeftMs;
 
-        window.startCountdownTimer = (endTime) => {
-            timerInterval = setInterval(() => {
+            const tick = () => {
                 const now = new Date().getTime();
-                const dist = endTime - now;
+                const dist = window.currentEndTime - now;
+                
                 if (dist <= 0) {
                     clearInterval(timerInterval);
-                    alert("Time is up! Submitting exam.");
-                    window.submitFinalExam();
+                    localStorage.setItem(`cbt_time_left_paper1_${currentUserId}`, 0);
+                    document.getElementById('timerDisplay').textContent = "00:00:00";
+                    window.showModal('alert', 'Time is Up!', 'Your exam duration has elapsed. Your answers will now be submitted automatically.', 'Understood', () => {
+                        window.executeDatabaseSubmission();
+                    });
                     return;
                 }
+                
+                localStorage.setItem(`cbt_time_left_paper1_${currentUserId}`, dist);
+                
                 const h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
                 const s = Math.floor((dist % (1000 * 60)) / 1000);
                 document.getElementById('timerDisplay').textContent = `${h < 10 ? '0'+h : h}:${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
-            }, 1000);
+            };
+            
+            tick(); 
+            timerInterval = setInterval(tick, 1000);
         };
 
+        /* --- INITIALIZATION --- */
         document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('regPassword').oninput = window.liveValidate;
             document.getElementById('regConfirmPassword').oninput = window.liveValidate;
@@ -905,7 +1058,6 @@
                 }
             };
 
-            // NEW: Added interception for multiple attempts
             document.getElementById('loginForm').onsubmit = async (e) => {
                 e.preventDefault();
                 
@@ -913,7 +1065,7 @@
                 btn.textContent = "Authenticating..."; btn.disabled = true;
 
                 if(!dbClient) {
-                    btn.textContent = "Start Exam"; btn.disabled = false;
+                    btn.textContent = "Start Paper I"; btn.disabled = false;
                     return window.showToast("Database error", true);
                 }
                 
@@ -926,11 +1078,11 @@
                     
                     currentUserId = data.user.id;
 
-                    // THE NEW CHECK: Verify if the user already submitted the exam
-                    const { data: existingResult } = await dbClient.from('results').select('id').eq('user_id', currentUserId).maybeSingle();
+                    // Block if already submitted Paper I
+                    const { data: existingResult } = await dbClient.from('results').select('id').eq('user_id', currentUserId).eq('paper_type', 'Paper I').maybeSingle();
                     if (existingResult) {
-                        await dbClient.auth.signOut(); // Force log them out
-                        throw new Error("Access Denied: You have already submitted this exam.");
+                        await dbClient.auth.signOut(); 
+                        throw new Error("Access Denied: You have already submitted Paper I.");
                     }
 
                     const { data: sData, error: sErr } = await dbClient.from('students').select('*').eq('user_id', currentUserId).single();
@@ -945,20 +1097,23 @@
                     document.getElementById('examContainer').classList.remove('hidden-view');
                     document.getElementById('studentInfoDisplay').textContent = `${sData.first_name} ${sData.last_name} | ${sData.admission_no}`;
                     
-                    let endTime = localStorage.getItem(`cbt_exam_end_${currentUserId}`);
-                    if (!endTime || new Date().getTime() > endTime) {
-                        endTime = new Date().getTime() + (2 * 60 * 60 * 1000);
-                        localStorage.setItem(`cbt_exam_end_${currentUserId}`, endTime);
+                    // Initialization for the true-pause countdown (2 hours for Paper 1)
+                    let savedTimeLeftMs = localStorage.getItem(`cbt_time_left_paper1_${currentUserId}`);
+                    if (!savedTimeLeftMs || isNaN(savedTimeLeftMs)) {
+                        savedTimeLeftMs = 2 * 60 * 60 * 1000; // 2 hours
+                    } else {
+                        savedTimeLeftMs = parseInt(savedTimeLeftMs, 10);
                     }
-                    const savedAns = localStorage.getItem(`cbt_answers_${currentUserId}`);
+
+                    const savedAns = localStorage.getItem(`cbt_answers_paper1_${currentUserId}`);
                     if(savedAns) studentAnswers = JSON.parse(savedAns);
 
-                    window.startCountdownTimer(endTime);
+                    window.startCountdownTimer(savedTimeLeftMs);
                     window.renderCurrentQuestion();
 
                 } catch (error) {
                     window.showToast(error.message, true);
-                    btn.textContent = "Start Exam"; btn.disabled = false;
+                    btn.textContent = "Start Paper I"; btn.disabled = false;
                 }
             };
         });

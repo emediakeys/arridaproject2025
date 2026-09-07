@@ -17,8 +17,8 @@
         
         /* The CSS Custom Stamp */
         .official-stamp {
-            width: 140px;
-            height: 140px;
+            width: 130px;
+            height: 130px;
             border: 4px double #dc2626;
             border-radius: 50%;
             display: flex;
@@ -32,12 +32,33 @@
             pointer-events: none;
         }
 
+        /* Strict A4 Print Formatting */
         @media print {
-            body { background-color: white; }
-            #loginContainer, #btnLogout, #btnPrint, #toast, .no-print { display: none !important; }
-            .print-border { border: 2px solid #e5e7eb; box-shadow: none !important; }
-            /* Forces printers to render the red stamp and background colors */
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            @page { 
+                size: A4 portrait; 
+                margin: 15mm; 
+            }
+            body { 
+                background-color: white !important; 
+                margin: 0; 
+                padding: 0; 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
+            #loginContainer, #btnLogout, #btnPrint, #toast, .no-print { 
+                display: none !important; 
+            }
+            #scorecardContainer { 
+                box-shadow: none !important; 
+                border: none !important; 
+                padding: 0 !important; 
+                margin: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+            /* Adjust spacing slightly to ensure 1-page fit */
+            .print-mb-small { margin-bottom: 1.5rem !important; }
+            .print-avoid-break { page-break-inside: avoid; break-inside: avoid; }
         }
     </style>
 </head>
@@ -48,7 +69,7 @@
     <!-- ========================================== -->
     <!-- 1. RESULT LOGIN CONTAINER                  -->
     <!-- ========================================== -->
-    <div id="loginContainer" class="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden p-8 border border-gray-100">
+    <div id="loginContainer" class="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden p-6 md:p-8 border border-gray-100">
         <div class="text-center mb-8">
             <div class="w-20 h-20 mx-auto mb-4">
                 <img src="icon.jpg" alt="School Logo" class="w-full h-full object-cover rounded-full shadow-md border border-gray-200" onerror="this.src='https://via.placeholder.com/80?text=LOGO'">
@@ -78,56 +99,56 @@
     <!-- ========================================== -->
     <!-- 2. STUDENT SCORECARD CONTAINER             -->
     <!-- ========================================== -->
-    <div id="scorecardContainer" class="hidden-view w-full max-w-4xl bg-white rounded-3xl shadow-2xl p-8 md:p-12 print-border relative">
+    <div id="scorecardContainer" class="hidden-view w-full max-w-4xl bg-white rounded-3xl shadow-2xl p-6 md:p-12 relative overflow-hidden">
         
         <!-- Background Watermark -->
-        <div class="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none overflow-hidden">
-            <img src="icon.jpg" class="w-96 h-96 object-contain filter grayscale" alt="">
+        <div class="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+            <img src="icon.jpg" class="w-72 h-72 md:w-96 md:h-96 object-contain filter grayscale" alt="">
         </div>
 
         <!-- Official Header -->
-        <div class="flex flex-col md:flex-row justify-between items-center border-b-4 border-blue-900 pb-6 mb-8 gap-6 text-center md:text-left relative z-10">
-            <div class="w-24 h-24 shrink-0">
+        <div class="flex flex-col md:flex-row justify-between items-center border-b-4 border-blue-900 pb-4 mb-6 md:mb-8 gap-4 text-center md:text-left relative z-10 print-mb-small">
+            <div class="w-20 h-20 md:w-24 md:h-24 shrink-0">
                 <img src="icon.jpg" alt="Arrida College Logo" class="w-full h-full object-contain rounded-full shadow-sm border border-gray-200" onerror="this.src='https://via.placeholder.com/96?text=LOGO'">
             </div>
             <div class="flex-grow text-center">
-                <h1 class="text-xl md:text-2xl lg:text-3xl font-black text-blue-900 tracking-tight uppercase leading-tight">Arrida College of Health Science and Technology Suleja</h1>
-                <p class="text-gray-600 mt-2 font-extrabold text-sm md:text-base tracking-widest uppercase">Pre-National Exam 2026</p>
-                <div class="inline-block bg-blue-50 text-blue-800 px-4 py-1 rounded-full font-bold text-xs mt-3 border border-blue-200 tracking-widest">
+                <h1 class="text-lg md:text-2xl lg:text-3xl font-black text-blue-900 tracking-tight uppercase leading-tight">Arrida College of Health Science & Technology Suleja</h1>
+                <p class="text-gray-600 mt-1 md:mt-2 font-extrabold text-xs md:text-sm tracking-widest uppercase">Pre-National Exam 2026</p>
+                <div class="inline-block bg-blue-50 text-blue-800 px-3 md:px-4 py-1 rounded-full font-bold text-[10px] md:text-xs mt-2 border border-blue-200 tracking-widest">
                     OFFICIAL STATEMENT OF RESULT
                 </div>
             </div>
-            <div class="shrink-0 text-center border-2 border-gray-200 p-3 rounded-lg bg-gray-50">
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Date Printed</p>
-                <p id="printDate" class="text-sm font-bold text-gray-800"></p>
+            <div class="shrink-0 text-center border-2 border-gray-200 p-2 md:p-3 rounded-lg bg-gray-50">
+                <p class="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Date Printed</p>
+                <p id="printDate" class="text-xs md:text-sm font-bold text-gray-800"></p>
             </div>
         </div>
 
         <!-- Student Details -->
-        <div class="bg-blue-900 text-white rounded-2xl p-6 mb-8 shadow-md relative z-10">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-blue-900 text-white rounded-2xl p-5 md:p-6 mb-6 md:mb-8 shadow-md relative z-10 print-mb-small print-avoid-break">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
-                    <p class="text-xs font-bold text-blue-300 uppercase tracking-wider mb-1">Candidate Name</p>
-                    <p id="dispName" class="text-xl font-black">Loading...</p>
+                    <p class="text-[10px] md:text-xs font-bold text-blue-300 uppercase tracking-wider mb-1">Candidate Name</p>
+                    <p id="dispName" class="text-lg md:text-xl font-black">Loading...</p>
                 </div>
                 <div>
-                    <p class="text-xs font-bold text-blue-300 uppercase tracking-wider mb-1">Admission / Matric Number</p>
-                    <p id="dispMatric" class="text-xl font-mono font-black text-blue-100">Loading...</p>
+                    <p class="text-[10px] md:text-xs font-bold text-blue-300 uppercase tracking-wider mb-1">Admission / Matric Number</p>
+                    <p id="dispMatric" class="text-lg md:text-xl font-mono font-black text-blue-100">Loading...</p>
                 </div>
             </div>
         </div>
 
         <!-- Individual Papers Table -->
-        <div class="mb-10 relative z-10">
-            <h3 class="text-lg font-extrabold text-gray-800 mb-4 uppercase tracking-wider border-b-2 border-gray-200 inline-block pb-1">Performance Breakdown</h3>
-            <div class="overflow-hidden rounded-xl border-2 border-gray-200 bg-white">
-                <table class="w-full text-left border-collapse">
+        <div class="mb-6 md:mb-10 relative z-10 print-mb-small print-avoid-break">
+            <h3 class="text-base md:text-lg font-extrabold text-gray-800 mb-3 md:mb-4 uppercase tracking-wider border-b-2 border-gray-200 inline-block pb-1">Performance Breakdown</h3>
+            <div class="overflow-x-auto rounded-xl border-2 border-gray-200 bg-white">
+                <table class="w-full text-left border-collapse min-w-[500px]">
                     <thead>
                         <tr class="bg-gray-100 border-b-2 border-gray-200">
-                            <th class="px-5 py-4 text-xs font-black text-gray-600 uppercase tracking-wider">Examination Module</th>
-                            <th class="px-5 py-4 text-xs font-black text-gray-600 uppercase tracking-wider text-center">Raw Score</th>
-                            <th class="px-5 py-4 text-xs font-black text-gray-600 uppercase tracking-wider text-center">Percentage</th>
-                            <th class="px-5 py-4 text-xs font-black text-gray-600 uppercase tracking-wider text-center">Grade</th>
+                            <th class="px-4 py-3 md:px-5 md:py-4 text-[10px] md:text-xs font-black text-gray-600 uppercase tracking-wider">Examination Module</th>
+                            <th class="px-4 py-3 md:px-5 md:py-4 text-[10px] md:text-xs font-black text-gray-600 uppercase tracking-wider text-center">Raw Score</th>
+                            <th class="px-4 py-3 md:px-5 md:py-4 text-[10px] md:text-xs font-black text-gray-600 uppercase tracking-wider text-center">Percentage</th>
+                            <th class="px-4 py-3 md:px-5 md:py-4 text-[10px] md:text-xs font-black text-gray-600 uppercase tracking-wider text-center">Grade</th>
                         </tr>
                     </thead>
                     <tbody id="papersTableBody" class="divide-y divide-gray-100">
@@ -138,51 +159,51 @@
         </div>
 
         <!-- Bottom Section: Cumulative Score & Official Stamp -->
-        <div class="flex flex-col md:flex-row justify-between items-end gap-8 relative z-10">
+        <div class="flex flex-col md:flex-row justify-between items-center md:items-end gap-6 md:gap-8 relative z-10 print-avoid-break">
             
             <!-- Cumulative Result Box -->
-            <div class="bg-gray-50 border-2 border-gray-200 rounded-2xl p-6 shadow-sm w-full md:w-1/2">
-                <p class="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-4">Cumulative Summary</p>
+            <div class="bg-gray-50 border-2 border-gray-200 rounded-2xl p-5 md:p-6 shadow-sm w-full md:w-1/2 text-center md:text-left">
+                <p class="text-[10px] md:text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-3 md:mb-4">Cumulative Summary</p>
                 <div class="flex justify-between items-end">
-                    <div>
-                        <p class="text-sm font-bold text-gray-500 mb-1">Total Score</p>
-                        <p class="text-3xl font-black text-gray-900"><span id="dispTotalScore">0</span> <span class="text-lg text-gray-400">/ <span id="dispTotalPossible">0</span></span></p>
+                    <div class="text-left">
+                        <p class="text-xs md:text-sm font-bold text-gray-500 mb-1">Total Score</p>
+                        <p class="text-2xl md:text-3xl font-black text-gray-900"><span id="dispTotalScore">0</span> <span class="text-base md:text-lg text-gray-400">/ <span id="dispTotalPossible">0</span></span></p>
                     </div>
                     <div class="text-right">
-                        <p class="text-sm font-bold text-gray-500 mb-1">Final Grade</p>
-                        <p class="text-4xl font-black" id="dispOverallGrade">-</p>
+                        <p class="text-xs md:text-sm font-bold text-gray-500 mb-1">Final Grade</p>
+                        <p class="text-3xl md:text-4xl font-black" id="dispOverallGrade">-</p>
                     </div>
                 </div>
             </div>
 
             <!-- Signature & Stamp -->
-            <div class="w-full md:w-1/2 relative flex justify-end md:pr-8 pt-8">
+            <div class="w-full md:w-1/2 relative flex flex-col md:flex-row justify-center md:justify-end items-center pt-4 md:pt-8 md:pr-8">
                 <!-- Signature Line -->
-                <div class="text-center z-20 relative bg-white/60 p-2 rounded">
-                    <div class="w-48 border-b-2 border-gray-800 mb-2 mx-auto"></div>
-                    <p class="font-bold text-gray-900 uppercase tracking-wider text-sm">Director of Exams</p>
-                    <p class="text-xs text-gray-500 font-medium">Arrida College of Health Science</p>
+                <div class="text-center z-20 relative bg-white/60 p-2 rounded w-full md:w-auto">
+                    <div class="w-40 md:w-48 border-b-2 border-gray-800 mb-2 mx-auto"></div>
+                    <p class="font-bold text-gray-900 uppercase tracking-wider text-[10px] md:text-sm">Director of Exams</p>
+                    <p class="text-[9px] md:text-xs text-gray-500 font-medium">Arrida College of Health Science</p>
                 </div>
                 
                 <!-- The CSS Stamp -->
-                <div class="absolute bottom-2 right-4 md:right-12 official-stamp z-10 bg-white/10">
-                    <span class="text-[8px] font-black uppercase text-center leading-tight mt-3 px-3">Arrida College of<br>Health Science & Tech</span>
-                    <span class="text-xl font-black tracking-widest my-1 border-y-2 border-red-600 w-full text-center py-0.5">VALID</span>
-                    <span class="text-[10px] font-extrabold tracking-widest mb-3">SEP 2026</span>
+                <div class="relative md:absolute mt-4 md:mt-0 md:bottom-2 md:right-4 lg:right-12 official-stamp z-10 bg-white/10">
+                    <span class="text-[7px] font-black uppercase text-center leading-tight mt-3 px-3">Arrida College of<br>Health Science & Tech</span>
+                    <span class="text-lg md:text-xl font-black tracking-widest my-1 border-y-2 border-red-600 w-full text-center py-0.5">VALID</span>
+                    <span class="text-[9px] md:text-[10px] font-extrabold tracking-widest mb-3">SEP 2026</span>
                 </div>
             </div>
 
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-between items-center pt-8 mt-12 border-t-2 border-gray-100 no-print relative z-10">
+        <div class="flex flex-col-reverse md:flex-row justify-between items-center pt-6 md:pt-8 mt-8 md:mt-12 border-t-2 border-gray-100 no-print relative z-10 gap-4">
             <button id="btnLogout" onclick="window.location.reload()" class="text-gray-400 hover:text-red-600 font-bold transition flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 Secure Logout
             </button>
-            <button id="btnPrint" onclick="window.print()" class="px-8 py-3.5 bg-blue-600 text-white font-black uppercase tracking-wider rounded-xl hover:bg-blue-700 transition shadow-lg flex items-center gap-2">
+            <button id="btnPrint" onclick="window.print()" class="w-full md:w-auto px-6 py-3.5 bg-blue-600 text-white font-black uppercase tracking-wider rounded-xl hover:bg-blue-700 transition shadow-lg flex items-center justify-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                Print Official Statement
+                Print Statement
             </button>
         </div>
 
@@ -222,7 +243,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Set today's date for the printout
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('printDate').textContent = new Date().toLocaleDateString(undefined, options);
 
@@ -239,7 +259,6 @@
                 btn.textContent = "Verifying..."; btn.disabled = true;
 
                 try {
-                    // 1. Find email via Admission No
                     const { data: student, error: fetchErr } = await dbClient
                         .from('students')
                         .select('email, first_name, last_name, admission_no')
@@ -248,7 +267,6 @@
 
                     if (fetchErr || !student) throw new Error("Admission Number not found.");
 
-                    // 2. Authenticate
                     const { data: authData, error: authErr } = await dbClient.auth.signInWithPassword({
                         email: student.email,
                         password: pwd
@@ -256,22 +274,19 @@
 
                     if (authErr) throw new Error("Incorrect Password.");
 
-                    // 3. Fetch ALL results for this student
                     const { data: results, error: resErr } = await dbClient
                         .from('results')
                         .select('*')
                         .eq('user_id', authData.user.id)
-                        .order('paper_type', { ascending: true }); // Order I, II, III
+                        .order('paper_type', { ascending: true });
 
                     if (resErr || !results || results.length === 0) {
                         throw new Error("No exam results found for this account.");
                     }
 
-                    // 4. Populate Student Info
                     document.getElementById('dispName').textContent = `${student.first_name} ${student.last_name}`;
                     document.getElementById('dispMatric').textContent = student.admission_no;
 
-                    // 5. Build the Table & Calculate Totals
                     let totalScore = 0;
                     let totalPossible = 0;
                     const tbody = document.getElementById('papersTableBody');
@@ -288,17 +303,16 @@
                         const tr = document.createElement('tr');
                         tr.className = "hover:bg-blue-50 transition";
                         tr.innerHTML = `
-                            <td class="px-5 py-4 font-black text-gray-900 border-r border-gray-100">${paperName}</td>
-                            <td class="px-5 py-4 text-center text-gray-800 font-bold border-r border-gray-100">${res.score} / ${res.total_questions}</td>
-                            <td class="px-5 py-4 text-center font-black text-blue-700 border-r border-gray-100">${pct}%</td>
-                            <td class="px-5 py-4 text-center">
-                                <span class="px-4 py-1.5 rounded-lg text-xs font-black border-2 ${grade.class}">${grade.letter}</span>
+                            <td class="px-4 py-3 md:px-5 md:py-4 font-black text-gray-900 border-r border-gray-100 text-sm md:text-base">${paperName}</td>
+                            <td class="px-4 py-3 md:px-5 md:py-4 text-center text-gray-800 font-bold border-r border-gray-100 text-sm md:text-base">${res.score} / ${res.total_questions}</td>
+                            <td class="px-4 py-3 md:px-5 md:py-4 text-center font-black text-blue-700 border-r border-gray-100 text-sm md:text-base">${pct}%</td>
+                            <td class="px-4 py-3 md:px-5 md:py-4 text-center">
+                                <span class="px-3 md:px-4 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs font-black border-2 ${grade.class}">${grade.letter}</span>
                             </td>
                         `;
                         tbody.appendChild(tr);
                     });
 
-                    // 6. Populate Cumulative Summary
                     document.getElementById('dispTotalScore').textContent = totalScore;
                     document.getElementById('dispTotalPossible').textContent = totalPossible;
                     
@@ -307,9 +321,8 @@
                     const cumulativeGrade = calculateOverallGrade(cumulativePct);
                     const gradeEl = document.getElementById('dispOverallGrade');
                     gradeEl.textContent = `${cumulativeGrade.letter} (${cumulativePct}%)`;
-                    gradeEl.className = `text-3xl md:text-4xl font-black ${cumulativeGrade.color}`;
+                    gradeEl.className = `text-2xl md:text-4xl font-black ${cumulativeGrade.color}`;
 
-                    // Show the scorecard
                     document.getElementById('loginContainer').classList.add('hidden-view');
                     document.getElementById('scorecardContainer').classList.remove('hidden-view');
                     showToast("Official scorecard loaded securely.");

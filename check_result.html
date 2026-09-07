@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Result - Arrida College</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="icon.jpg">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon.jpg">
+    <link rel="apple-touch-icon" href="icon.jpg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .hidden-view { display: none !important; }
+        
+        /* The CSS Custom Stamp */
+        .official-stamp {
+            width: 140px;
+            height: 140px;
+            border: 4px double #dc2626;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #dc2626;
+            transform: rotate(-15deg);
+            opacity: 0.85;
+            mix-blend-mode: multiply;
+            pointer-events: none;
+        }
+
+        @media print {
+            body { background-color: white; }
+            #loginContainer, #btnLogout, #btnPrint, #toast, .no-print { display: none !important; }
+            .print-border { border: 2px solid #e5e7eb; box-shadow: none !important; }
+            /* Forces printers to render the red stamp and background colors */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 transition-all duration-500">
+
+    <div id="toast" class="fixed top-5 right-5 px-6 py-3 rounded-lg shadow-lg text-white font-bold opacity-0 transition-opacity duration-300 pointer-events-none z-50 bg-blue-600"></div>
+
+    <!-- ========================================== -->
+    <!-- 1. RESULT LOGIN CONTAINER                  -->
+    <!-- ========================================== -->
+    <div id="loginContainer" class="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden p-8 border border-gray-100">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 mx-auto mb-4">
+                <img src="icon.jpg" alt="School Logo" class="w-full h-full object-cover rounded-full shadow-md border border-gray-200" onerror="this.src='https://via.placeholder.com/80?text=LOGO'">
+            </div>
+            <h2 class="text-2xl font-black text-gray-900 uppercase">Result Checker</h2>
+            <p class="text-sm text-gray-500 mt-2 font-medium">Enter your details to view your scorecard.</p>
+        </div>
+        
+        <form id="resultAuthForm" class="space-y-5">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Admission Number</label>
+                <input type="text" id="loginMatric" required placeholder="e.g., ENG/2026/001" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none uppercase font-medium">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Portal Password</label>
+                <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <button type="submit" id="authSubmitBtn" class="w-full py-3.5 bg-blue-900 text-white font-bold rounded-xl hover:bg-blue-800 transition shadow-lg flex justify-center items-center gap-2">
+                Check Result
+            </button>
+        </form>
+        <div class="mt-6 text-center no-print">
+            <a href="index.html" class="text-sm font-bold text-gray-400 hover:text-blue-600 transition">&larr; Back to Portal Home</a>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. STUDENT SCORECARD CONTAINER             -->
+    <!-- ========================================== -->
+    <div id="scorecardContainer" class="hidden-view w-full max-w-4xl bg-white rounded-3xl shadow-2xl p-8 md:p-12 print-border relative">
+        
+        <!-- Background Watermark -->
+        <div class="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none overflow-hidden">
+            <img src="icon.jpg" class="w-96 h-96 object-contain filter grayscale" alt="">
+        </div>
+
+        <!-- Official Header -->
+        <div class="flex flex-col md:flex-row justify-between items-center border-b-4 border-blue-900 pb-6 mb-8 gap-6 text-center md:text-left relative z-10">
+            <div class="w-24 h-24 shrink-0">
+                <img src="icon.jpg" alt="Arrida College Logo" class="w-full h-full object-contain rounded-full shadow-sm border border-gray-200" onerror="this.src='https://via.placeholder.com/96?text=LOGO'">
+            </div>
+            <div class="flex-grow text-center">
+                <h1 class="text-xl md:text-2xl lg:text-3xl font-black text-blue-900 tracking-tight uppercase leading-tight">Arrida College of Health Science and Technology Suleja</h1>
+                <p class="text-gray-600 mt-2 font-extrabold text-sm md:text-base tracking-widest uppercase">Pre-National Exam 2026</p>
+                <div class="inline-block bg-blue-50 text-blue-800 px-4 py-1 rounded-full font-bold text-xs mt-3 border border-blue-200 tracking-widest">
+                    OFFICIAL STATEMENT OF RESULT
+                </div>
+            </div>
+            <div class="shrink-0 text-center border-2 border-gray-200 p-3 rounded-lg bg-gray-50">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Date Printed</p>
+                <p id="printDate" class="text-sm font-bold text-gray-800"></p>
+            </div>
+        </div>
+
+        <!-- Student Details -->
+        <div class="bg-blue-900 text-white rounded-2xl p-6 mb-8 shadow-md relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-xs font-bold text-blue-300 uppercase tracking-wider mb-1">Candidate Name</p>
+                    <p id="dispName" class="text-xl font-black">Loading...</p>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-blue-300 uppercase tracking-wider mb-1">Admission / Matric Number</p>
+                    <p id="dispMatric" class="text-xl font-mono font-black text-blue-100">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Papers Table -->
+        <div class="mb-10 relative z-10">
+            <h3 class="text-lg font-extrabold text-gray-800 mb-4 uppercase tracking-wider border-b-2 border-gray-200 inline-block pb-1">Performance Breakdown</h3>
+            <div class="overflow-hidden rounded-xl border-2 border-gray-200 bg-white">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 border-b-2 border-gray-200">
+                            <th class="px-5 py-4 text-xs font-black text-gray-600 uppercase tracking-wider">Examination Module</th>
+                            <th class="px-5 py-4 text-xs font-black text-gray-600 uppercase tracking-wider text-center">Raw Score</th>
+                            <th class="px-5 py-4 text-xs font-black text-gray-600 uppercase tracking-wider text-center">Percentage</th>
+                            <th class="px-5 py-4 text-xs font-black text-gray-600 uppercase tracking-wider text-center">Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="papersTableBody" class="divide-y divide-gray-100">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Bottom Section: Cumulative Score & Official Stamp -->
+        <div class="flex flex-col md:flex-row justify-between items-end gap-8 relative z-10">
+            
+            <!-- Cumulative Result Box -->
+            <div class="bg-gray-50 border-2 border-gray-200 rounded-2xl p-6 shadow-sm w-full md:w-1/2">
+                <p class="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-4">Cumulative Summary</p>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <p class="text-sm font-bold text-gray-500 mb-1">Total Score</p>
+                        <p class="text-3xl font-black text-gray-900"><span id="dispTotalScore">0</span> <span class="text-lg text-gray-400">/ <span id="dispTotalPossible">0</span></span></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-gray-500 mb-1">Final Grade</p>
+                        <p class="text-4xl font-black" id="dispOverallGrade">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signature & Stamp -->
+            <div class="w-full md:w-1/2 relative flex justify-end md:pr-8 pt-8">
+                <!-- Signature Line -->
+                <div class="text-center z-20 relative bg-white/60 p-2 rounded">
+                    <div class="w-48 border-b-2 border-gray-800 mb-2 mx-auto"></div>
+                    <p class="font-bold text-gray-900 uppercase tracking-wider text-sm">Director of Exams</p>
+                    <p class="text-xs text-gray-500 font-medium">Arrida College of Health Science</p>
+                </div>
+                
+                <!-- The CSS Stamp -->
+                <div class="absolute bottom-2 right-4 md:right-12 official-stamp z-10 bg-white/10">
+                    <span class="text-[8px] font-black uppercase text-center leading-tight mt-3 px-3">Arrida College of<br>Health Science & Tech</span>
+                    <span class="text-xl font-black tracking-widest my-1 border-y-2 border-red-600 w-full text-center py-0.5">VALID</span>
+                    <span class="text-[10px] font-extrabold tracking-widest mb-3">SEP 2026</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-between items-center pt-8 mt-12 border-t-2 border-gray-100 no-print relative z-10">
+            <button id="btnLogout" onclick="window.location.reload()" class="text-gray-400 hover:text-red-600 font-bold transition flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Secure Logout
+            </button>
+            <button id="btnPrint" onclick="window.print()" class="px-8 py-3.5 bg-blue-600 text-white font-black uppercase tracking-wider rounded-xl hover:bg-blue-700 transition shadow-lg flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Print Official Statement
+            </button>
+        </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- LOGIC & DATABASE CONNECTION                -->
+    <!-- ========================================== -->
+    <script>
+        const SUPABASE_URL = 'https://adhbsmbmeigfcieofrkq.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaGJzbWJtZWlnZmNpZW9mcmtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODc1ODcsImV4cCI6MjA4MTI2MzU4N30.wpOMUUJ2PcEJbuHHFbG-gUjVoxttnxA5UxZJttChJ1s';
+        
+        let dbClient;
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `fixed top-5 right-5 px-6 py-3 rounded-lg shadow-lg text-white font-bold transition-opacity duration-300 z-50 ${isError ? 'bg-red-600' : 'bg-green-600'}`;
+            t.style.opacity = '1';
+            setTimeout(() => { t.style.opacity = '0'; }, 4000);
+        }
+
+        function calculateGrade(percentage) {
+            if (percentage >= 70) return { letter: 'A', class: 'bg-green-100 text-green-800 border-green-200' };
+            if (percentage >= 60) return { letter: 'B', class: 'bg-blue-100 text-blue-800 border-blue-200' };
+            if (percentage >= 50) return { letter: 'C', class: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+            if (percentage >= 40) return { letter: 'D', class: 'bg-orange-100 text-orange-800 border-orange-200' };
+            return { letter: 'F', class: 'bg-red-100 text-red-800 border-red-200' };
+        }
+
+        function calculateOverallGrade(percentage) {
+            if (percentage >= 70) return { letter: 'A', color: 'text-green-600' };
+            if (percentage >= 60) return { letter: 'B', color: 'text-blue-600' };
+            if (percentage >= 50) return { letter: 'C', color: 'text-yellow-600' };
+            if (percentage >= 40) return { letter: 'D', color: 'text-orange-500' };
+            return { letter: 'F', color: 'text-red-600' };
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set today's date for the printout
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('printDate').textContent = new Date().toLocaleDateString(undefined, options);
+
+            if(window.supabase) {
+                dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+
+            document.getElementById('resultAuthForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('authSubmitBtn');
+                const admNo = document.getElementById('loginMatric').value.trim().toUpperCase();
+                const pwd = document.getElementById('loginPassword').value;
+
+                btn.textContent = "Verifying..."; btn.disabled = true;
+
+                try {
+                    // 1. Find email via Admission No
+                    const { data: student, error: fetchErr } = await dbClient
+                        .from('students')
+                        .select('email, first_name, last_name, admission_no')
+                        .ilike('admission_no', admNo) 
+                        .single();
+
+                    if (fetchErr || !student) throw new Error("Admission Number not found.");
+
+                    // 2. Authenticate
+                    const { data: authData, error: authErr } = await dbClient.auth.signInWithPassword({
+                        email: student.email,
+                        password: pwd
+                    });
+
+                    if (authErr) throw new Error("Incorrect Password.");
+
+                    // 3. Fetch ALL results for this student
+                    const { data: results, error: resErr } = await dbClient
+                        .from('results')
+                        .select('*')
+                        .eq('user_id', authData.user.id)
+                        .order('paper_type', { ascending: true }); // Order I, II, III
+
+                    if (resErr || !results || results.length === 0) {
+                        throw new Error("No exam results found for this account.");
+                    }
+
+                    // 4. Populate Student Info
+                    document.getElementById('dispName').textContent = `${student.first_name} ${student.last_name}`;
+                    document.getElementById('dispMatric').textContent = student.admission_no;
+
+                    // 5. Build the Table & Calculate Totals
+                    let totalScore = 0;
+                    let totalPossible = 0;
+                    const tbody = document.getElementById('papersTableBody');
+                    tbody.innerHTML = '';
+
+                    results.forEach(res => {
+                        totalScore += res.score;
+                        totalPossible += res.total_questions;
+                        
+                        const pct = Math.round((res.score / res.total_questions) * 100);
+                        const grade = calculateGrade(pct);
+                        const paperName = res.paper_type || 'General Paper';
+
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-blue-50 transition";
+                        tr.innerHTML = `
+                            <td class="px-5 py-4 font-black text-gray-900 border-r border-gray-100">${paperName}</td>
+                            <td class="px-5 py-4 text-center text-gray-800 font-bold border-r border-gray-100">${res.score} / ${res.total_questions}</td>
+                            <td class="px-5 py-4 text-center font-black text-blue-700 border-r border-gray-100">${pct}%</td>
+                            <td class="px-5 py-4 text-center">
+                                <span class="px-4 py-1.5 rounded-lg text-xs font-black border-2 ${grade.class}">${grade.letter}</span>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+
+                    // 6. Populate Cumulative Summary
+                    document.getElementById('dispTotalScore').textContent = totalScore;
+                    document.getElementById('dispTotalPossible').textContent = totalPossible;
+                    
+                    const cumulativePct = Math.round((totalScore / totalPossible) * 100);
+                    
+                    const cumulativeGrade = calculateOverallGrade(cumulativePct);
+                    const gradeEl = document.getElementById('dispOverallGrade');
+                    gradeEl.textContent = `${cumulativeGrade.letter} (${cumulativePct}%)`;
+                    gradeEl.className = `text-3xl md:text-4xl font-black ${cumulativeGrade.color}`;
+
+                    // Show the scorecard
+                    document.getElementById('loginContainer').classList.add('hidden-view');
+                    document.getElementById('scorecardContainer').classList.remove('hidden-view');
+                    showToast("Official scorecard loaded securely.");
+
+                } catch (error) {
+                    showToast(error.message, true);
+                    btn.innerHTML = "Check Result"; btn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
